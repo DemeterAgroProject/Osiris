@@ -1,6 +1,7 @@
 <script>
-	import { Package, Plus, Search, MoreVertical, Edit, Trash2, Tractor, Leaf } from 'lucide-svelte';
+	import { Package, Plus, MoreVertical, Edit, Trash2, Tractor, Leaf } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
+	import SearchBar from '$lib/components/SearchBar.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
@@ -8,10 +9,26 @@
 	let activeTab = $state('maquinarios'); // Pode ser 'maquinarios' ou 'produtos'
 	let searchQuery = $state('');
 	let openMenu = $state(null);
-	
+
 	let loading = $state(true);
-	let maquinarios = $state([]); 
-	let produtos = $state([]); 
+	let maquinarios = $state([]);
+	let produtos = $state([]);
+	let brands = $state([]);
+	let types = $state([]);
+
+	let filters = $state({
+		status: '',
+		sort: 'recentes',
+		minPrice: '',
+		maxPrice: '',
+		brandIds: [],
+		typeIds: [],
+		categories: [],
+		minYear: '',
+		maxYear: '',
+		minHorimeter: '',
+		maxHorimeter: ''
+	});
 
 	onMount(async () => {
 		await loadAllAds();
@@ -26,10 +43,10 @@
 			const [maqResponse, prodResponse] = await Promise.all([
 				supabase
 					.from('agricultural_machinery')
-					.select('id, name, status, hourly_rate, machinery_types(name)')
+					.select('id, name, status, hourly_rate, brand_id, type_id, manufacture_year, current_horimeter, machinery_types(name)')
 					.eq('owner_id', user.id)
 					.order('created_at', { ascending: false }),
-				
+
 				supabase
 					.from('products')
 					.select('id, name, status, price, category')
@@ -39,17 +56,125 @@
 
 			if (maqResponse.data) maquinarios = maqResponse.data;
 			if (prodResponse.data) produtos = prodResponse.data;
+
+			const [brandsResponse, typesResponse] = await Promise.all([
+				supabase.from('brands').select('id, name').order('name'),
+				supabase.from('machinery_types').select('id, name').order('name')
+			]);
+
+			if (brandsResponse.data) brands = brandsResponse.data;
+			if (typesResponse.data) types = typesResponse.data;
 		}
 		loading = false;
 	}
 
-	// Filtros reativos baseados na busca e na aba ativa
-	const filteredMaquinarios = $derived(
-		maquinarios.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-	);
+	function normalizeText(value) {
+		return (value ?? '').toString().trim().toLowerCase();
+	}
 
-	const filteredProdutos = $derived(
-		produtos.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+	function parseOptionalNumber(value) {
+		if (value === '' || value === null || value === undefined) return null;
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+
+	// Filtros reativos baseados na busca, aba ativa e filtros avançados
+	const filteredMaquinarios = $derived.by(() => {
+		const query = normalizeText(searchQuery);
+		const minPrice = parseOptionalNumber(filters.minPrice);
+		const maxPrice = parseOptionalNumber(filters.maxPrice);
+		const minYear = parseOptionalNumber(filters.minYear);
+		const maxYear = parseOptionalNumber(filters.maxYear);
+		const minHorimeter = parseOptionalNumber(filters.minHorimeter);
+		const maxHorimeter = parseOptionalNumber(filters.maxHorimeter);
+
+		let list = maquinarios.filter((item) => {
+			if (query && !normalizeText(item.name).includes(query)) return false;
+			if (filters.status && item.status !== filters.status) return false;
+
+			const itemPrice = Number(item.hourly_rate) || 0;
+			if (minPrice !== null && itemPrice < minPrice) return false;
+			if (maxPrice !== null && itemPrice > maxPrice) return false;
+
+			if (filters.brandIds.length && !filters.brandIds.includes(item.brand_id)) return false;
+			if (filters.typeIds.length && !filters.typeIds.includes(item.type_id)) return false;
+
+			const year = Number(item.manufacture_year) || 0;
+			if (minYear !== null && year < minYear) return false;
+			if (maxYear !== null && year > maxYear) return false;
+
+			const horimeter = Number(item.current_horimeter) || 0;
+			if (minHorimeter !== null && horimeter < minHorimeter) return false;
+			if (maxHorimeter !== null && horimeter > maxHorimeter) return false;
+
+			return true;
+		});
+
+		switch (filters.sort) {
+			case 'nome-asc':
+				list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+				break;
+			case 'nome-desc':
+				list = [...list].sort((a, b) => b.name.localeCompare(a.name, 'pt-BR'));
+				break;
+			case 'preco-asc':
+				list = [...list].sort((a, b) => (Number(a.hourly_rate) || 0) - (Number(b.hourly_rate) || 0));
+				break;
+			case 'preco-desc':
+				list = [...list].sort((a, b) => (Number(b.hourly_rate) || 0) - (Number(a.hourly_rate) || 0));
+				break;
+			default:
+				break;
+		}
+
+		return list;
+	});
+
+	const filteredProdutos = $derived.by(() => {
+		const query = normalizeText(searchQuery);
+		const minPrice = parseOptionalNumber(filters.minPrice);
+		const maxPrice = parseOptionalNumber(filters.maxPrice);
+
+		let list = produtos.filter((item) => {
+			if (query && !normalizeText(item.name).includes(query)) return false;
+			if (filters.status && item.status !== filters.status) return false;
+
+			const itemPrice = Number(item.price) || 0;
+			if (minPrice !== null && itemPrice < minPrice) return false;
+			if (maxPrice !== null && itemPrice > maxPrice) return false;
+
+			if (filters.categories.length && !filters.categories.includes(item.category)) return false;
+
+			return true;
+		});
+
+		switch (filters.sort) {
+			case 'nome-asc':
+				list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+				break;
+			case 'nome-desc':
+				list = [...list].sort((a, b) => b.name.localeCompare(a.name, 'pt-BR'));
+				break;
+			case 'preco-asc':
+				list = [...list].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+				break;
+			case 'preco-desc':
+				list = [...list].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+				break;
+			default:
+				break;
+		}
+
+		return list;
+	});
+
+	const brandFilterOptions = $derived(brands.map((brand) => ({ id: brand.id, label: brand.name })));
+	const typeFilterOptions = $derived(types.map((type) => ({ id: type.id, label: type.name })));
+	const categoryFilterOptions = $derived(
+		[...new Set(produtos.map((item) => item.category).filter(Boolean))].map((category) => ({
+			id: category,
+			label: category
+		}))
 	);
 
 	function formatPrice(value) {
@@ -60,10 +185,10 @@
 	async function handleDelete(id, type, e) {
 		e.stopPropagation();
 		openMenu = null;
-		
+
 		if (confirm('Tem certeza que deseja excluir este anúncio?')) {
 			const table = type === 'maquinario' ? 'agricultural_machinery' : 'products';
-			
+
 			const { error } = await supabase.from(table).delete().eq('id', id);
 
 			if (!error) {
@@ -117,17 +242,24 @@
 			</button>
 		</div>
 
-		<div class="relative mb-6 shadow-sm">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-			<input type="text" placeholder="Buscar nos meus anúncios..." bind:value={searchQuery} class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" />
-		</div>
+		<SearchBar
+			bind:searchQuery
+			bind:filters
+			mode={activeTab}
+			placeholder={activeTab === 'maquinarios' ? 'Buscar maquinários...' : 'Buscar produtos...'}
+			options={{
+				brands: brandFilterOptions,
+				types: typeFilterOptions,
+				categories: categoryFilterOptions
+			}}
+		/>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
 				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
 			</div>
 		{:else}
-			
+
 			<!-- LISTA DE MAQUINÁRIOS -->
 			{#if activeTab === 'maquinarios'}
 				<div class="space-y-3">

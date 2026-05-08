@@ -1,266 +1,311 @@
 <script>
-	import { SlidersHorizontal, DollarSign, MapPin, Calendar, ChevronDown, Check } from 'lucide-svelte';
+	import { SlidersHorizontal, X, Check, ChevronDown } from 'lucide-svelte';
 
-	let activeType = $state('compra');
-	let selectedCategories = $state(['Insumos', 'Maquinários']);
-	let openDropdown = $state(null);
-	
-	// Filter selections
-	let selectedPrice = $state(null);
-	let selectedLocation = $state(null);
-	let selectedDate = $state(null);
-	let selectedFilterOptions = $state([]);
-
-	const filters = [
-		{ id: 'filtros', label: 'Filtros', icon: SlidersHorizontal },
-		{ id: 'preco', label: 'Preço', icon: DollarSign },
-		{ id: 'localidade', label: 'Localidade', icon: MapPin },
-		{ id: 'data', label: 'Data', icon: Calendar }
-	];
-
-	const priceOptions = [
-		{ id: 'ate-50k', label: 'Até R$ 50.000' },
-		{ id: '50k-100k', label: 'R$ 50.000 - R$ 100.000' },
-		{ id: '100k-250k', label: 'R$ 100.000 - R$ 250.000' },
-		{ id: '250k-500k', label: 'R$ 250.000 - R$ 500.000' },
-		{ id: 'acima-500k', label: 'Acima de R$ 500.000' }
-	];
-
-	const locationOptions = [
-		{ id: 'alegrete', label: 'Alegrete, RS' },
-		{ id: 'santa-maria', label: 'Santa Maria, RS' },
-		{ id: 'porto-alegre', label: 'Porto Alegre, RS' },
-		{ id: 'passo-fundo', label: 'Passo Fundo, RS' },
-		{ id: 'pelotas', label: 'Pelotas, RS' },
-		{ id: 'caxias', label: 'Caxias do Sul, RS' }
-	];
-
-	const dateOptions = [
-		{ id: 'hoje', label: 'Hoje' },
-		{ id: 'ultimos-7', label: 'Últimos 7 dias' },
-		{ id: 'ultimos-15', label: 'Últimos 15 dias' },
-		{ id: 'ultimos-30', label: 'Últimos 30 dias' },
-		{ id: 'ultimos-90', label: 'Últimos 90 dias' }
-	];
-
-	const filterGeneralOptions = [
-		{ id: 'novos', label: 'Apenas novos' },
-		{ id: 'usados', label: 'Apenas usados' },
-		{ id: 'com-fotos', label: 'Com fotos' },
-		{ id: 'com-video', label: 'Com vídeo' },
-		{ id: 'aceita-troca', label: 'Aceita troca' },
-		{ id: 'frete-gratis', label: 'Frete grátis' }
-	];
-
-	const transactionTypes = [
-		{ id: 'compra', label: 'Compra' },
-		{ id: 'aluguel', label: 'Aluguel' },
-		{ id: 'servico', label: 'Serviço' }
-	];
-
-	const categories = ['Insumos', 'Maquinários', 'Implementos', 'Sementes'];
-
-	function toggleDropdown(id) {
-		openDropdown = openDropdown === id ? null : id;
+	function createDefaultFilters() {
+		return {
+			listingTypes: [],
+			productKinds: [],
+			serviceKinds: [],
+			laborKinds: [],
+			status: '',
+			location: '',
+			sort: 'recentes',
+			minPrice: '',
+			maxPrice: ''
+		};
 	}
 
-	function closeDropdown() {
-		openDropdown = null;
+	function cloneFilters(source) {
+		return {
+			...createDefaultFilters(),
+			...source,
+			listingTypes: [...(source?.listingTypes ?? [])],
+			productKinds: [...(source?.productKinds ?? [])],
+			serviceKinds: [...(source?.serviceKinds ?? [])],
+			laborKinds: [...(source?.laborKinds ?? [])]
+		};
 	}
 
-	function toggleCategory(category) {
-		if (selectedCategories.includes(category)) {
-			selectedCategories = selectedCategories.filter((c) => c !== category);
+	let {
+		filters = $bindable(createDefaultFilters()),
+		locations = [],
+		onApply = null
+	} = $props();
+
+	const listingTypeOptions = [
+		{ id: 'produto', label: 'Produto' },
+		{ id: 'servico', label: 'Serviço (pacote completo)' },
+		{ id: 'mao-de-obra', label: 'Mão de obra (pessoa)' }
+	];
+
+	const productKindOptions = [
+		{ id: 'insumos', label: 'Insumos' },
+		{ id: 'maquinas', label: 'Máquinas' }
+	];
+
+	const serviceKindOptions = [
+		{ id: 'contratar-servico', label: 'Contratar serviço' }
+	];
+
+	const laborKindOptions = [
+		{ id: 'operador-maquinas', label: 'Operador de máquinas' },
+		{ id: 'tecnico-campo', label: 'Técnico de campo' },
+		{ id: 'auxiliar-rural', label: 'Auxiliar rural' }
+	];
+
+	const statusOptions = [
+		{ id: '', label: 'Todos' },
+		{ id: 'Ativo', label: 'Ativo' },
+		{ id: 'Pausado', label: 'Pausado' },
+		{ id: 'Inativo', label: 'Inativo' }
+	];
+
+	const sortOptions = [
+		{ id: 'recentes', label: 'Mais recentes' },
+		{ id: 'preco-asc', label: 'Menor preço' },
+		{ id: 'preco-desc', label: 'Maior preço' },
+		{ id: 'nome-asc', label: 'Nome (A-Z)' },
+		{ id: 'nome-desc', label: 'Nome (Z-A)' }
+	];
+
+	let isOpen = $state(false);
+	let draft = $state(createDefaultFilters());
+
+	function openFilters() {
+		draft = cloneFilters(filters);
+		isOpen = true;
+	}
+
+	function closeFilters() {
+		isOpen = false;
+	}
+
+	function clearDraft() {
+		draft = createDefaultFilters();
+	}
+
+	function toggleArrayItem(key, id) {
+		const values = draft[key];
+		if (values.includes(id)) {
+			draft = { ...draft, [key]: values.filter((value) => value !== id) };
 		} else {
-			selectedCategories = [...selectedCategories, category];
+			draft = { ...draft, [key]: [...values, id] };
 		}
 	}
 
-	function toggleFilterOption(option) {
-		if (selectedFilterOptions.includes(option)) {
-			selectedFilterOptions = selectedFilterOptions.filter((o) => o !== option);
-		} else {
-			selectedFilterOptions = [...selectedFilterOptions, option];
-		}
+	function applyFilters() {
+		filters = cloneFilters(draft);
+		isOpen = false;
+		if (typeof onApply === 'function') onApply(filters);
 	}
 
-	function selectPrice(id) {
-		selectedPrice = selectedPrice === id ? null : id;
+	function isSelected(key, id) {
+		return draft[key].includes(id);
 	}
 
-	function selectLocation(id) {
-		selectedLocation = selectedLocation === id ? null : id;
+	function activeFilterCount(value) {
+		let count = 0;
+		if (value.listingTypes.length) count++;
+		if (value.productKinds.length) count++;
+		if (value.serviceKinds.length) count++;
+		if (value.laborKinds.length) count++;
+		if (value.status) count++;
+		if (value.location) count++;
+		if (value.minPrice || value.maxPrice) count++;
+		return count;
 	}
 
-	function selectDate(id) {
-		selectedDate = selectedDate === id ? null : id;
-	}
-
-	function clearFilters() {
-		selectedCategories = [];
-		activeType = 'compra';
-		selectedPrice = null;
-		selectedLocation = null;
-		selectedDate = null;
-		selectedFilterOptions = [];
-		openDropdown = null;
-	}
-
-	function getFilterLabel(id) {
-		switch (id) {
-			case 'preco':
-				return selectedPrice ? priceOptions.find(p => p.id === selectedPrice)?.label || 'Preço' : 'Preço';
-			case 'localidade':
-				return selectedLocation ? locationOptions.find(l => l.id === selectedLocation)?.label || 'Localidade' : 'Localidade';
-			case 'data':
-				return selectedDate ? dateOptions.find(d => d.id === selectedDate)?.label || 'Data' : 'Data';
-			case 'filtros':
-				return selectedFilterOptions.length > 0 ? `Filtros (${selectedFilterOptions.length})` : 'Filtros';
-			default:
-				return '';
-		}
-	}
-
-	function hasSelection(id) {
-		switch (id) {
-			case 'preco':
-				return selectedPrice !== null;
-			case 'localidade':
-				return selectedLocation !== null;
-			case 'data':
-				return selectedDate !== null;
-			case 'filtros':
-				return selectedFilterOptions.length > 0;
-			default:
-				return false;
-		}
-	}
-
-	function getDropdownOptions(id) {
-		switch (id) {
-			case 'preco':
-				return priceOptions;
-			case 'localidade':
-				return locationOptions;
-			case 'data':
-				return dateOptions;
-			case 'filtros':
-				return filterGeneralOptions;
-			default:
-				return [];
-		}
-	}
-
-	function isOptionSelected(filterId, optionId) {
-		switch (filterId) {
-			case 'preco':
-				return selectedPrice === optionId;
-			case 'localidade':
-				return selectedLocation === optionId;
-			case 'data':
-				return selectedDate === optionId;
-			case 'filtros':
-				return selectedFilterOptions.includes(optionId);
-			default:
-				return false;
-		}
-	}
-
-	function handleOptionClick(filterId, optionId) {
-		switch (filterId) {
-			case 'preco':
-				selectPrice(optionId);
-				break;
-			case 'localidade':
-				selectLocation(optionId);
-				break;
-			case 'data':
-				selectDate(optionId);
-				break;
-			case 'filtros':
-				toggleFilterOption(optionId);
-				break;
-		}
-	}
+	const count = $derived(activeFilterCount(filters));
+	const locationOptions = $derived(
+		(locations.length ? locations : ['Alegrete, RS', 'Santa Maria, RS', 'Uruguaiana, RS']).map((item) => ({
+			id: item,
+			label: item
+		}))
+	);
 </script>
 
-<svelte:window onclick={closeDropdown} />
+<svelte:window
+	onkeydown={(event) => {
+		if (event.key === 'Escape' && isOpen) closeFilters();
+	}}
+/>
 
-<div class="space-y-3 bg-white px-4 py-3">
-	<!-- Filter chips with dropdowns -->
-	<div class="flex gap-2 overflow-x-auto hide-scrollbar">
-		{#each filters as filter}
-			<div class="relative shrink-0">
+<div class="px-4 py-3">
+	<button
+		onclick={openFilters}
+		class="relative flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
+	>
+		<SlidersHorizontal class="h-4 w-4" />
+		Filtros
+		{#if count > 0}
+			<span class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+				{count}
+			</span>
+		{/if}
+	</button>
+</div>
+
+{#if isOpen}
+	<div class="fixed inset-0 z-40 bg-black/30" onclick={closeFilters}></div>
+	<div class="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-white shadow-2xl">
+		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
+			<div class="mb-4 flex items-center justify-between">
+				<div>
+					<h2 class="text-base font-semibold text-gray-900">Filtros gerais</h2>
+					<p class="text-xs text-gray-500">Produtos, serviços e mão de obra</p>
+				</div>
 				<button
-					onclick={(e) => { e.stopPropagation(); toggleDropdown(filter.id); }}
-					class="flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm transition-colors {hasSelection(filter.id) 
-						? 'border-green-500 bg-green-50 text-green-700' 
-						: 'border-gray-200 bg-white text-gray-700 hover:border-green-500 hover:text-green-600'}"
+					onclick={closeFilters}
+					class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+					aria-label="Fechar filtros"
 				>
-					<svelte:component this={filter.icon} class="h-4 w-4" />
-					<span class="max-w-32 truncate">{getFilterLabel(filter.id)}</span>
-					<ChevronDown class="h-3 w-3 transition-transform {openDropdown === filter.id ? 'rotate-180' : ''}" />
+					<X class="h-5 w-5" />
 				</button>
+			</div>
 
-				{#if openDropdown === filter.id}
-					<div 
-						onclick={(e) => e.stopPropagation()}
-						class="fixed left-4 right-4 z-50 mt-2 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white py-2 shadow-xl sm:absolute sm:left-0 sm:right-auto sm:min-w-56"
-					>
-						{#each getDropdownOptions(filter.id) as option}
+			<div class="max-h-[70vh] space-y-5 overflow-y-auto pb-3">
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Tipo de anúncio</p>
+					<div class="flex flex-wrap gap-2">
+						{#each listingTypeOptions as option}
 							<button
-								onclick={() => handleOptionClick(filter.id, option.id)}
-								class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 {isOptionSelected(filter.id, option.id) ? 'text-green-600 font-medium' : 'text-gray-700'}"
+								onclick={() => toggleArrayItem('listingTypes', option.id)}
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('listingTypes', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
 							>
-								<span>{option.label}</span>
-								{#if isOptionSelected(filter.id, option.id)}
-									<Check class="h-4 w-4 text-green-600" />
-								{/if}
+								{#if isSelected('listingTypes', option.id)}<Check class="h-3 w-3" />{/if}
+								{option.label}
 							</button>
 						{/each}
 					</div>
-				{/if}
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produtos</p>
+					<div class="flex flex-wrap gap-2">
+						{#each productKindOptions as option}
+							<button
+								onclick={() => toggleArrayItem('productKinds', option.id)}
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('productKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+							>
+								{#if isSelected('productKinds', option.id)}<Check class="h-3 w-3" />{/if}
+								{option.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Serviços</p>
+					<div class="flex flex-wrap gap-2">
+						{#each serviceKindOptions as option}
+							<button
+								onclick={() => toggleArrayItem('serviceKinds', option.id)}
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('serviceKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+							>
+								{#if isSelected('serviceKinds', option.id)}<Check class="h-3 w-3" />{/if}
+								{option.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Mão de obra</p>
+					<div class="flex flex-wrap gap-2">
+						{#each laborKindOptions as option}
+							<button
+								onclick={() => toggleArrayItem('laborKinds', option.id)}
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('laborKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+							>
+								{#if isSelected('laborKinds', option.id)}<Check class="h-3 w-3" />{/if}
+								{option.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</p>
+					<div class="flex flex-wrap gap-2">
+						{#each statusOptions as option}
+							<button
+								onclick={() => (draft = { ...draft, status: option.id })}
+								class="rounded-full border px-3 py-2 text-xs font-medium transition-colors {draft.status === option.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+							>
+								{option.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Localidade</p>
+					<div class="relative">
+						<select
+							bind:value={draft.location}
+							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						>
+							<option value="">Todas</option>
+							{#each locationOptions as option}
+								<option value={option.id}>{option.label}</option>
+							{/each}
+						</select>
+						<ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ordenação</p>
+					<div class="relative">
+						<select
+							bind:value={draft.sort}
+							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						>
+							{#each sortOptions as option}
+								<option value={option.id}>{option.label}</option>
+							{/each}
+						</select>
+						<ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Faixa de preço (R$)</p>
+					<div class="grid grid-cols-2 gap-2">
+						<input
+							type="number"
+							min="0"
+							inputmode="numeric"
+							bind:value={draft.minPrice}
+							placeholder="Mínimo"
+							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						/>
+						<input
+							type="number"
+							min="0"
+							inputmode="numeric"
+							bind:value={draft.maxPrice}
+							placeholder="Máximo"
+							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						/>
+					</div>
+				</div>
 			</div>
-		{/each}
-	</div>
 
-	<!-- Transaction type toggle -->
-	<div class="flex rounded-lg border border-gray-200 p-1">
-		{#each transactionTypes as type}
-			<button
-				onclick={() => (activeType = type.id)}
-				class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors {activeType === type.id
-					? 'bg-green-600 text-white'
-					: 'text-gray-600 hover:bg-gray-50'}"
-			>
-				{type.label}
-			</button>
-		{/each}
+			<div class="mt-5 grid grid-cols-2 gap-2">
+				<button
+					onclick={clearDraft}
+					class="rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+				>
+					Limpar
+				</button>
+				<button
+					onclick={applyFilters}
+					class="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+				>
+					Aplicar filtros
+				</button>
+			</div>
+		</div>
 	</div>
-
-	<!-- Category tags -->
-	<div class="flex flex-wrap gap-2">
-		{#each categories as category}
-			<button
-				onclick={() => toggleCategory(category)}
-				class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors {selectedCategories.includes(category)
-					? 'border-green-600 bg-green-50 text-green-700'
-					: 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}"
-			>
-				{category}
-			</button>
-		{/each}
-	</div>
-
-	<!-- Action buttons -->
-	<div class="flex items-center justify-between pt-1">
-		<button onclick={clearFilters} class="text-sm font-medium text-gray-600 hover:text-gray-800">
-			Limpar
-		</button>
-		<button
-			class="rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-		>
-			Aplicar Filtros
-		</button>
-	</div>
-</div>
+{/if}

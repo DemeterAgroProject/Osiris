@@ -6,8 +6,8 @@
 	const navItems = [
 		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
 		{ id: 'negociacoes', label: 'Negociações', icon: MessageSquare, href: '/negociacoes' },
-		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventory' },
-		{ id: 'anuncios', label: 'Anúncios', icon: Megaphone, href: '/inventory?tab=ads' },
+		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventario' },
+		{ id: 'anuncios', label: 'Anúncios', icon: Megaphone, href: '/anuncios' },
 		{ id: 'mais', label: 'Mais', icon: MoreHorizontal, href: '/mais' }
 	];
 </script>

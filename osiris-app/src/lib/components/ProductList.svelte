@@ -9,11 +9,13 @@
 		<h2 class="text-lg font-bold text-green-700">{title}</h2>
 	</div>
 
-	<div class="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
+	<div class="mt-3 grid grid-cols-2 gap-3 px-4 pb-2 sm:grid-cols-2 lg:grid-cols-3">
 		{#each products as product (product.id)}
-			<div class="w-44 shrink-0 md:w-52">
-				<ProductCard {...product} />
-			</div>
+			<ProductCard {...product} />
+		{:else}
+			<p class="py-6 text-center text-sm text-gray-500 sm:col-span-2 lg:col-span-3">
+				Nenhum anúncio encontrado.
+			</p>
 		{/each}
 	</div>
 </section>
