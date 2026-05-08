@@ -139,7 +139,7 @@
 								</div>
 								<div class="flex flex-1 flex-col justify-center">
 									<h3 class="font-bold text-gray-900 line-clamp-1">{maq.name}</h3>
-									<p class="mt-0.5 text-sm font-extrabold text-green-700">{formatPrice(maq.hourly_rate)} <span class="text-xs font-normal text-gray-500">/hora</span></p>
+									<p class="mt-0.5 text-sm font-medium text-green-700">{formatPrice(maq.hourly_rate)} <span class="text-xs font-normal text-gray-500">/hora</span></p>
 									<div class="flex gap-2 mt-2">
 										<span class="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-600 uppercase tracking-wider">{maq.machinery_types?.name || 'Máquina'}</span>
 										<span class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {maq.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">{maq.status}</span>
