@@ -41,7 +41,7 @@
 				class="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-green-500 hover:shadow-sm"
 			>
 				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-					<svelte:component this={category.icon} class="h-6 w-6 text-gray-600" />
+					<category.icon class="h-6 w-6 text-gray-600" />
 				</div>
 				<span class="text-sm font-medium text-gray-700">{category.label}</span>
 			</button>

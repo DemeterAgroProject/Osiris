@@ -23,10 +23,10 @@
 			>
 				{#if active === item.id}
 					<div class="rounded-full bg-green-100 p-2">
-						<svelte:component this={item.icon} class="h-5 w-5" />
+						<item.icon class="h-5 w-5" />
 					</div>
 				{:else}
-					<svelte:component this={item.icon} class="h-6 w-6" />
+					<item.icon class="h-6 w-6" />
 				{/if}
 				<span class="text-[10px] font-medium">{item.label}</span>
 			</a>

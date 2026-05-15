@@ -146,7 +146,12 @@
 </div>
 
 {#if isOpen}
-	<div class="fixed inset-0 z-40 bg-black/30" onclick={closeFilters}></div>
+	<button
+		type="button"
+		class="fixed inset-0 z-40 border-0 bg-black/30 p-0"
+		onclick={closeFilters}
+		aria-label="Fechar filtros"
+	></button>
 	<div class="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-white shadow-2xl">
 		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">

@@ -4,12 +4,12 @@ import adapter from '@sveltejs/adapter-auto';
 const config = {
     compilerOptions: {
         // Force runes mode for the project, except for libraries. Can be removed in svelte 6.
-        runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+        runes: ({ filename }) => filename.split(/[\\/]/).includes('node_modules') ? undefined : true
     },
     // Adicione esta seção para configurar o inspetor
     vitePlugin: {
         inspector: {
-            // Ativa o inspetor (pode ser apenas `inspector: true` também)
+            // Ativa o inspetor (pode ser apenas inspector: true também)
             toggleKeyCombo: 'control-shift', // Atalho para ativar: Ctrl + Shift (ou Cmd + Shift no Mac)
             holdMode: false,
             showToggleButton: 'always', // Mostra um botão na tela ('always', 'active' ou 'never')

@@ -89,8 +89,8 @@
 		const { data: { user } } = await supabase.auth.getUser();
 
 		if (!user) {
-			message = { text: 'Você precisa estar logado para anunciar.', type: 'error' };
 			loading = false;
+			await goto('/login?redirect=/anunciar');
 			return;
 		}
 

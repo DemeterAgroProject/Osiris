@@ -68,7 +68,12 @@
 </script>
 
 {#if open}
-	<div class="fixed inset-0 z-[90] bg-black/50" onclick={closeModal}></div>
+	<button
+		type="button"
+		class="fixed inset-0 z-[90] border-0 bg-black/50 p-0"
+		onclick={closeModal}
+		aria-label="Fechar modal"
+	></button>
 
 	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-white shadow-2xl">
 		<div class="mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col px-4 pb-6 pt-4">
