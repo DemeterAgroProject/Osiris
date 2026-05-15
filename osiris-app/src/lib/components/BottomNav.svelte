@@ -4,11 +4,11 @@
 	let { active = 'inicio' } = $props();
 
 	const navItems = [
-		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
+		{ id: 'inicio', label: 'Painel', icon: Home, href: '/painel-de-controle' },
 		{ id: 'negociacoes', label: 'Negociações', icon: MessageSquare, href: '/negociacoes' },
 		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventario' },
 		{ id: 'servicos', label: 'Serviços', icon: Toolbox, href: '/servicos' },
-		{ id: 'mais', label: 'Mais', icon: MoreHorizontal, href: '/mais' }
+		{ id: 'mais', label: 'Mais', icon: MoreHorizontal, href: '/mais' },
 	];
 </script>
 
