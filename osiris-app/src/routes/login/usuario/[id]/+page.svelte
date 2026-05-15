@@ -407,7 +407,7 @@
 			{#if view === 'profile'}
 				<!-- Card principal do perfil -->
 				<section
-					class="overflow-hidden rounded-2xl border-2 border-green-600/30 bg-white shadow-sm"
+					class="overflow-hidden rounded-2xl bg-white shadow-sm"
 				>
 					<div class="flex flex-col items-center px-5 pb-5 pt-6">
 						{#if avatarUrl}
