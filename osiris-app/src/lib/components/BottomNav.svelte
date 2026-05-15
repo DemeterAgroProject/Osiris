@@ -1,5 +1,5 @@
 <script>
-	import { Home, MessageSquare, Archive, Megaphone, MoreHorizontal } from 'lucide-svelte';
+	import { Home, MessageSquare, Archive, Toolbox, MoreHorizontal } from 'lucide-svelte';
 
 	let { active = 'inicio' } = $props();
 
@@ -7,7 +7,7 @@
 		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
 		{ id: 'negociacoes', label: 'Negociações', icon: MessageSquare, href: '/negociacoes' },
 		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventario' },
-		{ id: 'anuncios', label: 'Anúncios', icon: Megaphone, href: '/anuncios' },
+		{ id: 'servicos', label: 'Serviços', icon: Toolbox, href: '/servicos' },
 		{ id: 'mais', label: 'Mais', icon: MoreHorizontal, href: '/mais' }
 	];
 </script>
@@ -15,19 +15,20 @@
 <nav class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
 	<div class="flex items-center justify-around py-2">
 		{#each navItems as item (item.id)}
-			<a
+				{@const Icon = item.icon}
+				<a
 				href={item.href}
 				class="flex flex-col items-center gap-1 px-2 py-1 transition-colors {active === item.id
 					? 'text-green-600'
 					: 'text-gray-500 hover:text-gray-700'}"
 			>
-				{#if active === item.id}
-					<div class="rounded-full bg-green-100 p-2">
-						<item.icon class="h-5 w-5" />
-					</div>
-				{:else}
-					<item.icon class="h-6 w-6" />
-				{/if}
+					{#if active === item.id}
+						<div class="rounded-full bg-green-100 p-2">
+							<Icon class="h-5 w-5" />
+						</div>
+					{:else}
+						<Icon class="h-6 w-6" />
+					{/if}
 				<span class="text-[10px] font-medium">{item.label}</span>
 			</a>
 		{/each}
