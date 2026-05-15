@@ -3,7 +3,133 @@
 	import { goto } from '$app/navigation';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import Rating from '$lib/components/Rating.svelte';
+	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
+
+	function resolveDisplayName(profile, authUser) {
+		return (
+			profile?.full_name ||
+			profile?.display_name ||
+			profile?.name ||
+			authUser?.user_metadata?.full_name ||
+			authUser?.user_metadata?.name ||
+			authUser?.email?.split('@')[0] ||
+			'Usuário'
+		);
+	}
+
+	function resolveAvatarUrl(profile, authUser) {
+		return (
+			profile?.avatar_url ||
+			profile?.photo_url ||
+			profile?.image_url ||
+			authUser?.user_metadata?.avatar_url ||
+			null
+		);
+	}
+
+	function resolveInitials(name) {
+		return (
+			name
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((part) => part[0]?.toUpperCase())
+				.join('') || 'U'
+		);
+	}
+
+	function mapReviewRow(row, machineryNamesById = {}) {
+		const reviewer = row.reviewer ?? row.profiles ?? null;
+		const products = row.products ?? null;
+		const productId = row.product_id;
+		const productName =
+			products?.name ||
+			(productId && machineryNamesById[String(productId)]) ||
+			row.product_name ||
+			null;
+
+		const reviewerName = resolveDisplayName(reviewer, null);
+		const reviewerPhoto = resolveAvatarUrl(reviewer, null);
+
+		return {
+			id: row.id,
+			rating: Number(row.rating) || 0,
+			comment: row.comment || '',
+			createdAt: row.created_at,
+			reviewerName,
+			reviewerPhoto,
+			reviewerInitials: resolveInitials(reviewerName),
+			productName: productName ? String(productName) : null
+		};
+	}
+
+	function computeReviewStats(reviews) {
+		if (!reviews?.length) {
+			return { average: 0, count: 0 };
+		}
+
+		const sum = reviews.reduce((total, review) => total + (Number(review.rating) || 0), 0);
+		return {
+			average: sum / reviews.length,
+			count: reviews.length
+		};
+	}
+
+	async function fetchReviewsForUser(revieweeId) {
+		const { data, error } = await supabase
+			.from('reviews')
+			.select(
+				`
+			id,
+			rating,
+			comment,
+			created_at,
+			product_id,
+			reviewer:profiles!reviewer_id (
+				display_name,
+				photo_url,
+				full_name,
+				name
+			),
+			products (
+				name
+			)
+		`
+			)
+			.eq('reviewee_id', revieweeId)
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			return { reviews: [], error };
+		}
+
+		const rows = data ?? [];
+		const missingNameIds = [
+			...new Set(
+				rows
+					.filter((row) => !row.products?.name && row.product_id)
+					.map((row) => String(row.product_id))
+			)
+		];
+
+		let machineryNamesById = {};
+
+		if (missingNameIds.length > 0) {
+			const { data: machinery } = await supabase
+				.from('agricultural_machinery')
+				.select('id, name')
+				.in('id', missingNameIds);
+
+			machineryNamesById = Object.fromEntries((machinery ?? []).map((item) => [item.id, item.name]));
+		}
+
+		return {
+			reviews: rows.map((row) => mapReviewRow(row, machineryNamesById)),
+			error: null
+		};
+	}
 	import {
 		Star,
 		Mail,
@@ -22,7 +148,7 @@
 		ChevronRight
 	} from 'lucide-svelte';
 
-	/** @typedef {'profile' | 'verification' | 'edit'} ProfileView */
+	/** @typedef {'profile' | 'verification' | 'edit' | 'reviews'} ProfileView */
 
 	let loading = $state(true);
 	let saving = $state(false);
@@ -33,6 +159,8 @@
 
 	let authUser = $state(null);
 	let profile = $state(null);
+	let reviews = $state([]);
+	let reviewsLoading = $state(false);
 
 	let form = $state({
 		fullName: '',
@@ -45,31 +173,9 @@
 
 	const userId = $derived(page.params.id);
 
-	const displayName = $derived(
-		profile?.full_name ||
-			profile?.display_name ||
-			profile?.name ||
-			authUser?.user_metadata?.full_name ||
-			authUser?.email?.split('@')[0] ||
-			'Usuário'
-	);
-
-	const avatarUrl = $derived(
-		profile?.avatar_url ||
-			profile?.photo_url ||
-			profile?.image_url ||
-			authUser?.user_metadata?.avatar_url ||
-			null
-	);
-
-	const initials = $derived(
-		displayName
-			.split(' ')
-			.filter(Boolean)
-			.slice(0, 2)
-			.map((part) => part[0]?.toUpperCase())
-			.join('') || 'U'
-	);
+	const displayName = $derived(resolveDisplayName(profile, authUser));
+	const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
+	const initials = $derived(resolveInitials(displayName));
 
 	const email = $derived(profile?.email || authUser?.email || '');
 	const phone = $derived(profile?.phone || profile?.phone_number || '');
@@ -86,12 +192,33 @@
 
 	const canBecomeAdvertiser = $derived(emailVerified && phoneVerified);
 
-	const rating = $derived(profile?.rating ?? 4.8);
-	const reviewCount = $derived(profile?.review_count ?? 27);
+	const reviewStats = $derived(computeReviewStats(reviews));
+	const rating = $derived(reviewStats.average);
+	const reviewCount = $derived(reviewStats.count);
 
 	const pageTitle = $derived(
-		view === 'edit' ? 'Editar Perfil' : view === 'verification' ? 'Verificação' : 'Meu perfil'
+		view === 'edit'
+			? 'Editar Perfil'
+			: view === 'verification'
+				? 'Verificação'
+				: view === 'reviews'
+					? 'Avaliações'
+					: 'Meu perfil'
 	);
+
+	async function loadReviews() {
+		if (!userId) return;
+
+		reviewsLoading = true;
+		const { reviews: data, error } = await fetchReviewsForUser(userId);
+		reviews = data;
+
+		if (error) {
+			console.error('Erro ao carregar avaliações:', error.message);
+		}
+
+		reviewsLoading = false;
+	}
 
 	function syncFormFromProfile() {
 		form = {
@@ -138,6 +265,7 @@
 		}
 
 		syncFormFromProfile();
+		await loadReviews();
 		loading = false;
 	}
 
@@ -298,10 +426,8 @@
 
 						<h2 class="mt-4 text-center text-lg font-bold text-gray-900">{displayName}</h2>
 
-						<div class="mt-2 flex items-center gap-1.5 text-sm text-gray-600">
-							<Star class="h-4 w-4 fill-amber-400 text-amber-400" />
-							<span class="font-semibold text-gray-800">{rating.toFixed(1)}</span>
-							<span class="text-gray-500">({reviewCount} avaliações)</span>
+						<div class="mt-2">
+							<Rating value={rating} count={reviewCount} size="sm" />
 						</div>
 
 						<div class="mt-5 w-full space-y-3 border-t border-gray-100 pt-5">
@@ -367,9 +493,12 @@
 					</div>
 					<button
 						type="button"
+						onclick={() => openView('reviews')}
 						class="mt-4 w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
 					>
-						Ver todas as {reviewCount} avaliações
+						{reviewCount > 0
+							? `Ver todas as ${reviewCount} avaliações`
+							: 'Ver avaliações'}
 					</button>
 				</section>
 
@@ -412,6 +541,26 @@
 					</div>
 					<ChevronRight class="h-5 w-5 text-gray-400" />
 				</button>
+			{:else if view === 'reviews'}
+				<section class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+					<div class="mb-4 flex items-center justify-between gap-3">
+						<div>
+							<h2 class="text-base font-semibold text-gray-900">Avaliações recebidas</h2>
+							<p class="mt-0.5 text-xs text-gray-500">
+								Feedback de outros usuários sobre {displayName}
+							</p>
+						</div>
+						<Rating value={rating} count={reviewCount} size="sm" />
+					</div>
+
+					<ReviewList
+						{reviews}
+						loading={reviewsLoading}
+						showProductName={true}
+						emptyTitle="Nenhuma avaliação recebida"
+						emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
+					/>
+				</section>
 			{:else if view === 'verification'}
 				<!-- Validar email -->
 				<section class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

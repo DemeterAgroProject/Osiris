@@ -4,7 +4,38 @@
 	import { Bell, User } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 	import UserMenu from '$lib/components/UserMenu.svelte';
-	import { resolveAvatarUrl, resolveInitials, resolveDisplayName } from '$lib/profile.js';
+	function resolveDisplayName(profile, authUser) {
+		return (
+			profile?.full_name ||
+			profile?.display_name ||
+			profile?.name ||
+			authUser?.user_metadata?.full_name ||
+			authUser?.user_metadata?.name ||
+			authUser?.email?.split('@')[0] ||
+			'Usuário'
+		);
+	}
+
+	function resolveAvatarUrl(profile, authUser) {
+		return (
+			profile?.avatar_url ||
+			profile?.photo_url ||
+			profile?.image_url ||
+			authUser?.user_metadata?.avatar_url ||
+			null
+		);
+	}
+
+	function resolveInitials(name) {
+		return (
+			name
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((part) => part[0]?.toUpperCase())
+				.join('') || 'U'
+		);
+	}
 
 	let authUser = $state(null);
 	let profile = $state(null);

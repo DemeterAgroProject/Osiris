@@ -1,10 +1,166 @@
 <script>
 	import { page } from '$app/state';
-	import { supabase } from '$lib/supabase';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
-	import { ChevronLeft, Star } from 'lucide-svelte';
+	import Rating from '$lib/components/Rating.svelte';
+	import ReviewList from '$lib/components/ReviewList.svelte';
+	import { supabase } from '$lib/supabase';
+	import { ChevronLeft } from 'lucide-svelte';
+
+	function resolveDisplayName(profile, authUser) {
+		return (
+			profile?.full_name ||
+			profile?.display_name ||
+			profile?.name ||
+			authUser?.user_metadata?.full_name ||
+			authUser?.user_metadata?.name ||
+			authUser?.email?.split('@')[0] ||
+			'Usuário'
+		);
+	}
+
+	function resolveAvatarUrl(profile, authUser) {
+		return (
+			profile?.avatar_url ||
+			profile?.photo_url ||
+			profile?.image_url ||
+			authUser?.user_metadata?.avatar_url ||
+			null
+		);
+	}
+
+	function resolveInitials(name) {
+		return (
+			name
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((part) => part[0]?.toUpperCase())
+				.join('') || 'U'
+		);
+	}
+
+	function mapReviewRow(row, machineryNamesById = {}) {
+		const reviewer = row.reviewer ?? row.profiles ?? null;
+		const products = row.products ?? null;
+		const productId = row.product_id;
+		const productName =
+			products?.name ||
+			(productId && machineryNamesById[String(productId)]) ||
+			row.product_name ||
+			null;
+
+		const reviewerName = resolveDisplayName(reviewer, null);
+		const reviewerPhoto = resolveAvatarUrl(reviewer, null);
+
+		return {
+			id: row.id,
+			rating: Number(row.rating) || 0,
+			comment: row.comment || '',
+			createdAt: row.created_at,
+			reviewerName,
+			reviewerPhoto,
+			reviewerInitials: resolveInitials(reviewerName),
+			productName: productName ? String(productName) : null
+		};
+	}
+
+	function computeReviewStats(reviews) {
+		if (!reviews?.length) {
+			return { average: 0, count: 0 };
+		}
+
+		const sum = reviews.reduce((total, review) => total + (Number(review.rating) || 0), 0);
+		return {
+			average: sum / reviews.length,
+			count: reviews.length
+		};
+	}
+
+	async function fetchReviewsForProduct(productId) {
+		const { data, error } = await supabase
+			.from('reviews')
+			.select(
+				`
+			id,
+			rating,
+			comment,
+			created_at,
+			reviewer:profiles!reviewer_id (
+				display_name,
+				photo_url,
+				full_name,
+				name
+			)
+		`
+			)
+			.eq('product_id', productId)
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			return { reviews: [], error };
+		}
+
+		return {
+			reviews: (data ?? []).map((row) => mapReviewRow(row)),
+			error: null
+		};
+	}
+
+	async function fetchReviewsForUser(revieweeId) {
+		const { data, error } = await supabase
+			.from('reviews')
+			.select(
+				`
+			id,
+			rating,
+			comment,
+			created_at,
+			product_id,
+			reviewer:profiles!reviewer_id (
+				display_name,
+				photo_url,
+				full_name,
+				name
+			),
+			products (
+				name
+			)
+		`
+			)
+			.eq('reviewee_id', revieweeId)
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			return { reviews: [], error };
+		}
+
+		const rows = data ?? [];
+		const missingNameIds = [
+			...new Set(
+				rows
+					.filter((row) => !row.products?.name && row.product_id)
+					.map((row) => String(row.product_id))
+			)
+		];
+
+		let machineryNamesById = {};
+
+		if (missingNameIds.length > 0) {
+			const { data: machinery } = await supabase
+				.from('agricultural_machinery')
+				.select('id, name')
+				.in('id', missingNameIds);
+
+			machineryNamesById = Object.fromEntries((machinery ?? []).map((item) => [item.id, item.name]));
+		}
+
+		return {
+			reviews: rows.map((row) => mapReviewRow(row, machineryNamesById)),
+			error: null
+		};
+	}
 
 	let loading = $state(true);
 	let errorMessage = $state('');
@@ -14,9 +170,14 @@
 		avatarUrl: null
 	});
 	let showNegotiationModal = $state(false);
+	let reviews = $state([]);
+	let reviewsLoading = $state(false);
+	let sellerReviewStats = $state({ average: 0, count: 0 });
 
 	const routeTipo = $derived(page.params.tipo);
 	const routeId = $derived(page.params.id);
+
+	const productReviewStats = $derived(computeReviewStats(reviews));
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined || value === '') return 'Preço a combinar';
@@ -45,7 +206,7 @@
 	}
 
 	async function loadSeller(ownerId) {
-		seller = { name: 'Anunciante', avatarUrl: null };
+		seller = { name: 'Anunciante', avatarUrl: null, id: ownerId ?? null };
 		if (!ownerId) return;
 
 		const { data, error } = await supabase
@@ -56,17 +217,40 @@
 
 		if (!error && data) {
 			seller = {
+				id: ownerId,
 				name: resolveSellerName(data),
 				avatarUrl: resolveSellerAvatar(data)
 			};
 		}
+
+		const { reviews: sellerReviews } = await fetchReviewsForUser(ownerId);
+		sellerReviewStats = computeReviewStats(sellerReviews);
+	}
+
+	async function loadProductReviews(productId) {
+		if (!productId) {
+			reviews = [];
+			return;
+		}
+
+		reviewsLoading = true;
+		const { reviews: data, error } = await fetchReviewsForProduct(productId);
+		reviews = data;
+
+		if (error) {
+			console.error('Erro ao carregar avaliações do anúncio:', error.message);
+		}
+
+		reviewsLoading = false;
 	}
 
 	async function loadItemDetails() {
 		loading = true;
 		errorMessage = '';
 		item = null;
-		seller = { name: 'Anunciante', avatarUrl: null };
+		seller = { name: 'Anunciante', avatarUrl: null, id: null };
+		reviews = [];
+		sellerReviewStats = { average: 0, count: 0 };
 
 		if (!routeTipo || !routeId) {
 			errorMessage = 'Anúncio inválido.';
@@ -89,6 +273,7 @@
 
 			item = {
 				type: 'produto',
+				productId: data.id,
 				title: data.name,
 				priceLabel: formatCurrency(data.price),
 				description: 'Anúncio público de produto no marketplace Osiris.',
@@ -100,11 +285,31 @@
 				]
 			};
 
-			await loadSeller(data.owner_id);
+			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
 		} else if (routeTipo === 'maquinario') {
 			const { data, error } = await supabase
-				.from('agricultural_machinery')
-				.select('id, name, hourly_rate, model, manufacture_year, current_horimeter, status, owner_id, machinery_types(name), brands(name)')
+				.from('products')
+				.select(
+					`
+					id,
+					name,
+					price,
+					description,
+					category,
+					status,
+					owner_id,
+					created_at,
+					agricultural_machinery (
+						id,
+						model,
+						serial_number,
+						manufacture_year,
+						current_horimeter,
+						brands (name),
+						machinery_types (name)
+					)
+				`
+				)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -114,22 +319,32 @@
 				return;
 			}
 
+			const machineryRaw = data.agricultural_machinery;
+			const machinery = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
+
+			if (!machinery) {
+				errorMessage = 'Detalhes do maquinário não encontrados.';
+				loading = false;
+				return;
+			}
+
 			item = {
 				type: 'maquinario',
+				productId: data.id,
 				title: data.name,
-				priceLabel: `${formatCurrency(data.hourly_rate)} / hora`,
-				description: 'Anúncio público de maquinário agrícola no marketplace Osiris.',
+				priceLabel: `${formatCurrency(data.price)} / hora`,
+				description: data.description || 'Anúncio de maquinário agrícola no marketplace Osiris.',
 				details: [
-					{ label: 'Tipo', value: data.machinery_types?.name || 'Não informado' },
-					{ label: 'Marca', value: data.brands?.name || 'Não informado' },
-					{ label: 'Modelo', value: data.model || 'Não informado' },
-					{ label: 'Ano', value: data.manufacture_year || 'Não informado' },
-					{ label: 'Horímetro', value: data.current_horimeter || 'Não informado' },
+					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
+					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
+					{ label: 'Modelo', value: machinery.model || 'Não informado' },
+					{ label: 'Ano', value: machinery.manufacture_year || 'Não informado' },
+					{ label: 'Horímetro', value: machinery.current_horimeter || 'Não informado' },
 					{ label: 'Status', value: data.status || 'Não informado' }
 				]
 			};
 
-			await loadSeller(data.owner_id);
+			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';
 		}
@@ -184,18 +399,50 @@
 					</div>
 				</div>
 
-				<div class="mt-8 flex items-center gap-3">
+				<a
+					href={seller.id ? `/login/usuario/${seller.id}` : '#'}
+					class="mt-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-300"
+				>
 					{#if seller.avatarUrl}
 						<img src={seller.avatarUrl} alt={seller.name} class="h-14 w-14 rounded-full object-cover" />
 					{:else}
-						<div class="h-14 w-14 rounded-full bg-green-100"></div>
+						<div
+							class="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-lg font-bold text-green-700"
+						>
+							{seller.name.slice(0, 1).toUpperCase()}
+						</div>
 					{/if}
-					<div>
+					<div class="min-w-0 flex-1">
 						<p class="text-sm font-semibold text-green-700">Anunciante</p>
-						<p class="text-3xl font-semibold text-gray-900">{seller.name}</p>
-						<p class="text-sm font-semibold text-gray-700">4.9 <Star class="inline h-4 w-4 fill-current" /></p>
+						<p class="truncate text-xl font-semibold text-gray-900">{seller.name}</p>
+						<Rating
+							value={sellerReviewStats.average}
+							count={sellerReviewStats.count}
+							size="sm"
+						/>
+					</div>
+				</a>
+				<div class="mt-8 overflow-hidden rounded-2xl border border-gray-200">
+					<div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+						<h2 class="text-lg font-semibold text-gray-900">Avaliações do anúncio</h2>
+						<div class="mt-1">
+							<Rating
+								value={productReviewStats.average}
+								count={productReviewStats.count}
+								size="sm"
+							/>
+						</div>
+					</div>
+					<div class="p-4">
+						<ReviewList
+							{reviews}
+							loading={reviewsLoading}
+							emptyTitle="Este anúncio ainda não tem avaliações"
+							emptyDescription="Seja o primeiro a avaliar após uma negociação."
+						/>
 					</div>
 				</div>
+
 
 				<button
 					onclick={() => (showNegotiationModal = true)}

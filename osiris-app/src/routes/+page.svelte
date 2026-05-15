@@ -9,88 +9,158 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 
+	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
+	const DEFAULT_LOCATION = 'Alegrete, RS';
+
 	let loading = $state(true);
 	let errorMessage = $state('');
 	let products = $state([]);
 	let machinery = $state([]);
+	let services = $state([]);
 
-	onMount(async () => {
-		await loadHomeListings();
-	});
-
-	function mapProductItem(item) {
+	function mapProductListing(product) {
 		return {
-			id: `product-${item.id}`,
-			adId: item.id,
+			id: `product-${product.id}`,
+			adId: product.id,
 			tipo: 'produto',
-			title: item.name,
-			price: item.price,
-			location: 'Alegrete, RS',
+			title: product.name,
+			price: product.price,
+			location: DEFAULT_LOCATION,
 			views: '-',
-			publishedAt: item.created_at,
+			publishedAt: product.created_at,
 			imageUrl: null,
 			sponsored: false,
-			href: `/anuncio/produto/${item.id}`
+			category: product.category,
+			href: `/anuncio/produto/${product.id}`
 		};
 	}
 
-	function mapMachineryItem(item) {
+	function mapMachineryListing(product) {
+		const machineryRaw = product.agricultural_machinery;
+		const m = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
+		const brandName = m?.brands?.name;
+		const typeName = m?.machinery_types?.name;
+
 		return {
-			id: `machinery-${item.id}`,
-			adId: item.id,
+			id: `machinery-${product.id}`,
+			adId: product.id,
 			tipo: 'maquinario',
-			title: item.name,
-			price: item.hourly_rate,
-			location: 'Alegrete, RS',
+			title: product.name,
+			price: product.price,
+			location: DEFAULT_LOCATION,
 			views: '-',
-			publishedAt: item.created_at,
+			publishedAt: product.created_at,
 			imageUrl: null,
 			sponsored: false,
-			href: `/anuncio/maquinario/${item.id}`
+			category: product.category || 'Maquinário',
+			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
+			href: `/anuncio/maquinario/${product.id}`
 		};
+	}
+
+	function mapServiceListing(service) {
+		return {
+			id: `service-${service.id}`,
+			adId: service.id,
+			tipo: 'servico',
+			title: service.title,
+			price: service.price,
+			location: service.location || DEFAULT_LOCATION,
+			views: '-',
+			publishedAt: service.created_at,
+			imageUrl: null,
+			sponsored: false,
+			category: service.service_type,
+			href: `/anuncio/servico/${service.id}`
+		};
+	}
+
+	function mergeListingGroups(groups) {
+		return [...(groups.products ?? []), ...(groups.machinery ?? []), ...(groups.services ?? [])].sort(
+			(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+		);
+	}
+
+	async function fetchProductListings(limit) {
+		const { data, error } = await supabase
+			.from('products')
+			.select('id, name, price, status, created_at, category, description')
+			.or(ACTIVE_STATUS_OR)
+			.neq('category', 'Maquinário')
+			.order('created_at', { ascending: false })
+			.limit(limit);
+
+		return { items: (data ?? []).map(mapProductListing), error };
+	}
+
+	async function fetchMachineryListings(limit) {
+		const { data, error } = await supabase
+			.from('products')
+			.select(
+				`
+				id, name, price, status, created_at, category, description,
+				agricultural_machinery!inner (
+					id, model, manufacture_year, current_horimeter,
+					brands (name), machinery_types (name)
+				)
+			`
+			)
+			.or(ACTIVE_STATUS_OR)
+			.order('created_at', { ascending: false })
+			.limit(limit);
+
+		return { items: (data ?? []).map(mapMachineryListing), error };
+	}
+
+	async function fetchServiceListings(limit) {
+		const { data, error } = await supabase
+			.from('services')
+			.select('id, title, price, status, location, created_at, service_type, pricing_model')
+			.or(ACTIVE_STATUS_OR)
+			.order('created_at', { ascending: false })
+			.limit(limit);
+
+		return { items: (data ?? []).map(mapServiceListing), error };
 	}
 
 	async function loadHomeListings() {
 		loading = true;
 		errorMessage = '';
 
-		const [productsResponse, machineryResponse] = await Promise.all([
-			supabase
-				.from('products')
-				.select('id, name, price, status, created_at')
-				.eq('status', 'Ativo')
-				.order('created_at', { ascending: false })
-				.limit(12),
-			supabase
-				.from('agricultural_machinery')
-				.select('id, name, hourly_rate, status, created_at')
-				.eq('status', 'Ativo')
-				.order('created_at', { ascending: false })
-				.limit(12)
+		const limit = 12;
+		const [productsResult, machineryResult, servicesResult] = await Promise.all([
+			fetchProductListings(limit),
+			fetchMachineryListings(limit),
+			fetchServiceListings(limit)
 		]);
 
-		if (productsResponse.error || machineryResponse.error) {
+		const error = productsResult.error || machineryResult.error || servicesResult.error;
+
+		if (error) {
 			errorMessage = 'Não foi possível carregar os anúncios no momento.';
 			products = [];
 			machinery = [];
-			loading = false;
-			return;
+			services = [];
+		} else {
+			products = productsResult.items;
+			machinery = machineryResult.items;
+			services = servicesResult.items;
 		}
 
-		products = productsResponse.data ? productsResponse.data.map(mapProductItem) : [];
-		machinery = machineryResponse.data ? machineryResponse.data.map(mapMachineryItem) : [];
 		loading = false;
 	}
 
-	const allListings = $derived(
-		[...products, ...machinery]
-			.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-	);
+	onMount(() => {
+		loadHomeListings();
+	});
+
+	const allListings = $derived(mergeListingGroups({ products, machinery, services }));
 
 	const featuredListings = $derived(allListings.slice(0, 8));
 	const sponsoredListings = $derived(allListings.slice(0, 4).map((item) => ({ ...item, sponsored: true })));
 	const machineryHighlights = $derived(machinery.slice(0, 6));
 	const productHighlights = $derived(products.slice(0, 6));
+	const serviceHighlights = $derived(services.slice(0, 6));
 </script>
 
 <svelte:head>
@@ -123,6 +193,9 @@
 		<ProductList title="Patrocinados" products={sponsoredListings} />
 		<ProductList title="Máquinas em alta" products={machineryHighlights} />
 		<ProductList title="Produtos em alta" products={productHighlights} />
+		{#if serviceHighlights.length > 0}
+			<ProductList title="Serviços em alta" products={serviceHighlights} />
+		{/if}
 		<CategorySection />
 		<PartnerSection />
 	{/if}
