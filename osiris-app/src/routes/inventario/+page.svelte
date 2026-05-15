@@ -105,20 +105,20 @@
             </a>
         </div>
 
-        <div class="mb-6 flex gap-2">
+        <div class="mb-6 flex rounded-xl bg-gray-200 p-1">
             <button
                 onclick={() => activeTab = 'maquinarios'}
-                class="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all {activeTab === 'maquinarios' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
+                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all {activeTab === 'maquinarios' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}"
             >
-                <Tractor class="h-5 w-5" />
-                Maquinários ({maquinarios.length})
+                <Tractor class="h-4 w-4" />
+                Maquinários
             </button>
             <button
                 onclick={() => activeTab = 'produtos'}
-                class="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all {activeTab === 'produtos' ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
+                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all {activeTab === 'produtos' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}"
             >
-                <Leaf class="h-5 w-5" />
-                Produtos ({produtos.length})
+                <Leaf class="h-4 w-4" />
+                Produtos
             </button>
         </div>
 
