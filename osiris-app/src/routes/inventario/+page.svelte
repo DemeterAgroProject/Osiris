@@ -103,6 +103,11 @@
 	let statusConfirmItem = $state(null);
 	let statusConfirmLoading = $state(false);
 
+	let deleteConfirmOpen = $state(false);
+	let deleteConfirmItem = $state(null);
+	let deleteConfirmLoading = $state(false);
+	let deletingId = $state(null);
+
 	const statusConfirmContent = $derived.by(() => {
 		if (!statusConfirmItem) return null;
 
@@ -117,6 +122,17 @@
 				: `"${statusConfirmItem.name}" voltará a aparecer na busca do marketplace.`,
 			confirmLabel: isPausing ? 'Pausar anúncio' : 'Ativar anúncio',
 			variant: isPausing ? 'warning' : 'default'
+		};
+	});
+
+	const deleteConfirmContent = $derived.by(() => {
+		if (!deleteConfirmItem) return null;
+
+		return {
+			title: 'Excluir anúncio?',
+			message: `Tem certeza que deseja excluir "${deleteConfirmItem.name}"? Esta ação não pode ser desfeita.`,
+			confirmLabel: 'Excluir anúncio',
+			variant: 'danger'
 		};
 	});
 
@@ -258,24 +274,39 @@
 		togglingId = null;
 	}
 
-	async function handleDelete(id, type, event) {
+	function requestDelete(item, event) {
 		event.stopPropagation();
 		openMenu = null;
+		deleteConfirmItem = item;
+		deleteConfirmOpen = true;
+	}
 
-		if (!confirm('Tem certeza que deseja excluir este anúncio? Esta ação não pode ser desfeita.')) {
-			return;
-		}
+	function cancelDelete() {
+		deleteConfirmItem = null;
+	}
+
+	async function confirmDelete() {
+		if (!deleteConfirmItem) return;
+
+		const id = deleteConfirmItem.id;
+
+		deleteConfirmLoading = true;
+		deletingId = id;
 
 		const { error } = await supabase.from('products').delete().eq('id', id);
 
 		if (error) {
 			statusMessage = { text: 'Erro ao excluir o anúncio.', type: 'error' };
-			return;
+		} else {
+			maquinarios = maquinarios.filter((item) => item.id !== id);
+			produtos = produtos.filter((item) => item.id !== id);
+			statusMessage = { text: 'Anúncio excluído.', type: 'success' };
+			deleteConfirmOpen = false;
+			deleteConfirmItem = null;
 		}
 
-		maquinarios = maquinarios.filter((item) => item.id !== id);
-		produtos = produtos.filter((item) => item.id !== id);
-		statusMessage = { text: 'Anúncio excluído.', type: 'success' };
+		deleteConfirmLoading = false;
+		deletingId = null;
 	}
 
 	function toggleMenu(id, event) {
@@ -458,8 +489,9 @@
 											<button
 												type="button"
 												role="menuitem"
-												onclick={(event) => handleDelete(maq.id, 'maquinario', event)}
-												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+												disabled={deletingId === maq.id}
+												onclick={(event) => requestDelete(maq, event)}
+												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
 											>
 												<Trash2 class="h-4 w-4" />
 												Excluir
@@ -565,8 +597,9 @@
 											<button
 												type="button"
 												role="menuitem"
-												onclick={(event) => handleDelete(prod.id, 'produto', event)}
-												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+												disabled={deletingId === prod.id}
+												onclick={(event) => requestDelete(prod, event)}
+												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
 											>
 												<Trash2 class="h-4 w-4" />
 												Excluir
@@ -602,6 +635,18 @@
 		loading={statusConfirmLoading}
 		onconfirm={confirmToggleStatus}
 		oncancel={cancelToggleStatus}
+	/>
+
+	<ConfirmDialog
+		bind:open={deleteConfirmOpen}
+		title={deleteConfirmContent?.title ?? 'Excluir anúncio?'}
+		message={deleteConfirmContent?.message ?? ''}
+		confirmLabel={deleteConfirmContent?.confirmLabel ?? 'Excluir'}
+		cancelLabel="Cancelar"
+		variant="danger"
+		loading={deleteConfirmLoading}
+		onconfirm={confirmDelete}
+		oncancel={cancelDelete}
 	/>
 
 	<BottomNav active="inventario" />
