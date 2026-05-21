@@ -11,12 +11,56 @@
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const DEFAULT_LOCATION = 'Alegrete, RS';
+	const FETCH_LIMIT = 48;
+	const DEBOUNCE_MS = 350;
+
+	function createDefaultFilters() {
+		return {
+			listingTypes: [],
+			productKinds: [],
+			serviceKinds: [],
+			laborKinds: [],
+			status: '',
+			location: '',
+			sort: 'recentes',
+			minPrice: '',
+			maxPrice: ''
+		};
+	}
+
+	let searchQuery = $state('');
+	let debouncedSearch = $state('');
+	let filters = $state(createDefaultFilters());
 
 	let loading = $state(true);
+	let fetching = $state(false);
 	let errorMessage = $state('');
 	let products = $state([]);
 	let machinery = $state([]);
 	let services = $state([]);
+
+	let loadSeq = 0;
+	let debounceTimer;
+	let skipDebouncedFetch = $state(true);
+
+	function normalizeText(value) {
+		return (value ?? '').toString().trim().toLowerCase();
+	}
+
+	function escapeIlike(term) {
+		return term.replace(/[%_,.()]/g, ' ').trim();
+	}
+
+	function activeFilterCount(filterState) {
+		let count = 0;
+		if (filterState.listingTypes.length) count++;
+		if (filterState.productKinds.length) count++;
+		if (filterState.serviceKinds.length) count++;
+		if (filterState.laborKinds.length) count++;
+		if (filterState.location) count++;
+		if (filterState.minPrice || filterState.maxPrice) count++;
+		return count;
+	}
 
 	function mapProductListing(product) {
 		return {
@@ -31,6 +75,7 @@
 			imageUrl: null,
 			sponsored: false,
 			category: product.category,
+			description: product.description ?? '',
 			href: `/anuncio/produto/${product.id}`
 		};
 	}
@@ -53,6 +98,7 @@
 			imageUrl: null,
 			sponsored: false,
 			category: product.category || 'Maquinário',
+			description: product.description ?? '',
 			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
 			href: `/anuncio/maquinario/${product.id}`
 		};
@@ -71,30 +117,117 @@
 			imageUrl: null,
 			sponsored: false,
 			category: service.service_type,
+			serviceType: service.service_type,
+			description: service.description ?? '',
 			href: `/anuncio/servico/${service.id}`
 		};
 	}
 
 	function mergeListingGroups(groups) {
-		return [...(groups.products ?? []), ...(groups.machinery ?? []), ...(groups.services ?? [])].sort(
-			(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-		);
+		return [...(groups.products ?? []), ...(groups.machinery ?? []), ...(groups.services ?? [])];
 	}
 
-	async function fetchProductListings(limit) {
-		const { data, error } = await supabase
+	function sortListings(listings, sortId) {
+		const items = [...listings];
+		switch (sortId) {
+			case 'preco-asc':
+				return items.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+			case 'preco-desc':
+				return items.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+			case 'nome-asc':
+				return items.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+			case 'nome-desc':
+				return items.sort((a, b) => b.title.localeCompare(a.title, 'pt-BR'));
+			default:
+				return items.sort(
+					(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+				);
+		}
+	}
+
+	function matchesListingTypes(item, types) {
+		if (!types.length) return true;
+		if (item.tipo === 'produto' && types.includes('produto')) return true;
+		if (item.tipo === 'maquinario' && types.includes('maquinario')) return true;
+		if (item.tipo === 'servico') {
+			if (types.includes('servico') && item.serviceType === 'Pacote Completo') return true;
+			if (types.includes('mao-de-obra') && item.serviceType === 'Mão de Obra') return true;
+		}
+		return false;
+	}
+
+	function applyLocalFilters(listings, filterState, searchTerm) {
+		let result = listings;
+		const q = normalizeText(searchTerm);
+
+		if (q) {
+			result = result.filter((item) => {
+				const haystack = [item.title, item.subtitle, item.category, item.location, item.description]
+					.filter(Boolean)
+					.join(' ')
+					.toLowerCase();
+				return haystack.includes(q);
+			});
+		}
+
+		if (filterState.listingTypes.length) {
+			result = result.filter((item) => matchesListingTypes(item, filterState.listingTypes));
+		}
+
+		if (filterState.productKinds.length) {
+			result = result.filter((item) => {
+				if (filterState.productKinds.includes('insumos') && item.tipo === 'produto') return true;
+				if (filterState.productKinds.includes('maquinas') && item.tipo === 'maquinario') return true;
+				return false;
+			});
+		}
+
+		if (filterState.serviceKinds.length) {
+			result = result.filter(
+				(item) => item.tipo === 'servico' && item.serviceType === 'Pacote Completo'
+			);
+		}
+
+		if (filterState.laborKinds.length) {
+			result = result.filter(
+				(item) => item.tipo === 'servico' && item.serviceType === 'Mão de Obra'
+			);
+		}
+
+		if (filterState.location) {
+			const loc = normalizeText(filterState.location);
+			result = result.filter((item) => normalizeText(item.location).includes(loc));
+		}
+
+		const minPrice = Number(filterState.minPrice);
+		const maxPrice = Number(filterState.maxPrice);
+		if (Number.isFinite(minPrice) && minPrice > 0) {
+			result = result.filter((item) => Number(item.price) >= minPrice);
+		}
+		if (Number.isFinite(maxPrice) && maxPrice > 0) {
+			result = result.filter((item) => Number(item.price) <= maxPrice);
+		}
+
+		return sortListings(result, filterState.sort);
+	}
+
+	async function loadMarketplaceListings(searchTerm = '') {
+		const seq = ++loadSeq;
+		const term = escapeIlike(normalizeText(searchTerm));
+		const useServerSearch = term.length >= 2;
+
+		if (!loading) fetching = true;
+		errorMessage = '';
+
+		let productQuery = supabase
 			.from('products')
 			.select('id, name, price, status, created_at, category, description')
 			.or(ACTIVE_STATUS_OR)
 			.neq('category', 'Maquinário')
 			.order('created_at', { ascending: false })
-			.limit(limit);
+			.limit(FETCH_LIMIT);
 
-		return { items: (data ?? []).map(mapProductListing), error };
-	}
-
-	async function fetchMachineryListings(limit) {
-		const { data, error } = await supabase
+		let machineryQuery = supabase
 			.from('products')
 			.select(
 				`
@@ -107,32 +240,31 @@
 			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
-			.limit(limit);
+			.limit(FETCH_LIMIT);
 
-		return { items: (data ?? []).map(mapMachineryListing), error };
-	}
-
-	async function fetchServiceListings(limit) {
-		const { data, error } = await supabase
+		let serviceQuery = supabase
 			.from('services')
-			.select('id, title, price, status, location, created_at, service_type, pricing_model')
+			.select(
+				'id, title, price, status, location, created_at, service_type, pricing_model, description'
+			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
-			.limit(limit);
+			.limit(FETCH_LIMIT);
 
-		return { items: (data ?? []).map(mapServiceListing), error };
-	}
+		if (useServerSearch) {
+			const pattern = `%${term}%`;
+			productQuery = productQuery.ilike('name', pattern);
+			machineryQuery = machineryQuery.ilike('name', pattern);
+			serviceQuery = serviceQuery.ilike('title', pattern);
+		}
 
-	async function loadHomeListings() {
-		loading = true;
-		errorMessage = '';
-
-		const limit = 12;
 		const [productsResult, machineryResult, servicesResult] = await Promise.all([
-			fetchProductListings(limit),
-			fetchMachineryListings(limit),
-			fetchServiceListings(limit)
+			productQuery,
+			machineryQuery,
+			serviceQuery
 		]);
+
+		if (seq !== loadSeq) return;
 
 		const error = productsResult.error || machineryResult.error || servicesResult.error;
 
@@ -142,25 +274,63 @@
 			machinery = [];
 			services = [];
 		} else {
-			products = productsResult.items;
-			machinery = machineryResult.items;
-			services = servicesResult.items;
+			products = (productsResult.data ?? []).map(mapProductListing);
+			machinery = (machineryResult.data ?? []).map(mapMachineryListing);
+			services = (servicesResult.data ?? []).map(mapServiceListing);
 		}
 
 		loading = false;
+		fetching = false;
 	}
 
-	onMount(() => {
-		loadHomeListings();
+	const catalog = $derived(mergeListingGroups({ products, machinery, services }));
+
+	const visibleListings = $derived(applyLocalFilters(catalog, filters, searchQuery));
+
+	const hasDiscoveryMode = $derived(
+		normalizeText(searchQuery).length > 0 || activeFilterCount(filters) > 0
+	);
+
+	const locationOptions = $derived([...new Set(catalog.map((item) => item.location).filter(Boolean))]);
+
+	const featuredListings = $derived(visibleListings.slice(0, 8));
+	const sponsoredListings = $derived(
+		visibleListings.slice(0, 4).map((item) => ({ ...item, sponsored: true }))
+	);
+	const machineryHighlights = $derived(
+		hasDiscoveryMode
+			? visibleListings.filter((i) => i.tipo === 'maquinario').slice(0, 6)
+			: machinery.slice(0, 6)
+	);
+	const productHighlights = $derived(
+		hasDiscoveryMode
+			? visibleListings.filter((i) => i.tipo === 'produto').slice(0, 6)
+			: products.slice(0, 6)
+	);
+	const serviceHighlights = $derived(
+		hasDiscoveryMode
+			? visibleListings.filter((i) => i.tipo === 'servico').slice(0, 6)
+			: services.slice(0, 6)
+	);
+
+	$effect(() => {
+		const term = searchQuery;
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			debouncedSearch = term;
+		}, DEBOUNCE_MS);
+		return () => clearTimeout(debounceTimer);
 	});
 
-	const allListings = $derived(mergeListingGroups({ products, machinery, services }));
+	$effect(() => {
+		if (skipDebouncedFetch) return;
+		loadMarketplaceListings(debouncedSearch);
+	});
 
-	const featuredListings = $derived(allListings.slice(0, 8));
-	const sponsoredListings = $derived(allListings.slice(0, 4).map((item) => ({ ...item, sponsored: true })));
-	const machineryHighlights = $derived(machinery.slice(0, 6));
-	const productHighlights = $derived(products.slice(0, 6));
-	const serviceHighlights = $derived(services.slice(0, 6));
+	onMount(async () => {
+		await loadMarketplaceListings('');
+		skipDebouncedFetch = false;
+	});
 </script>
 
 <svelte:head>
@@ -173,8 +343,8 @@
 
 <div class="min-h-screen bg-gray-50 pb-24">
 	<Header />
-	<SearchBar />
-	<FilterBar />
+	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar máquinas, produtos e serviços..." />
+	<FilterBar bind:filters locations={locationOptions} resultCount={hasDiscoveryMode ? visibleListings.length : null} />
 
 	<div class="px-4 pb-2 pt-1">
 		<div class="rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 p-4 text-white shadow-sm">
@@ -188,6 +358,15 @@
 		<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando destaques...</div>
 	{:else if errorMessage}
 		<div class="mx-4 my-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+	{:else if hasDiscoveryMode}
+		{#if visibleListings.length === 0}
+			<div class="mx-4 my-8 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
+				<p class="text-sm font-semibold text-gray-800">Nenhum anúncio encontrado</p>
+				<p class="mt-1 text-xs text-gray-500">Ajuste a busca ou os filtros para ver mais resultados.</p>
+			</div>
+		{:else}
+			<ProductList title="Resultados" products={visibleListings} />
+		{/if}
 	{:else}
 		<ProductList title="Em destaque" products={featuredListings} />
 		<ProductList title="Patrocinados" products={sponsoredListings} />

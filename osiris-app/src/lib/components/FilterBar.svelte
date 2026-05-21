@@ -1,7 +1,7 @@
 <script>
 	import { SlidersHorizontal, X, Check, ChevronDown } from 'lucide-svelte';
 
-	function createDefaultFilters() {
+	function createDefaultMarketplaceFilters() {
 		return {
 			listingTypes: [],
 			productKinds: [],
@@ -16,26 +16,28 @@
 	}
 
 	function cloneFilters(source) {
+		const defaults = createDefaultMarketplaceFilters();
 		return {
-			...createDefaultFilters(),
+			...defaults,
 			...source,
-			listingTypes: [...(source?.listingTypes ?? [])],
-			productKinds: [...(source?.productKinds ?? [])],
-			serviceKinds: [...(source?.serviceKinds ?? [])],
-			laborKinds: [...(source?.laborKinds ?? [])]
+			listingTypes: [...(source?.listingTypes ?? defaults.listingTypes)],
+			productKinds: [...(source?.productKinds ?? defaults.productKinds)],
+			serviceKinds: [...(source?.serviceKinds ?? defaults.serviceKinds)],
+			laborKinds: [...(source?.laborKinds ?? defaults.laborKinds)]
 		};
 	}
 
 	let {
-		filters = $bindable(createDefaultFilters()),
+		filters = $bindable(createDefaultMarketplaceFilters()),
 		locations = [],
-		onApply = null
+		resultCount = null
 	} = $props();
 
 	const listingTypeOptions = [
 		{ id: 'produto', label: 'Produto' },
-		{ id: 'servico', label: 'Serviço (pacote completo)' },
-		{ id: 'mao-de-obra', label: 'Mão de obra (pessoa)' }
+		{ id: 'maquinario', label: 'Maquinário' },
+		{ id: 'servico', label: 'Serviço (pacote)' },
+		{ id: 'mao-de-obra', label: 'Mão de obra' }
 	];
 
 	const productKindOptions = [
@@ -43,21 +45,14 @@
 		{ id: 'maquinas', label: 'Máquinas' }
 	];
 
-	const serviceKindOptions = [
-		{ id: 'contratar-servico', label: 'Contratar serviço' }
-	];
+	const serviceKindOptions = [{ id: 'pacote', label: 'Pacote completo' }];
 
-	const laborKindOptions = [
-		{ id: 'operador-maquinas', label: 'Operador de máquinas' },
-		{ id: 'tecnico-campo', label: 'Técnico de campo' },
-		{ id: 'auxiliar-rural', label: 'Auxiliar rural' }
-	];
+	const laborKindOptions = [{ id: 'mao-de-obra', label: 'Mão de obra' }];
 
 	const statusOptions = [
 		{ id: '', label: 'Todos' },
-		{ id: 'Ativo', label: 'Ativo' },
-		{ id: 'Pausado', label: 'Pausado' },
-		{ id: 'Inativo', label: 'Inativo' }
+		{ id: 'ativo', label: 'Ativo' },
+		{ id: 'pausado', label: 'Pausado' }
 	];
 
 	const sortOptions = [
@@ -69,39 +64,13 @@
 	];
 
 	let isOpen = $state(false);
-	let draft = $state(createDefaultFilters());
+	let draft = $state(createDefaultMarketplaceFilters());
 
-	function openFilters() {
-		draft = cloneFilters(filters);
-		isOpen = true;
-	}
-
-	function closeFilters() {
-		isOpen = false;
-	}
-
-	function clearDraft() {
-		draft = createDefaultFilters();
-	}
-
-	function toggleArrayItem(key, id) {
-		const values = draft[key];
-		if (values.includes(id)) {
-			draft = { ...draft, [key]: values.filter((value) => value !== id) };
-		} else {
-			draft = { ...draft, [key]: [...values, id] };
-		}
-	}
-
-	function applyFilters() {
-		filters = cloneFilters(draft);
-		isOpen = false;
-		if (typeof onApply === 'function') onApply(filters);
-	}
-
-	function isSelected(key, id) {
-		return draft[key].includes(id);
-	}
+	const locationOptions = $derived(
+		(locations.length ? locations : ['Alegrete, RS', 'Santa Maria, RS', 'Uruguaiana, RS']).map(
+			(item) => ({ id: item, label: item })
+		)
+	);
 
 	function activeFilterCount(value) {
 		let count = 0;
@@ -115,13 +84,57 @@
 		return count;
 	}
 
-	const count = $derived(activeFilterCount(filters));
-	const locationOptions = $derived(
-		(locations.length ? locations : ['Alegrete, RS', 'Santa Maria, RS', 'Uruguaiana, RS']).map((item) => ({
-			id: item,
-			label: item
-		}))
-	);
+	const activeCount = $derived(activeFilterCount(filters));
+
+	const activeLabels = $derived.by(() => {
+		const labels = [];
+		for (const id of filters.listingTypes) {
+			const opt = listingTypeOptions.find((o) => o.id === id);
+			if (opt) labels.push(opt.label);
+		}
+		if (filters.location) labels.push(filters.location);
+		if (filters.minPrice || filters.maxPrice) {
+			labels.push(
+				`R$ ${filters.minPrice || '0'} – ${filters.maxPrice || '∞'}`
+			);
+		}
+		if (filters.sort !== 'recentes') {
+			const sort = sortOptions.find((o) => o.id === filters.sort);
+			if (sort) labels.push(sort.label);
+		}
+		return labels;
+	});
+
+	function openFilters() {
+		draft = cloneFilters(filters);
+		isOpen = true;
+	}
+
+	function closeFilters() {
+		isOpen = false;
+	}
+
+	function clearDraft() {
+		draft = createDefaultMarketplaceFilters();
+	}
+
+	function applyFilters() {
+		filters = cloneFilters(draft);
+		isOpen = false;
+	}
+
+	function toggleArrayItem(key, id) {
+		const values = draft[key];
+		if (values.includes(id)) {
+			draft = { ...draft, [key]: values.filter((value) => value !== id) };
+		} else {
+			draft = { ...draft, [key]: [...values, id] };
+		}
+	}
+
+	function isSelected(key, id) {
+		return draft[key].includes(id);
+	}
 </script>
 
 <svelte:window
@@ -130,36 +143,67 @@
 	}}
 />
 
-<div class="px-4 py-3">
-	<button
-		onclick={openFilters}
-		class="relative flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
-	>
-		<SlidersHorizontal class="h-4 w-4" />
-		Filtros
-		{#if count > 0}
-			<span class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-				{count}
-			</span>
+<div class="space-y-2 px-4 pb-3">
+	<div class="flex items-center gap-2">
+		<button
+			type="button"
+			onclick={openFilters}
+			class="relative flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-green-500 hover:text-green-600"
+		>
+			<SlidersHorizontal class="h-4 w-4 shrink-0" />
+			<span>Filtros</span>
+			{#if activeCount > 0}
+				<span
+					class="rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+				>
+					{activeCount}
+				</span>
+			{/if}
+		</button>
+
+		{#if resultCount !== null}
+			<p class="shrink-0 text-xs font-medium text-gray-500">
+				{resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
+			</p>
 		{/if}
-	</button>
+	</div>
+
+	{#if activeLabels.length > 0}
+		<div class="flex flex-wrap gap-1.5">
+			{#each activeLabels as label (label)}
+				<span
+					class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-800"
+				>
+					{label}
+				</span>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 {#if isOpen}
 	<button
 		type="button"
-		class="fixed inset-0 z-40 border-0 bg-black/30 p-0"
+		class="fixed inset-0 z-[70] border-0 bg-black/30 p-0"
 		onclick={closeFilters}
 		aria-label="Fechar filtros"
 	></button>
-	<div class="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-white shadow-2xl">
+	<div
+		class="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl bg-white shadow-2xl"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="filter-bar-title"
+	>
 		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
-					<h2 class="text-base font-semibold text-gray-900">Filtros gerais</h2>
-					<p class="text-xs text-gray-500">Produtos, serviços e mão de obra</p>
+					<h2 id="filter-bar-title" class="text-base font-semibold text-gray-900">
+						Filtros do marketplace
+					</h2>
+					<p class="text-xs text-gray-500">Produtos, maquinários e serviços</p>
 				</div>
 				<button
+					type="button"
 					onclick={closeFilters}
 					class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
 					aria-label="Fechar filtros"
@@ -170,12 +214,20 @@
 
 			<div class="max-h-[70vh] space-y-5 overflow-y-auto pb-3">
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Tipo de anúncio</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+						Tipo de anúncio
+					</p>
 					<div class="flex flex-wrap gap-2">
-						{#each listingTypeOptions as option}
+						{#each listingTypeOptions as option (option.id)}
 							<button
+								type="button"
 								onclick={() => toggleArrayItem('listingTypes', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('listingTypes', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
+									'listingTypes',
+									option.id
+								)
+									? 'border-green-600 bg-green-50 text-green-700'
+									: 'border-gray-200 text-gray-600'}"
 							>
 								{#if isSelected('listingTypes', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -187,10 +239,16 @@
 				<div class="space-y-2">
 					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produtos</p>
 					<div class="flex flex-wrap gap-2">
-						{#each productKindOptions as option}
+						{#each productKindOptions as option (option.id)}
 							<button
+								type="button"
 								onclick={() => toggleArrayItem('productKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('productKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
+									'productKinds',
+									option.id
+								)
+									? 'border-green-600 bg-green-50 text-green-700'
+									: 'border-gray-200 text-gray-600'}"
 							>
 								{#if isSelected('productKinds', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -202,10 +260,16 @@
 				<div class="space-y-2">
 					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Serviços</p>
 					<div class="flex flex-wrap gap-2">
-						{#each serviceKindOptions as option}
+						{#each serviceKindOptions as option (option.id)}
 							<button
+								type="button"
 								onclick={() => toggleArrayItem('serviceKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('serviceKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
+									'serviceKinds',
+									option.id
+								)
+									? 'border-green-600 bg-green-50 text-green-700'
+									: 'border-gray-200 text-gray-600'}"
 							>
 								{#if isSelected('serviceKinds', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -217,26 +281,18 @@
 				<div class="space-y-2">
 					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Mão de obra</p>
 					<div class="flex flex-wrap gap-2">
-						{#each laborKindOptions as option}
+						{#each laborKindOptions as option (option.id)}
 							<button
+								type="button"
 								onclick={() => toggleArrayItem('laborKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected('laborKinds', option.id) ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
+								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
+									'laborKinds',
+									option.id
+								)
+									? 'border-green-600 bg-green-50 text-green-700'
+									: 'border-gray-200 text-gray-600'}"
 							>
 								{#if isSelected('laborKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</p>
-					<div class="flex flex-wrap gap-2">
-						{#each statusOptions as option}
-							<button
-								onclick={() => (draft = { ...draft, status: option.id })}
-								class="rounded-full border px-3 py-2 text-xs font-medium transition-colors {draft.status === option.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600'}"
-							>
 								{option.label}
 							</button>
 						{/each}
@@ -250,12 +306,14 @@
 							bind:value={draft.location}
 							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
 						>
-							<option value="">Todas</option>
-							{#each locationOptions as option}
+							<option value="">Todas as regiões</option>
+							{#each locationOptions as option (option.id)}
 								<option value={option.id}>{option.label}</option>
 							{/each}
 						</select>
-						<ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+						<ChevronDown
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+						/>
 					</div>
 				</div>
 
@@ -266,16 +324,20 @@
 							bind:value={draft.sort}
 							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
 						>
-							{#each sortOptions as option}
+							{#each sortOptions as option (option.id)}
 								<option value={option.id}>{option.label}</option>
 							{/each}
 						</select>
-						<ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+						<ChevronDown
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+						/>
 					</div>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Faixa de preço (R$)</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+						Faixa de preço (R$)
+					</p>
 					<div class="grid grid-cols-2 gap-2">
 						<input
 							type="number"
@@ -299,12 +361,14 @@
 
 			<div class="mt-5 grid grid-cols-2 gap-2">
 				<button
+					type="button"
 					onclick={clearDraft}
 					class="rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
 				>
 					Limpar
 				</button>
 				<button
+					type="button"
 					onclick={applyFilters}
 					class="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
 				>
