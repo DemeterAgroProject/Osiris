@@ -143,7 +143,7 @@
 	}}
 />
 
-<div class="space-y-2 px-4 pb-3">
+<div class="space-y-2 px-4 pb-3 mt-4">
 	<div class="flex items-center gap-2">
 		<button
 			type="button"

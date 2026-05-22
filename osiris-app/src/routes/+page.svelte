@@ -344,9 +344,8 @@
 <div class="min-h-screen bg-gray-50 pb-24">
 	<Header />
 	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar máquinas, produtos e serviços..." />
-	<FilterBar bind:filters locations={locationOptions} resultCount={hasDiscoveryMode ? visibleListings.length : null} />
-
-	<div class="px-4 pb-2 pt-1">
+	
+	<div class="px-4 pb-2">
 		<div class="rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 p-4 text-white shadow-sm">
 			<p class="text-xs font-medium uppercase tracking-wider text-green-100">Marketplace Osiris</p>
 			<h1 class="mt-1 text-xl font-bold">Máquinas, produtos e serviços em um só lugar</h1>

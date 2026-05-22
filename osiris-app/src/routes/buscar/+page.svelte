@@ -329,5 +329,5 @@
 		<ProductList title="Resultados da busca" products={visibleListings} />
 	{/if}
 
-	<BottomNav active="inicio" />
+	<BottomNav active="buscar" />
 </div>

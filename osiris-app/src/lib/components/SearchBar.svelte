@@ -13,7 +13,7 @@
 	}
 </script>
 
-<div class="border-b border-gray-100 bg-white px-4 py-3 shadow-sm">
+<div class="border-gray-100 px-4 py-3">
 	<div class="relative mx-auto max-w-3xl">
 		{#if loading}
 			<Loader2
@@ -31,7 +31,7 @@
 			{placeholder}
 			autocomplete="off"
 			aria-label={placeholder}
-			class="w-full rounded-full border border-gray-200 bg-gray-50 py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-500 transition-all focus:border-green-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-70"
+			class="w-full rounded-full border border-gray-200 bg-white py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-500 transition-all focus:border-green-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-70"
 			disabled={loading}
 		/>
 

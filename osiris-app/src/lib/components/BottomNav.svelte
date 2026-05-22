@@ -1,11 +1,11 @@
 <script>
-	import { Home, MessageSquare, Archive, Toolbox, MoreHorizontal } from 'lucide-svelte';
+	import { Home, Search, Archive, Toolbox, MoreHorizontal } from 'lucide-svelte';
 
 	let { active = 'inicio' } = $props();
 
 	const navItems = [
-		{ id: 'inicio', label: 'Painel', icon: Home, href: '/painel-de-controle' },
-		{ id: 'negociacoes', label: 'Negociações', icon: MessageSquare, href: '/negociacoes' },
+		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
+		{ id: 'buscar', label: 'Buscar', icon: Search, href: '/buscar' },
 		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventario' },
 		{ id: 'servicos', label: 'Serviços', icon: Toolbox, href: '/servicos' },
 		{ id: 'mais', label: 'Mais', icon: MoreHorizontal, href: '/mais' },
