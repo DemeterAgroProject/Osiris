@@ -9,6 +9,8 @@
     let searchQuery = $state('');
     let loading = $state(true);
     let allServices = $state([]);
+    
+    let imgErrors = $state({}); 
 
     onMount(async () => {
         await fetchServices();
@@ -17,18 +19,28 @@
     async function fetchServices() {
         loading = true;
         
-        // Busca todos os serviços ativos e junta os dados do perfil do prestador
+        // 1. Pega o usuário logado atualmente
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Se não tiver ninguém logado, para a busca por aqui
+        if (!user) {
+            loading = false;
+            return;
+        }
+        
+        // 2. Busca apenas os serviços onde o dono é o usuário logado
         const { data, error } = await supabase
             .from('services')
             .select(`
                 id, title, description, service_type, pricing_model, price, location,
                 profiles (display_name, photo_url)
             `)
+            .eq('owner_id', user.id) 
             .eq('status', 'ativo')
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error("Erro ao buscar serviços com perfil:", error);
+            console.error("Erro ao buscar serviços:", error);
         }
 
         if (data) {
@@ -64,7 +76,7 @@
 
     <main class="px-4 py-4 max-w-3xl mx-auto w-full">
         <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-xl font-bold text-gray-900">Serviços</h1>
+            <h1 class="text-xl font-bold text-gray-900">Meus Serviços</h1>
             <a href="/servicos/novo" class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 shadow-sm transition-colors">
                 <Plus class="h-4 w-4" />
                 Oferecer Serviço
@@ -92,7 +104,7 @@
             <Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input 
                 type="text" 
-                placeholder="Buscar por serviços, operadores, plantio..." 
+                placeholder="Buscar nos meus serviços..." 
                 bind:value={searchQuery} 
                 class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
             />
@@ -119,13 +131,20 @@
                             <div class="flex items-center justify-between border-t border-gray-50 pt-3 mt-2">
                                 <div class="flex items-center gap-2">
                                     <div class="h-6 w-6 rounded-full bg-gray-200 overflow-hidden">
-                                        {#if serv.profiles?.photo_url}
-                                            <img src={serv.profiles.photo_url} alt={serv.profiles.display_name} class="h-full w-full object-cover" />
+                                        
+                                        {#if serv.profiles?.photo_url && !imgErrors[serv.id]}
+                                            <img 
+                                                src={serv.profiles.photo_url} 
+                                                alt={serv.profiles.display_name} 
+                                                class="h-full w-full object-cover" 
+                                                onerror={() => imgErrors[serv.id] = true}
+                                            />
                                         {:else}
                                             <div class="h-full w-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">
                                                 {serv.profiles?.display_name?.charAt(0) || '?'}
                                             </div>
                                         {/if}
+                                        
                                     </div>
                                     <span class="text-xs font-medium text-gray-700">{serv.profiles?.display_name || 'Usuário'}</span>
                                 </div>
@@ -147,7 +166,7 @@
                             {/if}
                         </div>
                         <h3 class="mb-1 text-lg font-medium text-gray-900">Nenhum serviço encontrado</h3>
-                        <p class="text-sm text-gray-500">Ainda não há ofertas para esta categoria na sua região.</p>
+                        <p class="text-sm text-gray-500">Você ainda não possui serviços cadastrados nesta categoria.</p>
                     </div>
                 {/each}
             </div>

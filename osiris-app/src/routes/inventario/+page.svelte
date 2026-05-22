@@ -336,7 +336,7 @@
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<div class="mb-4 flex items-center justify-between">
-			<h1 class="text-xl font-bold text-gray-900">Meu Painel</h1>
+			<h1 class="text-xl font-bold text-gray-900">Meu Inventário</h1>
 			<a
 				href="/anunciar"
 				class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
