@@ -3,7 +3,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import FilterBar from '$lib/components/FilterBar.svelte';
-	import ProductList from '$lib/components/ProductList.svelte';
+	import ProductSection from '$lib/components/ProductSection.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import PartnerSection from '$lib/components/PartnerSection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -11,7 +11,9 @@
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const DEFAULT_LOCATION = 'Alegrete, RS';
-	const FETCH_LIMIT = 48;
+	const HOME_CAROUSEL_LIMIT = 6;
+	const HOME_FETCH_LIMIT = 6;
+	const SEARCH_FETCH_LIMIT = 48;
 	const DEBOUNCE_MS = 350;
 
 	function createDefaultFilters() {
@@ -211,10 +213,26 @@
 		return sortListings(result, filterState.sort);
 	}
 
+	function buildBuscarHref({ tipo = null } = {}) {
+		const params = new URLSearchParams();
+		const q = searchQuery.trim();
+		if (q) params.set('q', q);
+		if (tipo) params.set('tipo', tipo);
+		const qs = params.toString();
+		return qs ? `/buscar?${qs}` : '/buscar';
+	}
+
+	function resolveFetchLimit(searchTerm) {
+		const hasSearch = normalizeText(searchTerm).length >= 2;
+		const hasFilters = activeFilterCount(filters) > 0;
+		return hasSearch || hasFilters ? SEARCH_FETCH_LIMIT : HOME_FETCH_LIMIT;
+	}
+
 	async function loadMarketplaceListings(searchTerm = '') {
 		const seq = ++loadSeq;
 		const term = escapeIlike(normalizeText(searchTerm));
 		const useServerSearch = term.length >= 2;
+		const fetchLimit = resolveFetchLimit(searchTerm);
 
 		if (!loading) fetching = true;
 		errorMessage = '';
@@ -225,7 +243,7 @@
 			.or(ACTIVE_STATUS_OR)
 			.neq('category', 'Maquinário')
 			.order('created_at', { ascending: false })
-			.limit(FETCH_LIMIT);
+			.limit(fetchLimit);
 
 		let machineryQuery = supabase
 			.from('products')
@@ -240,7 +258,7 @@
 			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
-			.limit(FETCH_LIMIT);
+			.limit(fetchLimit);
 
 		let serviceQuery = supabase
 			.from('services')
@@ -249,7 +267,7 @@
 			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
-			.limit(FETCH_LIMIT);
+			.limit(fetchLimit);
 
 		if (useServerSearch) {
 			const pattern = `%${term}%`;
@@ -293,24 +311,32 @@
 
 	const locationOptions = $derived([...new Set(catalog.map((item) => item.location).filter(Boolean))]);
 
-	const featuredListings = $derived(visibleListings.slice(0, 8));
-	const sponsoredListings = $derived(
-		visibleListings.slice(0, 4).map((item) => ({ ...item, sponsored: true }))
+	const homePreviewListings = $derived(visibleListings.slice(0, HOME_CAROUSEL_LIMIT));
+
+	const featuredListings = $derived(
+		sortListings(catalog, 'recentes').slice(0, HOME_CAROUSEL_LIMIT)
 	);
+
+	const sponsoredListings = $derived(
+		machinery.slice(0, HOME_CAROUSEL_LIMIT).map((item) => ({ ...item, sponsored: true }))
+	);
+
 	const machineryHighlights = $derived(
 		hasDiscoveryMode
-			? visibleListings.filter((i) => i.tipo === 'maquinario').slice(0, 6)
-			: machinery.slice(0, 6)
+			? visibleListings.filter((i) => i.tipo === 'maquinario').slice(0, HOME_CAROUSEL_LIMIT)
+			: machinery.slice(0, HOME_CAROUSEL_LIMIT)
 	);
+
 	const productHighlights = $derived(
 		hasDiscoveryMode
-			? visibleListings.filter((i) => i.tipo === 'produto').slice(0, 6)
-			: products.slice(0, 6)
+			? visibleListings.filter((i) => i.tipo === 'produto').slice(0, HOME_CAROUSEL_LIMIT)
+			: products.slice(0, HOME_CAROUSEL_LIMIT)
 	);
+
 	const serviceHighlights = $derived(
 		hasDiscoveryMode
-			? visibleListings.filter((i) => i.tipo === 'servico').slice(0, 6)
-			: services.slice(0, 6)
+			? visibleListings.filter((i) => i.tipo === 'servico').slice(0, HOME_CAROUSEL_LIMIT)
+			: services.slice(0, HOME_CAROUSEL_LIMIT)
 	);
 
 	$effect(() => {
@@ -364,16 +390,45 @@
 				<p class="mt-1 text-xs text-gray-500">Ajuste a busca ou os filtros para ver mais resultados.</p>
 			</div>
 		{:else}
-			<ProductList title="Resultados" products={visibleListings} />
+			<ProductSection
+				title="Resultados"
+				products={homePreviewListings}
+				limit={HOME_CAROUSEL_LIMIT}
+				seeMoreHref={buildBuscarHref()}
+				seeMoreLabel="Ver todos na busca"
+			/>
 		{/if}
 	{:else}
-		<ProductList title="Em destaque" products={featuredListings} />
-		<ProductList title="Patrocinados" products={sponsoredListings} />
-		<ProductList title="Máquinas em alta" products={machineryHighlights} />
-		<ProductList title="Produtos em alta" products={productHighlights} />
-		{#if serviceHighlights.length > 0}
-			<ProductList title="Serviços em alta" products={serviceHighlights} />
-		{/if}
+		<ProductSection
+			title="Em destaque"
+			products={featuredListings}
+			limit={HOME_CAROUSEL_LIMIT}
+			seeMoreHref="/buscar"
+		/>
+		<ProductSection
+			title="Patrocinados"
+			products={sponsoredListings}
+			limit={HOME_CAROUSEL_LIMIT}
+			seeMoreHref="/buscar"
+		/>
+		<ProductSection
+			title="Máquinas em alta"
+			products={machineryHighlights}
+			limit={HOME_CAROUSEL_LIMIT}
+			seeMoreHref={buildBuscarHref({ tipo: 'maquinario' })}
+		/>
+		<ProductSection
+			title="Produtos em alta"
+			products={productHighlights}
+			limit={HOME_CAROUSEL_LIMIT}
+			seeMoreHref={buildBuscarHref({ tipo: 'produto' })}
+		/>
+		<ProductSection
+			title="Serviços em alta"
+			products={serviceHighlights}
+			limit={HOME_CAROUSEL_LIMIT}
+			seeMoreHref={buildBuscarHref({ tipo: 'servico' })}
+		/>
 		<CategorySection />
 		<PartnerSection />
 	{/if}
