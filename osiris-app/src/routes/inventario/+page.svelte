@@ -366,7 +366,7 @@
 					: 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
 			>
 				<Tractor class="h-5 w-5" />
-				Maquinários ({maquinarios.length})
+				Maquinários
 			</button>
 			<button
 				type="button"
@@ -377,7 +377,7 @@
 					: 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
 			>
 				<Leaf class="h-5 w-5" />
-				Produtos ({produtos.length})
+				Produtos
 			</button>
 		</div>
 
