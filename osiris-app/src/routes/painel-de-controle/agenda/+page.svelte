@@ -66,15 +66,17 @@
             const dayStr = String(day).padStart(2, '0');
             const dateString = `${currentYear}-${monthStr}-${dayStr}`;
             
+            const activeStatuses = ['pendente', 'em_operacao'];
             const dayBookings = bookings.filter(b => {
-                return b.status !== 'cancelado' && dateString >= b.start_date && dateString <= b.end_date;
+                return activeStatuses.includes(b.status) && dateString >= b.start_date && dateString <= b.end_date;
             });
 
             let cellState = 'livre'; 
             if (dayBookings.length > 1) {
                 cellState = 'conflito'; 
             } else if (dayBookings.length === 1) {
-                cellState = dayBookings[0].status; 
+                const s = dayBookings[0].status;
+                cellState = s === 'em_operacao' ? 'confirmado' : 'pendente';
             }
 
             daysArray.push({ day, dateString, cellState });
@@ -174,7 +176,7 @@
                 <h2 class="text-base font-bold text-gray-900">Solicitações Pendentes</h2>
                 
                 {#each bookings.filter(b => b.status === 'pendente') as req (req.id)}
-                    {@const hasConflict = bookings.some(b => b.id !== req.id && b.status !== 'cancelado' && (req.start_date <= b.end_date && req.end_date >= b.start_date))}
+                    {@const hasConflict = bookings.some(b => b.id !== req.id && !['cancelado', 'finalizada', 'bloqueado_prestador'].includes(b.status) && (req.start_date <= b.end_date && req.end_date >= b.start_date))}
                     
                     <div class="rounded-xl bg-white p-4 shadow-sm border {hasConflict ? 'border-red-300 ring-1 ring-red-100' : 'border-gray-100'} flex flex-col justify-between gap-3">
                         <div class="flex items-start gap-3">
@@ -198,11 +200,11 @@
                         {/if}
 
                         <div class="flex gap-2">
-                            <button onclick={() => updateStatus(req.id, 'confirmado')} class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-green-600 text-white rounded-lg py-2 hover:bg-green-700">
-                                <CheckCircle2 class="h-3.5 w-3.5" /> Aceitar
-                            </button>
+                            <a href="/operacoes/{req.id}" class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-green-600 text-white rounded-lg py-2 hover:bg-green-700">
+                                <CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
+                            </a>
                             <button onclick={() => updateStatus(req.id, 'cancelado')} class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg py-2 hover:bg-gray-50">
-                                <XCircle class="h-3.5 w-3.5" /> Recusar
+                                <XCircle class="h-3.5 w-3.5" /> Cancelar
                             </button>
                         </div>
                     </div>
@@ -214,9 +216,9 @@
             </div>
 
             <div class="space-y-3 p-0.5">
-                <h2 class="text-base font-bold text-gray-900">Atividades Confirmadas</h2>
+                <h2 class="text-base font-bold text-gray-900">Em operação</h2>
                 
-                {#each bookings.filter(b => b.status === 'confirmado') as conf (conf.id)}
+                {#each bookings.filter(b => b.status === 'em_operacao') as conf (conf.id)}
                     <div class="rounded-xl bg-white p-4 shadow-sm border border-gray-100 flex flex-col justify-between gap-3">
                         <div class="flex items-start gap-3">
                             <div class="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
@@ -232,11 +234,17 @@
                         </div>
 
                         <div class="flex gap-2 border-t border-gray-50 pt-2">
+                            <a
+                                href="/operacoes/{conf.id}"
+                                class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-green-50 border border-green-200 text-green-700 rounded-lg py-2 hover:bg-green-100"
+                            >
+                                Ver operação
+                            </a>
                             <button 
                                 onclick={() => openCancelModal(conf)} 
-                                class="w-full flex items-center justify-center gap-1 text-xs font-semibold bg-white border border-red-200 text-red-600 rounded-lg py-2 hover:bg-red-50 transition-colors"
+                                class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-white border border-red-200 text-red-600 rounded-lg py-2 hover:bg-red-50 transition-colors"
                             >
-                                <XCircle class="h-3.5 w-3.5" /> Cancelar Atividade
+                                <XCircle class="h-3.5 w-3.5" /> Cancelar
                             </button>
                         </div>
                     </div>

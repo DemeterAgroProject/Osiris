@@ -345,6 +345,34 @@
 			};
 
 			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
+		} else if (routeTipo === 'servico') {
+			const { data, error } = await supabase
+				.from('services')
+				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at')
+				.eq('id', routeId)
+				.maybeSingle();
+
+			if (error || !data) {
+				errorMessage = 'Serviço não encontrado.';
+				loading = false;
+				return;
+			}
+
+			item = {
+				type: 'servico',
+				serviceId: data.id,
+				title: data.title,
+				priceLabel: formatCurrency(data.price),
+				description: data.description || 'Serviço no marketplace Osiris.',
+				details: [
+					{ label: 'Tipo', value: data.service_type || 'Não informado' },
+					{ label: 'Modelo de preço', value: data.pricing_model || 'Não informado' },
+					{ label: 'Local', value: data.location || 'Não informado' },
+					{ label: 'Status', value: data.status || 'Não informado' }
+				]
+			};
+
+			await loadSeller(data.owner_id);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';
 		}
@@ -400,7 +428,7 @@
 				</div>
 
 				<a
-					href={seller.id ? `/login/usuario/${seller.id}` : '#'}
+					href={seller.id ? `/perfil/${seller.id}` : '#'}
 					class="mt-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-300"
 				>
 					{#if seller.avatarUrl}
@@ -460,6 +488,9 @@
 		priceLabel={item?.priceLabel || 'Preço a combinar'}
 		sellerName={seller.name}
 		type={item?.type || 'produto'}
+		providerId={seller.id}
+		productId={item?.productId ?? null}
+		serviceId={item?.serviceId ?? null}
 	/>
 
 	<BottomNav />
