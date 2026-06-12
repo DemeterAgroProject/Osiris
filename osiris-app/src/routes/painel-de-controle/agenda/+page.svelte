@@ -9,7 +9,6 @@
     let bookings = $state([]);
     let currentDate = $state(new Date());
     
-    // NOVO: Estados para o modal de cancelamento
     let showCancelModal = $state(false);
     let bookingToCancel = $state(null);
     
@@ -75,8 +74,8 @@
             if (dayBookings.length > 1) {
                 cellState = 'conflito'; 
             } else if (dayBookings.length === 1) {
-                const s = dayBookings[0].status;
-                cellState = s === 'em_operacao' ? 'confirmado' : 'pendente';
+                // Passa a usar o status real do banco ('pendente' ou 'em_operacao')
+                cellState = dayBookings[0].status; 
             }
 
             daysArray.push({ day, dateString, cellState });
@@ -102,7 +101,6 @@
         }
     }
 
-    // NOVO: Funções de controle do Modal
     function openCancelModal(booking) {
         bookingToCancel = booking;
         showCancelModal = true;
@@ -155,7 +153,7 @@
                             class="relative flex items-center justify-center rounded-lg text-sm transition-all border
                             {day ? (
                                 cellState === 'conflito' ? 'bg-red-500 text-white font-bold border-red-600 shadow-sm' :
-                                cellState === 'confirmado' ? 'bg-green-500 text-white font-bold border-green-600 shadow-sm' :
+                                cellState === 'em_operacao' ? 'bg-green-500 text-white font-bold border-green-600 shadow-sm' :
                                 cellState === 'pendente' ? 'bg-amber-300 text-amber-900 font-bold border-amber-400 shadow-sm animate-pulse' :
                                 'bg-white text-gray-900 border-gray-100'
                             ) : 'bg-transparent text-transparent border-none'}
@@ -167,7 +165,7 @@
 
                 <div class="mt-4 flex flex-wrap gap-3 text-xs border-t border-gray-100 pt-3 justify-center font-medium">
                     <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-amber-300 border border-amber-400"></span> Pendente</div>
-                    <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-green-500 border border-green-600"></span> Ocupado</div>
+                    <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-green-500 border border-green-600"></span> Em Operação</div>
                     <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-red-500 border border-red-600"></span> Conflito</div>
                 </div>
             </div>
@@ -200,11 +198,11 @@
                         {/if}
 
                         <div class="flex gap-2">
-                            <a href="/operacoes/{req.id}" class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-green-600 text-white rounded-lg py-2 hover:bg-green-700">
-                                <CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
-                            </a>
+                            <button onclick={() => updateStatus(req.id, 'em_operacao')} class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-green-600 text-white rounded-lg py-2 hover:bg-green-700">
+                                <CheckCircle2 class="h-3.5 w-3.5" /> Aceitar
+                            </button>
                             <button onclick={() => updateStatus(req.id, 'cancelado')} class="flex-1 flex items-center justify-center gap-1 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg py-2 hover:bg-gray-50">
-                                <XCircle class="h-3.5 w-3.5" /> Cancelar
+                                <XCircle class="h-3.5 w-3.5" /> Recusar
                             </button>
                         </div>
                     </div>
