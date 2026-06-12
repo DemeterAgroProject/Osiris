@@ -8,6 +8,7 @@
         LayoutDashboard,
         Archive,
         MessageSquare,
+        Heart,
         User,
         Megaphone,
         Tractor,
@@ -82,6 +83,7 @@
             ? [
                   { icon: LayoutDashboard, label: 'Painel de controle', href: '/painel-de-controle' },
                   { icon: Archive, label: 'Meu inventário', href: '/inventario' },
+                  { icon: Heart, label: 'Favoritos', href: '/favoritos' },
                   { icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
                   { icon: User, label: 'Meu perfil', href: profileHref },
                   { icon: Megaphone, label: 'Anunciar produto ou máquina', href: '/anunciar' }

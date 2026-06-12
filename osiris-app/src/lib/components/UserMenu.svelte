@@ -6,6 +6,7 @@
 		Archive,
 		Megaphone,
 		MessageSquare,
+		Heart,
 		LogOut,
 		ChevronRight,
 		Leaf
@@ -62,6 +63,7 @@
 	const menuSections = $derived([
 		[
 			{ icon: User, label: 'Meu perfil', href: profileHref },
+			{ icon: Heart, label: 'Favoritos', href: '/favoritos' },
 			{ icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
 			{ icon: Archive, label: 'Meu inventário', href: '/inventario' },
 			{ icon: Megaphone, label: 'Anunciar', href: '/anunciar' }

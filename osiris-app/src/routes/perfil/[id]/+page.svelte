@@ -15,8 +15,14 @@
 		Star
 	} from 'lucide-svelte';
 
-	function resolveDisplayName(profile) {
-		return profile?.display_name || profile?.full_name || profile?.name || 'Usuário';
+	function resolveDisplayName(profile, authUser = null) {
+		return (
+			profile?.display_name ||
+			authUser?.user_metadata?.full_name ||
+			authUser?.user_metadata?.name ||
+			authUser?.email?.split('@')[0] ||
+			'Usuário'
+		);
 	}
 
 	function resolveAvatarUrl(profile) {
@@ -74,8 +80,7 @@
 				booking_id,
 				reviewer:profiles!reviews_reviewer_id_fkey (
 					display_name,
-					photo_url,
-					full_name
+					photo_url
 				)
 			`
 			)
@@ -94,8 +99,7 @@
 					booking_id,
 					reviewer:profiles!reviewer_id (
 						display_name,
-						photo_url,
-						full_name
+						photo_url
 					)
 				`
 				)
@@ -122,7 +126,7 @@
 				rows.map(async (row) => {
 					const { data: reviewer } = await supabase
 						.from('profiles')
-						.select('display_name, photo_url, full_name')
+						.select('display_name, photo_url')
 						.eq('id', row.reviewer_id)
 						.maybeSingle();
 					return mapReviewRow({ ...row, reviewer });
@@ -173,7 +177,7 @@
 	const profileId = $derived(page.params.id);
 	const isOwner = $derived(Boolean(authUser?.id && profileId && authUser.id === profileId));
 
-	const displayName = $derived(resolveDisplayName(profile));
+	const displayName = $derived(resolveDisplayName(profile, authUser));
 	const avatarUrl = $derived(resolveAvatarUrl(profile));
 	const initials = $derived(resolveInitials(displayName));
 	const email = $derived(profile?.email || '');
@@ -228,18 +232,33 @@
 
 		const { data, error } = await supabase
 			.from('profiles')
-			.select('id, display_name, email, phone_number, photo_url, role, full_name')
+			.select('id, display_name, email, phone_number, photo_url, role, cpf')
 			.eq('id', profileId)
 			.maybeSingle();
 
 		if (error) {
-			
-			errorMessage = 'Não foi possível carregar o perfil.';
-			console.error("ERRO SUPABASE:", error.message, error.code, error.details);
+			errorMessage = error.message || 'Não foi possível carregar o perfil.';
+			console.error('Erro ao carregar perfil:', error.message, error.code, error.details);
 			profile = null;
 		} else if (!data) {
-			errorMessage = 'Perfil não encontrado.';
-			profile = null;
+			if (user?.id === profileId) {
+				profile = {
+					id: user.id,
+					email: user.email,
+					display_name:
+						user.user_metadata?.full_name ||
+						user.user_metadata?.name ||
+						user.email?.split('@')[0] ||
+						null,
+					photo_url: user.user_metadata?.avatar_url || null,
+					phone_number: null,
+					role: null,
+					cpf: null
+				};
+			} else {
+				errorMessage = 'Perfil não encontrado.';
+				profile = null;
+			}
 		} else {
 			profile = data;
 		}
@@ -286,7 +305,7 @@
 				photo_url: form.photoUrl.trim() || null
 			})
 			.eq('id', authUser.id)
-			.select('id, display_name, email, phone_number, photo_url, role, full_name')
+			.select('id, display_name, email, phone_number, photo_url, role, cpf')
 			.maybeSingle();
 
 		if (error) {

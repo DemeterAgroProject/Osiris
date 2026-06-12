@@ -3,6 +3,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
+	import FavoriteButton from '$lib/components/FavoriteButton.svelte';
 	import Rating from '$lib/components/Rating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
@@ -407,10 +408,16 @@
 			<section class="mt-4 rounded-t-3xl bg-white p-4 shadow-sm">
 				<div class="aspect-[16/10] rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50"></div>
 
-				<div class="mt-4">
-					<p class="text-3xl font-extrabold text-green-700">{item.priceLabel}</p>
-					<h1 class="mt-2 text-3xl font-bold text-gray-900">{item.title}</h1>
-					<p class="mt-3 text-base leading-7 text-gray-600">{item.description}</p>
+				<div class="mt-4 flex items-start justify-between gap-3">
+					<div class="min-w-0 flex-1">
+						<p class="text-3xl font-extrabold text-green-700">{item.priceLabel}</p>
+						<h1 class="mt-2 text-3xl font-bold text-gray-900">{item.title}</h1>
+						<p class="mt-3 text-base leading-7 text-gray-600">{item.description}</p>
+					</div>
+					<FavoriteButton
+						productId={item.productId ?? null}
+						serviceId={item.serviceId ?? null}
+					/>
 				</div>
 
 				<div class="mt-6 overflow-hidden rounded-2xl border border-gray-200">
@@ -450,6 +457,14 @@
 						/>
 					</div>
 				</a>
+
+				<button
+					onclick={() => (showNegotiationModal = true)}
+					class="mt-6 w-full rounded-xl bg-green-700 px-4 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-800"
+				>
+					Negociar
+				</button>
+
 				<div class="mt-8 overflow-hidden rounded-2xl border border-gray-200">
 					<div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
 						<h2 class="text-lg font-semibold text-gray-900">Avaliações do anúncio</h2>
@@ -470,14 +485,6 @@
 						/>
 					</div>
 				</div>
-
-
-				<button
-					onclick={() => (showNegotiationModal = true)}
-					class="mt-6 w-full rounded-xl bg-green-700 px-4 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-800"
-				>
-					Negociar
-				</button>
 			</section>
 		{/if}
 	</main>
