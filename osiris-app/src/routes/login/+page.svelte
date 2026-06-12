@@ -5,6 +5,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
+	import { subscribeToPush } from '$lib/push';
 
 	let loading = $state(true);
 	let signingIn = $state(false);
@@ -26,6 +27,7 @@
 		} = await supabase.auth.getSession();
 
 		if (session?.user) {
+			await subscribeToPush(session.user.id);
 			const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
 			await goto(target, { replaceState: true });
 			return;
@@ -62,6 +64,7 @@
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			if (session?.user) {
+				subscribeToPush(session.user.id); 
 				const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
 				goto(target, { replaceState: true });
 			}
