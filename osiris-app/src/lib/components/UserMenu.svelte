@@ -1,14 +1,15 @@
 <script>
     import { goto } from '$app/navigation';
-    import {
-        Settings,
-        User,
-        Archive,
-        Megaphone,
-        LogOut,
-        ChevronRight,
-        Leaf
-    } from 'lucide-svelte';
+	import {
+		Settings,
+		User,
+		Archive,
+		Megaphone,
+		MessageSquare,
+		LogOut,
+		ChevronRight,
+		Leaf
+	} from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
 
     function resolveDisplayName(profile, authUser) {
@@ -58,12 +59,13 @@
     const email = $derived(profile?.email || authUser?.email || '');
     const profileHref = $derived(authUser ? `/login/usuario/${authUser.id}` : '/login');
 
-    const menuSections = $derived([
-        [
-            { icon: User, label: 'Meu perfil', href: profileHref },
-            { icon: Archive, label: 'Meu inventário', href: '/inventario' },
-            { icon: Megaphone, label: 'Anunciar', href: '/anunciar' }
-        ],
+	const menuSections = $derived([
+		[
+			{ icon: User, label: 'Meu perfil', href: profileHref },
+			{ icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
+			{ icon: Archive, label: 'Meu inventário', href: '/inventario' },
+			{ icon: Megaphone, label: 'Anunciar', href: '/anunciar' }
+		],
         [{ icon: Leaf, label: 'Explorar marketplace', href: '/' }]
     ]);
 

@@ -82,13 +82,7 @@
             ? [
                   { icon: LayoutDashboard, label: 'Painel de controle', href: '/painel-de-controle' },
                   { icon: Archive, label: 'Meu inventário', href: '/inventario' },
-                  {
-                      icon: MessageSquare,
-                      label: 'Negociações',
-                      href: null,
-                      badge: 'Em breve',
-                      badgeTone: 'muted'
-                  },
+                  { icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
                   { icon: User, label: 'Meu perfil', href: profileHref },
                   { icon: Megaphone, label: 'Anunciar produto ou máquina', href: '/anunciar' }
               ]

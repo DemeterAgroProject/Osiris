@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import FilterBar from '$lib/components/FilterBar.svelte';
@@ -24,6 +25,23 @@
 			minPrice: '',
 			maxPrice: ''
 		};
+	}
+
+	function filtersFromSearchParams(searchParams) {
+		const base = createDefaultFilters();
+		const tipo = searchParams.get('tipo');
+
+		if (tipo === 'maquinario') {
+			return { ...base, listingTypes: ['maquinario'], productKinds: ['maquinas'] };
+		}
+		if (tipo === 'produto') {
+			return { ...base, listingTypes: ['produto'], productKinds: ['insumos'] };
+		}
+		if (tipo === 'servico') {
+			return { ...base, listingTypes: ['servico', 'mao-de-obra'] };
+		}
+
+		return base;
 	}
 
 	let searchQuery = $state('');
@@ -302,7 +320,12 @@
 	});
 
 	onMount(async () => {
-		await loadMarketplaceListings('');
+		const q = page.url.searchParams.get('q');
+		if (q) searchQuery = q;
+
+		filters = filtersFromSearchParams(page.url.searchParams);
+
+		await loadMarketplaceListings(searchQuery);
 		skipDebouncedFetch = false;
 	});
 </script>

@@ -6,12 +6,25 @@
     import Rating from '$lib/components/Rating.svelte';
     import ReviewList from '$lib/components/ReviewList.svelte';
     import { supabase } from '$lib/supabase';
+    import {
+        Star,
+        Mail,
+        Phone,
+        Check,
+        AlertCircle,
+        SquarePen,
+        ArrowLeft,
+        Camera,
+        User,
+        IdCard,
+        Award,
+        Megaphone,
+        ChevronRight
+    } from 'lucide-svelte';
 
     function resolveDisplayName(profile, authUser) {
         return (
-            profile?.full_name ||
             profile?.display_name ||
-            profile?.name ||
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||
@@ -40,16 +53,8 @@
         );
     }
 
-    function mapReviewRow(row, machineryNamesById = {}) {
+    function mapReviewRow(row) {
         const reviewer = row.reviewer ?? row.profiles ?? null;
-        const products = row.products ?? null;
-        const productId = row.product_id;
-        const productName =
-            products?.name ||
-            (productId && machineryNamesById[String(productId)]) ||
-            row.product_name ||
-            null;
-
         const reviewerName = resolveDisplayName(reviewer, null);
         const reviewerPhoto = resolveAvatarUrl(reviewer, null);
 
@@ -60,93 +65,95 @@
             createdAt: row.created_at,
             reviewerName,
             reviewerPhoto,
-            reviewerInitials: resolveInitials(reviewerName),
-            productName: productName ? String(productName) : null
+            reviewerInitials: resolveInitials(reviewerName)
         };
     }
 
-    function computeReviewStats(reviews) {
-        if (!reviews?.length) {
+    function computeReviewStats(reviewList) {
+        if (!reviewList?.length) {
             return { average: 0, count: 0 };
         }
-
-        const sum = reviews.reduce((total, review) => total + (Number(review.rating) || 0), 0);
-        return {
-            average: sum / reviews.length,
-            count: reviews.length
-        };
+        const sum = reviewList.reduce((total, review) => total + (Number(review.rating) || 0), 0);
+        return { average: sum / reviewList.length, count: reviewList.length };
     }
 
     async function fetchReviewsForUser(revieweeId) {
-        const { data, error } = await supabase
+        if (!revieweeId) {
+            return { reviews: [], error: null };
+        }
+
+        let { data, error } = await supabase
             .from('reviews')
             .select(
                 `
-            id,
-            rating,
-            comment,
-            created_at,
-            product_id,
-            reviewer:profiles!reviewer_id (
-                display_name,
-                photo_url,
-                full_name,
-                name
-            ),
-            products (
-                name
-            )
-        `
+                id,
+                rating,
+                comment,
+                created_at,
+                booking_id,
+                reviewer:profiles!reviews_reviewer_id_fkey (
+                    display_name,
+                    photo_url
+                )
+            `
             )
             .eq('reviewee_id', revieweeId)
             .order('created_at', { ascending: false });
 
         if (error) {
-            return { reviews: [], error };
+            const fallback = await supabase
+                .from('reviews')
+                .select(
+                    `
+                    id,
+                    rating,
+                    comment,
+                    created_at,
+                    booking_id,
+                    reviewer:profiles!reviewer_id (
+                        display_name,
+                        photo_url
+                    )
+                `
+                )
+                .eq('reviewee_id', revieweeId)
+                .order('created_at', { ascending: false });
+
+            data = fallback.data;
+            error = fallback.error;
         }
 
-        const rows = data ?? [];
-        const missingNameIds = [
-            ...new Set(
-                rows
-                    .filter((row) => !row.products?.name && row.product_id)
-                    .map((row) => String(row.product_id))
-            )
-        ];
+        if (error) {
+            const plain = await supabase
+                .from('reviews')
+                .select('id, rating, comment, created_at, booking_id, reviewer_id')
+                .eq('reviewee_id', revieweeId)
+                .order('created_at', { ascending: false });
 
-        let machineryNamesById = {};
+            if (plain.error) {
+                return { reviews: [], error: plain.error };
+            }
 
-        if (missingNameIds.length > 0) {
-            const { data: machinery } = await supabase
-                .from('agricultural_machinery')
-                .select('id, name')
-                .in('id', missingNameIds);
+            const rows = plain.data ?? [];
+            const enriched = await Promise.all(
+                rows.map(async (row) => {
+                    const { data: reviewer } = await supabase
+                        .from('profiles')
+                        .select('display_name, photo_url')
+                        .eq('id', row.reviewer_id)
+                        .maybeSingle();
+                    return mapReviewRow({ ...row, reviewer });
+                })
+            );
 
-            machineryNamesById = Object.fromEntries((machinery ?? []).map((item) => [item.id, item.name]));
+            return { reviews: enriched, error: null };
         }
 
         return {
-            reviews: rows.map((row) => mapReviewRow(row, machineryNamesById)),
+            reviews: (data ?? []).map(mapReviewRow),
             error: null
         };
     }
-    import {
-        Star,
-        Mail,
-        Phone,
-        Check,
-        AlertCircle,
-        SquarePen,
-        ArrowLeft,
-        Camera,
-        User,
-        IdCard,
-        KeyRound,
-        Lock,
-        Award,
-        Megaphone,
-        ChevronRight
-    } from 'lucide-svelte';
 
     /** @typedef {'profile' | 'verification' | 'edit' | 'reviews'} ProfileView */
 
@@ -164,32 +171,31 @@
     let reviewsLoading = $state(false);
 
     let form = $state({
-        fullName: '',
-        cpf: '',
-        phone: '',
+        displayName: '',
         email: '',
-        password: '',
-        passwordConfirm: ''
+        phone: '',
+        cpf: '',
+        photoUrl: ''
     });
 
     const userId = $derived(page.params.id);
+    const isOwner = $derived(Boolean(authUser?.id && userId && authUser.id === userId));
 
     const displayName = $derived(resolveDisplayName(profile, authUser));
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
 
     const email = $derived(profile?.email || authUser?.email || '');
-    const phone = $derived(profile?.phone || profile?.phone_number || '');
+    const phone = $derived(profile?.phone_number || profile?.phone || '');
+    const cpf = $derived(profile?.cpf || '');
 
     const emailVerified = $derived(
         Boolean(
-            profile?.email_verified ||
-                authUser?.email_confirmed_at ||
-                authUser?.app_metadata?.provider === 'google'
+            authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google'
         )
     );
 
-    const phoneVerified = $derived(Boolean(profile?.phone_verified));
+    const phoneVerified = $derived(false);
 
     const canBecomeAdvertiser = $derived(emailVerified && phoneVerified);
 
@@ -223,12 +229,11 @@
 
     function syncFormFromProfile() {
         form = {
-            fullName: profile?.full_name || profile?.display_name || profile?.name || displayName,
-            cpf: profile?.cpf || '',
-            phone: profile?.phone || profile?.phone_number || '',
+            displayName: profile?.display_name || displayName,
             email: profile?.email || authUser?.email || '',
-            password: '',
-            passwordConfirm: ''
+            phone: profile?.phone_number || profile?.phone || '',
+            cpf: profile?.cpf || '',
+            photoUrl: profile?.photo_url || profile?.avatar_url || ''
         };
     }
 
@@ -248,7 +253,11 @@
         } = await supabase.auth.getUser();
         authUser = user;
 
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, display_name, email, phone_number, photo_url, role, cpf')
+            .eq('id', userId)
+            .maybeSingle();
 
         if (error) {
             errorMessage = 'Não foi possível carregar o perfil.';
@@ -261,8 +270,8 @@
             profile = {
                 id: user.id,
                 email: user.email,
-                full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-                avatar_url: user.user_metadata?.avatar_url || null
+                display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+                photo_url: user.user_metadata?.avatar_url || null
             };
         }
 
@@ -272,6 +281,7 @@
     }
 
     function openView(nextView) {
+        if (nextView === 'edit' && !isOwner) return;
         saveMessage = { text: '', type: '' };
         if (nextView === 'edit') syncFormFromProfile();
         view = nextView;
@@ -286,56 +296,56 @@
         event.preventDefault();
         saveMessage = { text: '', type: '' };
 
-        if (form.password && form.password !== form.passwordConfirm) {
-            saveMessage = { text: 'As senhas não coincidem.', type: 'error' };
+        if (!isOwner || !authUser?.id) {
+            saveMessage = { text: 'Você só pode editar o seu próprio perfil.', type: 'error' };
             return;
         }
 
-        if (form.password && form.password.length < 6) {
-            saveMessage = { text: 'A senha deve ter pelo menos 6 caracteres.', type: 'error' };
+        const display_name = form.displayName.trim();
+        const email = form.email.trim();
+
+        if (!display_name) {
+            saveMessage = { text: 'Informe o nome.', type: 'error' };
+            return;
+        }
+
+        if (!email) {
+            saveMessage = { text: 'Informe o e-mail.', type: 'error' };
             return;
         }
 
         saving = true;
 
-        const {
-            data: { user }
-        } = await supabase.auth.getUser();
-
-        if (!user || user.id !== userId) {
-            saveMessage = { text: 'Você só pode editar o seu próprio perfil.', type: 'error' };
-            saving = false;
-            return;
-        }
-
-        if (form.password) {
-            const { error: passwordError } = await supabase.auth.updateUser({ password: form.password });
-            if (passwordError) {
-                saveMessage = { text: passwordError.message, type: 'error' };
-                saving = false;
-                return;
-            }
-        }
-
-        const payload = {
-            id: userId,
-            full_name: form.fullName.trim(),
-            cpf: form.cpf.trim() || null,
-            phone: form.phone.trim() || null,
-            email: form.email.trim() || user.email,
-            updated_at: new Date().toISOString()
-        };
-
-        const { data, error } = await supabase.from('profiles').upsert(payload).select().maybeSingle();
+        const { data, error } = await supabase
+            .from('profiles')
+            .update({
+                display_name,
+                email,
+                phone_number: form.phone.trim() || null,
+                cpf: form.cpf.trim() || null,
+                photo_url: form.photoUrl.trim() || null
+            })
+            .eq('id', authUser.id)
+            .select('id, display_name, email, phone_number, photo_url, role, cpf')
+            .maybeSingle();
 
         if (error) {
-            saveMessage = { text: 'Não foi possível salvar as alterações.', type: 'error' };
+            console.error('Erro ao salvar perfil:', error);
+            saveMessage = { text: error.message || 'Não foi possível salvar as alterações.', type: 'error' };
             saving = false;
             return;
         }
 
-        profile = data ?? { ...profile, ...payload };
+        profile = data ?? {
+            ...profile,
+            display_name,
+            email,
+            phone_number: form.phone.trim() || null,
+            cpf: form.cpf.trim() || null,
+            photo_url: form.photoUrl.trim() || null
+        };
         syncFormFromProfile();
+        imgError = false;
         saveMessage = { text: 'Perfil atualizado com sucesso!', type: 'success' };
         saving = false;
         setTimeout(() => {
@@ -432,51 +442,58 @@
                             <Rating value={rating} count={reviewCount} size="sm" />
                         </div>
 
-                        <div class="mt-5 w-full space-y-3 border-t border-gray-100 pt-5">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex min-w-0 items-start gap-2">
-                                    <Mail class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                                    <span class="truncate text-sm text-gray-700">{email || '—'}</span>
+                        {#if isOwner}
+                            <div class="mt-5 w-full space-y-3 border-t border-gray-100 pt-5">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex min-w-0 items-start gap-2">
+                                        <Mail class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                                        <span class="truncate text-sm text-gray-700">{email || '—'}</span>
+                                    </div>
+                                    {#if emailVerified}
+                                        <span
+                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700"
+                                        >
+                                            <Check class="h-3 w-3" />
+                                            Validado
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                                        >
+                                            <AlertCircle class="h-3 w-3" />
+                                            Não validado
+                                        </span>
+                                    {/if}
                                 </div>
-                                {#if emailVerified}
-                                    <span
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700"
-                                    >
-                                        <Check class="h-3 w-3" />
-                                        Validado
-                                    </span>
-                                {:else}
-                                    <span
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
-                                    >
-                                        <AlertCircle class="h-3 w-3" />
-                                        Não validado
-                                    </span>
-                                {/if}
-                            </div>
 
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex min-w-0 items-start gap-2">
-                                    <Phone class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                                    <span class="truncate text-sm text-gray-700">{phone || 'Não informado'}</span>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex min-w-0 items-start gap-2">
+                                        <Phone class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                                        <span class="truncate text-sm text-gray-700">{phone || 'Não informado'}</span>
+                                    </div>
+                                    {#if phoneVerified}
+                                        <span
+                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700"
+                                        >
+                                            <Check class="h-3 w-3" />
+                                            Validado
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                                        >
+                                            <AlertCircle class="h-3 w-3" />
+                                            Não validado
+                                        </span>
+                                    {/if}
                                 </div>
-                                {#if phoneVerified}
-                                    <span
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700"
-                                    >
-                                        <Check class="h-3 w-3" />
-                                        Validado
-                                    </span>
-                                {:else}
-                                    <span
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
-                                    >
-                                        <AlertCircle class="h-3 w-3" />
-                                        Não validado
-                                    </span>
-                                {/if}
+
+                                <div class="flex items-start gap-2">
+                                    <IdCard class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                                    <span class="truncate text-sm text-gray-700">{cpf || 'CPF não informado'}</span>
+                                </div>
                             </div>
-                        </div>
+                        {/if}
                     </div>
                 </section>
 
@@ -503,43 +520,45 @@
                     </button>
                 </section>
 
-                <section class="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
-                            <SquarePen class="h-5 w-5 text-gray-600" />
+                {#if isOwner}
+                    <section class="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                                <SquarePen class="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">Editar perfil</h3>
+                                <p class="mt-0.5 text-sm text-gray-500">
+                                    Atualize nome, telefone e foto do seu perfil público.
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900">Editar perfil</h3>
-                            <p class="mt-0.5 text-sm text-gray-500">
-                                Atualize seus dados pessoais, contato e senha de acesso.
-                            </p>
-                        </div>
-                    </div>
+                        <button
+                            type="button"
+                            onclick={() => openView('edit')}
+                            class="mt-4 w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                        >
+                            Editar perfil
+                        </button>
+                    </section>
+
                     <button
                         type="button"
-                        onclick={() => openView('edit')}
-                        class="mt-4 w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                        onclick={() => openView('verification')}
+                        class="mt-4 flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-4 text-left shadow-sm transition-colors hover:border-green-300"
                     >
-                        Editar perfil
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50">
+                                <Check class="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Verificação e status</p>
+                                <p class="text-xs text-gray-500">Email, telefone e anunciante</p>
+                            </div>
+                        </div>
+                        <ChevronRight class="h-5 w-5 text-gray-400" />
                     </button>
-                </section>
-
-                <button
-                    type="button"
-                    onclick={() => openView('verification')}
-                    class="mt-4 flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-4 text-left shadow-sm transition-colors hover:border-green-300"
-                >
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50">
-                            <Check class="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-900">Verificação e status</p>
-                            <p class="text-xs text-gray-500">Email, telefone e anunciante</p>
-                        </div>
-                    </div>
-                    <ChevronRight class="h-5 w-5 text-gray-400" />
-                </button>
+                {/if}
             {:else if view === 'reviews'}
                 <section class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="mb-4 flex items-center justify-between gap-3">
@@ -555,7 +574,7 @@
                     <ReviewList
                         {reviews}
                         loading={reviewsLoading}
-                        showProductName={true}
+                        showProductName={false}
                         emptyTitle="Nenhuma avaliação recebida"
                         emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
                     />
@@ -672,7 +691,7 @@
                         Gerenciar certificados
                     </button>
                 </section>
-            {:else if view === 'edit'}
+            {:else if view === 'edit' && isOwner}
                 <form class="space-y-4" onsubmit={handleSaveProfile}>
                     {#if saveMessage.text}
                         <div
@@ -686,13 +705,12 @@
 
                     <div class="flex justify-center">
                         <div class="relative">
-                            
-                            {#if avatarUrl && !imgError}
+                            {#if (form.photoUrl || avatarUrl) && !imgError}
                                 <img
-                                    src={avatarUrl}
+                                    src={form.photoUrl || avatarUrl}
                                     alt={displayName}
                                     class="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md ring-2 ring-green-100"
-                                    onerror={() => imgError = true}
+                                    onerror={() => (imgError = true)}
                                 />
                             {:else}
                                 <div
@@ -709,16 +727,13 @@
                             </span>
                         </div>
                     </div>
-
                     <div>
-                        <label for="fullName" class="mb-1 block text-sm font-medium text-gray-700">
-                            Nome completo
-                        </label>
+                        <label for="displayName" class="mb-1 block text-sm font-medium text-gray-700">Nome</label>
                         <div class="relative">
                             <input
-                                id="fullName"
+                                id="displayName"
                                 type="text"
-                                bind:value={form.fullName}
+                                bind:value={form.displayName}
                                 required
                                 class="w-full rounded-xl border border-gray-200 py-3 pl-4 pr-11 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                             />
@@ -727,16 +742,17 @@
                     </div>
 
                     <div>
-                        <label for="cpf" class="mb-1 block text-sm font-medium text-gray-700">CPF</label>
+                        <label for="email" class="mb-1 block text-sm font-medium text-gray-700">E-mail</label>
                         <div class="relative">
                             <input
-                                id="cpf"
-                                type="text"
-                                bind:value={form.cpf}
-                                placeholder="000.000.000-00"
+                                id="email"
+                                type="email"
+                                bind:value={form.email}
+                                required
+                                autocomplete="email"
                                 class="w-full rounded-xl border border-gray-200 py-3 pl-4 pr-11 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                             />
-                            <IdCard class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                            <Mail class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                         </div>
                     </div>
 
@@ -748,6 +764,7 @@
                                 type="tel"
                                 bind:value={form.phone}
                                 placeholder="(00) 00000-0000"
+                                autocomplete="tel"
                                 class="w-full rounded-xl border border-gray-200 py-3 pl-4 pr-11 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                             />
                             <Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -755,48 +772,17 @@
                     </div>
 
                     <div>
-                        <label for="email" class="mb-1 block text-sm font-medium text-gray-700">Email</label>
+                        <label for="cpf" class="mb-1 block text-sm font-medium text-gray-700">CPF</label>
                         <div class="relative">
                             <input
-                                id="email"
-                                type="email"
-                                bind:value={form.email}
-                                class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-4 pr-11 text-sm text-gray-600 outline-none"
-                                readonly
-                            />
-                            <Mail class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="password" class="mb-1 block text-sm font-medium text-gray-700">Senha</label>
-                        <div class="relative">
-                            <input
-                                id="password"
-                                type="password"
-                                bind:value={form.password}
-                                placeholder="Nova senha (opcional)"
-                                autocomplete="new-password"
+                                id="cpf"
+                                type="text"
+                                bind:value={form.cpf}
+                                placeholder="000.000.000-00"
+                                inputmode="numeric"
                                 class="w-full rounded-xl border border-gray-200 py-3 pl-4 pr-11 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                             />
-                            <KeyRound class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="passwordConfirm" class="mb-1 block text-sm font-medium text-gray-700">
-                            Confirmar senha
-                        </label>
-                        <div class="relative">
-                            <input
-                                id="passwordConfirm"
-                                type="password"
-                                bind:value={form.passwordConfirm}
-                                placeholder="Repita a nova senha"
-                                autocomplete="new-password"
-                                class="w-full rounded-xl border border-gray-200 py-3 pl-4 pr-11 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                            />
-                            <Lock class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                            <IdCard class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                         </div>
                     </div>
 
