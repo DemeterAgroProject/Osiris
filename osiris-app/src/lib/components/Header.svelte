@@ -7,9 +7,7 @@
     
     function resolveDisplayName(profile, authUser) {
         return (
-            profile?.full_name ||
             profile?.display_name ||
-            profile?.name ||
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||

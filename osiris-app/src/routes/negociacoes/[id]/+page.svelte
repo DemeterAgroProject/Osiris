@@ -112,14 +112,14 @@
 
 	function counterpartyName() {
 		const profile = isProvider ? negotiation?.client : negotiation?.provider;
-		return profile?.display_name || profile?.full_name || 'Participante';
+		return profile?.display_name || 'Participante';
 	}
 
 	async function fetchProfileBrief(profileId) {
 		if (!profileId) return null;
 		const { data } = await supabase
 			.from('profiles')
-			.select('display_name, full_name, photo_url')
+			.select('display_name, photo_url')
 			.eq('id', profileId)
 			.maybeSingle();
 		return data;

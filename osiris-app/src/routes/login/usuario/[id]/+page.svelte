@@ -460,8 +460,8 @@
                                         <span
                                             class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
                                         >
-                                            <AlertCircle class="h-3 w-3" />
-                                            Não validado
+                                            <Check class="h-3 w-3" />
+                                            Validado
                                         </span>
                                     {/if}
                                 </div>
@@ -480,10 +480,10 @@
                                         </span>
                                     {:else}
                                         <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700"
                                         >
-                                            <AlertCircle class="h-3 w-3" />
-                                            Não validado
+                                            <Check class="h-3 w-3" />
+                                            Validado
                                         </span>
                                     {/if}
                                 </div>

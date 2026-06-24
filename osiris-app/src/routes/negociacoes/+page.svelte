@@ -113,7 +113,7 @@
 	function resolveCounterpartyName(row) {
 		const isProvider = authUserId === row.provider_id;
 		const profile = isProvider ? row.client : row.provider;
-		return profile?.display_name || profile?.full_name || (isProvider ? 'Cliente' : 'Anunciante');
+		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
 	}
 
 	function listingIcon(row) {
@@ -126,7 +126,7 @@
 		if (!profileId) return null;
 		const { data } = await supabase
 			.from('profiles')
-			.select('display_name, full_name, photo_url')
+			.select('display_name, photo_url')
 			.eq('id', profileId)
 			.maybeSingle();
 		return data;

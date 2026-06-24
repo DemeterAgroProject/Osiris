@@ -92,7 +92,7 @@
 		if (!profileId) return null;
 		const { data } = await supabase
 			.from('profiles')
-			.select('display_name, full_name')
+			.select('display_name')
 			.eq('id', profileId)
 			.maybeSingle();
 		return data;
@@ -278,8 +278,8 @@
 						<p class="mt-1 text-sm text-gray-500">
 							{isProvider ? 'Cliente' : 'Provedor'}:
 							{isProvider
-								? booking.client?.display_name || booking.client?.full_name
-								: booking.provider?.display_name || booking.provider?.full_name}
+								? booking.client?.display_name
+								: booking.provider?.display_name}
 						</p>
 					</div>
 					<span

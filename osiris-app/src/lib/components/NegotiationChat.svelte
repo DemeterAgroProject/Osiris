@@ -21,7 +21,7 @@
     const profileCache = new Map();
 
     function resolveSenderName(msg) {
-        return msg.sender?.display_name || msg.sender?.full_name || 'Participante';
+        return msg.sender?.display_name || 'Participante';
     }
 
     function isOwnMessage(msg) {
@@ -33,7 +33,7 @@
 
         const { data } = await supabase
             .from('profiles')
-            .select('display_name, full_name, photo_url')
+            .select('display_name, photo_url')
             .eq('id', senderId)
             .maybeSingle();
 

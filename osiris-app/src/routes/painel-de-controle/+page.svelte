@@ -5,7 +5,7 @@
     import BottomNav from '$lib/components/BottomNav.svelte';
     import { 
         TrendingUp, Eye, Package, Tractor, Briefcase, 
-        MessageCircle, PlusCircle, ArrowRight, Leaf, MessageSquare
+        MessageCircle, PlusCircle, ArrowRight, Leaf, MessageSquare, Calendar
     } from 'lucide-svelte';
 
     let loading = $state(true);
@@ -133,6 +133,19 @@
             <div>
                 <h2 class="text-base font-bold text-gray-900 mb-3">Ações Rápidas</h2>
                 <div class="space-y-3">
+                    <a href="/painel-de-controle/agenda" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-sky-300 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-sky-50 flex items-center justify-center">
+                                <Calendar class="h-5 w-5 text-sky-600" />
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">Agenda</p>
+                                <p class="text-xs text-gray-500">Propostas, negociações e operações</p>
+                            </div>
+                        </div>
+                        <ArrowRight class="h-5 w-5 text-gray-400" />
+                    </a>
+
                     <a href="/negociacoes" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-amber-300 transition-colors">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-lg bg-amber-50 flex items-center justify-center">

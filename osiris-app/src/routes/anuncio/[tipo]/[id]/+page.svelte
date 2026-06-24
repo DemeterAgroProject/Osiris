@@ -11,9 +11,7 @@
 
 	function resolveDisplayName(profile, authUser) {
 		return (
-			profile?.full_name ||
 			profile?.display_name ||
-			profile?.name ||
 			authUser?.user_metadata?.full_name ||
 			authUser?.user_metadata?.name ||
 			authUser?.email?.split('@')[0] ||
@@ -90,9 +88,7 @@
 			created_at,
 			reviewer:profiles!reviewer_id (
 				display_name,
-				photo_url,
-				full_name,
-				name
+				photo_url
 			)
 		`
 			)
@@ -121,9 +117,7 @@
 			product_id,
 			reviewer:profiles!reviewer_id (
 				display_name,
-				photo_url,
-				full_name,
-				name
+				photo_url
 			),
 			products (
 				name
@@ -187,10 +181,7 @@
 
 	function resolveSellerName(profile) {
 		return (
-			profile?.full_name ||
 			profile?.display_name ||
-			profile?.name ||
-			profile?.username ||
 			profile?.email ||
 			'Anunciante'
 		);
