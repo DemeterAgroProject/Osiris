@@ -3,6 +3,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
+	import FavoriteButton from '$lib/components/FavoriteButton.svelte';
 	import Rating from '$lib/components/Rating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
@@ -10,9 +11,7 @@
 
 	function resolveDisplayName(profile, authUser) {
 		return (
-			profile?.full_name ||
 			profile?.display_name ||
-			profile?.name ||
 			authUser?.user_metadata?.full_name ||
 			authUser?.user_metadata?.name ||
 			authUser?.email?.split('@')[0] ||
@@ -89,9 +88,7 @@
 			created_at,
 			reviewer:profiles!reviewer_id (
 				display_name,
-				photo_url,
-				full_name,
-				name
+				photo_url
 			)
 		`
 			)
@@ -120,9 +117,7 @@
 			product_id,
 			reviewer:profiles!reviewer_id (
 				display_name,
-				photo_url,
-				full_name,
-				name
+				photo_url
 			),
 			products (
 				name
@@ -186,10 +181,7 @@
 
 	function resolveSellerName(profile) {
 		return (
-			profile?.full_name ||
 			profile?.display_name ||
-			profile?.name ||
-			profile?.username ||
 			profile?.email ||
 			'Anunciante'
 		);
@@ -345,6 +337,34 @@
 			};
 
 			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
+		} else if (routeTipo === 'servico') {
+			const { data, error } = await supabase
+				.from('services')
+				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at')
+				.eq('id', routeId)
+				.maybeSingle();
+
+			if (error || !data) {
+				errorMessage = 'Serviço não encontrado.';
+				loading = false;
+				return;
+			}
+
+			item = {
+				type: 'servico',
+				serviceId: data.id,
+				title: data.title,
+				priceLabel: formatCurrency(data.price),
+				description: data.description || 'Serviço no marketplace Osiris.',
+				details: [
+					{ label: 'Tipo', value: data.service_type || 'Não informado' },
+					{ label: 'Modelo de preço', value: data.pricing_model || 'Não informado' },
+					{ label: 'Local', value: data.location || 'Não informado' },
+					{ label: 'Status', value: data.status || 'Não informado' }
+				]
+			};
+
+			await loadSeller(data.owner_id);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';
 		}
@@ -379,10 +399,16 @@
 			<section class="mt-4 rounded-t-3xl bg-white p-4 shadow-sm">
 				<div class="aspect-[16/10] rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50"></div>
 
-				<div class="mt-4">
-					<p class="text-3xl font-extrabold text-green-700">{item.priceLabel}</p>
-					<h1 class="mt-2 text-3xl font-bold text-gray-900">{item.title}</h1>
-					<p class="mt-3 text-base leading-7 text-gray-600">{item.description}</p>
+				<div class="mt-4 flex items-start justify-between gap-3">
+					<div class="min-w-0 flex-1">
+						<p class="text-3xl font-extrabold text-green-700">{item.priceLabel}</p>
+						<h1 class="mt-2 text-3xl font-bold text-gray-900">{item.title}</h1>
+						<p class="mt-3 text-base leading-7 text-gray-600">{item.description}</p>
+					</div>
+					<FavoriteButton
+						productId={item.productId ?? null}
+						serviceId={item.serviceId ?? null}
+					/>
 				</div>
 
 				<div class="mt-6 overflow-hidden rounded-2xl border border-gray-200">
@@ -400,7 +426,7 @@
 				</div>
 
 				<a
-					href={seller.id ? `/login/usuario/${seller.id}` : '#'}
+					href={seller.id ? `/perfil/${seller.id}` : '#'}
 					class="mt-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-300"
 				>
 					{#if seller.avatarUrl}
@@ -422,6 +448,14 @@
 						/>
 					</div>
 				</a>
+
+				<button
+					onclick={() => (showNegotiationModal = true)}
+					class="mt-6 w-full rounded-xl bg-green-700 px-4 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-800"
+				>
+					Negociar
+				</button>
+
 				<div class="mt-8 overflow-hidden rounded-2xl border border-gray-200">
 					<div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
 						<h2 class="text-lg font-semibold text-gray-900">Avaliações do anúncio</h2>
@@ -442,14 +476,6 @@
 						/>
 					</div>
 				</div>
-
-
-				<button
-					onclick={() => (showNegotiationModal = true)}
-					class="mt-6 w-full rounded-xl bg-green-700 px-4 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-800"
-				>
-					Negociar
-				</button>
 			</section>
 		{/if}
 	</main>
@@ -460,6 +486,9 @@
 		priceLabel={item?.priceLabel || 'Preço a combinar'}
 		sellerName={seller.name}
 		type={item?.type || 'produto'}
+		providerId={seller.id}
+		productId={item?.productId ?? null}
+		serviceId={item?.serviceId ?? null}
 	/>
 
 	<BottomNav />

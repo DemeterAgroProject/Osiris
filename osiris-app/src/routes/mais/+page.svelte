@@ -8,6 +8,7 @@
         LayoutDashboard,
         Archive,
         MessageSquare,
+        Heart,
         User,
         Megaphone,
         Tractor,
@@ -28,9 +29,7 @@
 
     function resolveDisplayName(profile, authUser) {
         return (
-            profile?.full_name ||
             profile?.display_name ||
-            profile?.name ||
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||
@@ -82,13 +81,8 @@
             ? [
                   { icon: LayoutDashboard, label: 'Painel de controle', href: '/painel-de-controle' },
                   { icon: Archive, label: 'Meu inventário', href: '/inventario' },
-                  {
-                      icon: MessageSquare,
-                      label: 'Negociações',
-                      href: null,
-                      badge: 'Em breve',
-                      badgeTone: 'muted'
-                  },
+                  { icon: Heart, label: 'Favoritos', href: '/favoritos' },
+                  { icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
                   { icon: User, label: 'Meu perfil', href: profileHref },
                   { icon: Megaphone, label: 'Anunciar produto ou máquina', href: '/anunciar' }
               ]
