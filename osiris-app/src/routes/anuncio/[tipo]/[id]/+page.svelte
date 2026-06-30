@@ -40,14 +40,12 @@
 		);
 	}
 
-	function mapReviewRow(row, machineryNamesById = {}) {
+	function mapReviewRow(row, productNamesById = {}) {
 		const reviewer = row.reviewer ?? row.profiles ?? null;
-		const products = row.products ?? null;
-		const productId = row.product_id;
+		const productId = row.booking_product_id ?? null;
 		const productName =
-			products?.name ||
-			(productId && machineryNamesById[String(productId)]) ||
 			row.product_name ||
+			(productId && productNamesById[String(productId)]) ||
 			null;
 
 		const reviewerName = resolveDisplayName(reviewer, null);
@@ -65,6 +63,102 @@
 		};
 	}
 
+	async function enrichReviewRows(rows) {
+		const list = rows ?? [];
+		if (!list.length) return [];
+
+		const reviewerIds = [...new Set(list.map((row) => row.reviewer_id).filter(Boolean))];
+		const bookingIds = [...new Set(list.map((row) => row.booking_id).filter(Boolean))];
+
+		let profilesById = {};
+		if (reviewerIds.length) {
+			const { data: profiles } = await supabase
+				.from('profiles')
+				.select('id, display_name, photo_url')
+				.in('id', reviewerIds);
+
+			profilesById = Object.fromEntries((profiles ?? []).map((profile) => [profile.id, profile]));
+		}
+
+		let productNamesById = {};
+		let productIdByBookingId = {};
+		if (bookingIds.length) {
+			const { data: bookings } = await supabase
+				.from('bookings')
+				.select('id, product_id, products(name)')
+				.in('id', bookingIds);
+
+			for (const booking of bookings ?? []) {
+				const product = Array.isArray(booking.products) ? booking.products[0] : booking.products;
+				if (booking.product_id) {
+					productIdByBookingId[booking.id] = booking.product_id;
+					if (product?.name) {
+						productNamesById[String(booking.product_id)] = product.name;
+					}
+				}
+			}
+		}
+
+		return list.map((row) =>
+			mapReviewRow(
+				{
+					...row,
+					reviewer: profilesById[row.reviewer_id] ?? null,
+					booking_product_id: productIdByBookingId[row.booking_id] ?? null
+				},
+				productNamesById
+			)
+		);
+	}
+
+	async function fetchReviewsForProduct(productId) {
+		const { data: bookings, error: bookingsError } = await supabase
+			.from('bookings')
+			.select('id')
+			.eq('product_id', productId);
+
+		if (bookingsError) {
+			return { reviews: [], error: bookingsError };
+		}
+
+		const bookingIds = (bookings ?? []).map((booking) => booking.id);
+		if (!bookingIds.length) {
+			return { reviews: [], error: null };
+		}
+
+		const { data, error } = await supabase
+			.from('reviews')
+			.select('id, rating, comment, created_at, booking_id, reviewer_id')
+			.in('booking_id', bookingIds)
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			return { reviews: [], error };
+		}
+
+		const reviews = await enrichReviewRows(data);
+		return { reviews, error: null };
+	}
+
+	async function fetchReviewsForUser(revieweeId) {
+		if (!revieweeId) {
+			return { reviews: [], error: null };
+		}
+
+		const { data, error } = await supabase
+			.from('reviews')
+			.select('id, rating, comment, created_at, booking_id, reviewer_id')
+			.eq('reviewee_id', revieweeId)
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			return { reviews: [], error };
+		}
+
+		const reviews = await enrichReviewRows(data);
+		return { reviews, error: null };
+	}
+
 	function computeReviewStats(reviews) {
 		if (!reviews?.length) {
 			return { average: 0, count: 0 };
@@ -74,86 +168,6 @@
 		return {
 			average: sum / reviews.length,
 			count: reviews.length
-		};
-	}
-
-	async function fetchReviewsForProduct(productId) {
-		const { data, error } = await supabase
-			.from('reviews')
-			.select(
-				`
-			id,
-			rating,
-			comment,
-			created_at,
-			reviewer:profiles!reviewer_id (
-				display_name,
-				photo_url
-			)
-		`
-			)
-			.eq('product_id', productId)
-			.order('created_at', { ascending: false });
-
-		if (error) {
-			return { reviews: [], error };
-		}
-
-		return {
-			reviews: (data ?? []).map((row) => mapReviewRow(row)),
-			error: null
-		};
-	}
-
-	async function fetchReviewsForUser(revieweeId) {
-		const { data, error } = await supabase
-			.from('reviews')
-			.select(
-				`
-			id,
-			rating,
-			comment,
-			created_at,
-			product_id,
-			reviewer:profiles!reviewer_id (
-				display_name,
-				photo_url
-			),
-			products (
-				name
-			)
-		`
-			)
-			.eq('reviewee_id', revieweeId)
-			.order('created_at', { ascending: false });
-
-		if (error) {
-			return { reviews: [], error };
-		}
-
-		const rows = data ?? [];
-		const missingNameIds = [
-			...new Set(
-				rows
-					.filter((row) => !row.products?.name && row.product_id)
-					.map((row) => String(row.product_id))
-			)
-		];
-
-		let machineryNamesById = {};
-
-		if (missingNameIds.length > 0) {
-			const { data: machinery } = await supabase
-				.from('agricultural_machinery')
-				.select('id, name')
-				.in('id', missingNameIds);
-
-			machineryNamesById = Object.fromEntries((machinery ?? []).map((item) => [item.id, item.name]));
-		}
-
-		return {
-			reviews: rows.map((row) => mapReviewRow(row, machineryNamesById)),
-			error: null
 		};
 	}
 
@@ -168,6 +182,7 @@
 	let reviews = $state([]);
 	let reviewsLoading = $state(false);
 	let sellerReviewStats = $state({ average: 0, count: 0 });
+	let galleryImages = $state([]);
 
 	const routeTipo = $derived(page.params.tipo);
 	const routeId = $derived(page.params.id);
@@ -229,17 +244,40 @@
 		const { reviews: data, error } = await fetchReviewsForProduct(productId);
 		reviews = data;
 
-		if (error) {
+		if (error && error.code !== 'PGRST116') {
 			console.error('Erro ao carregar avaliações do anúncio:', error.message);
 		}
 
 		reviewsLoading = false;
 	}
 
+	async function loadProductGallery(productId, legacyImageUrl = null) {
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.eq('product_id', productId)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar imagens do produto:', error);
+		}
+
+		const urls = (data ?? []).map((row) => row.url).filter(Boolean);
+
+		if (urls.length) {
+			galleryImages = urls;
+			return;
+		}
+
+		galleryImages = legacyImageUrl ? [legacyImageUrl] : [];
+	}
+
 	async function loadItemDetails() {
 		loading = true;
 		errorMessage = '';
 		item = null;
+		galleryImages = [];
 		seller = { name: 'Anunciante', avatarUrl: null, id: null };
 		reviews = [];
 		sellerReviewStats = { average: 0, count: 0 };
@@ -253,7 +291,7 @@
 		if (routeTipo === 'produto') {
 			const { data, error } = await supabase
 				.from('products')
-				.select('id, name, price, category, quantity, stock_unit, status, owner_id, created_at')
+				.select('id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description')
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -268,7 +306,7 @@
 				productId: data.id,
 				title: data.name,
 				priceLabel: formatCurrency(data.price),
-				description: 'Anúncio público de produto no marketplace Osiris.',
+				description: data.description || 'Anúncio público de produto no marketplace Osiris.',
 				details: [
 					{ label: 'Categoria', value: data.category || 'Não informado' },
 					{ label: 'Quantidade', value: data.quantity ?? 'Não informado' },
@@ -277,7 +315,11 @@
 				]
 			};
 
-			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
+			await Promise.all([
+				loadSeller(data.owner_id),
+				loadProductReviews(data.id),
+				loadProductGallery(data.id)
+			]);
 		} else if (routeTipo === 'maquinario') {
 			const { data, error } = await supabase
 				.from('products')
@@ -336,7 +378,11 @@
 				]
 			};
 
-			await Promise.all([loadSeller(data.owner_id), loadProductReviews(data.id)]);
+			await Promise.all([
+				loadSeller(data.owner_id),
+				loadProductReviews(data.id),
+				loadProductGallery(data.id)
+			]);
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
@@ -397,7 +443,27 @@
 			<div class="mx-4 mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
 		{:else if item}
 			<section class="mt-4 rounded-t-3xl bg-white p-4 shadow-sm">
-				<div class="aspect-[16/10] rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50"></div>
+				{#if galleryImages.length > 0}
+					{#if galleryImages.length === 1}
+						<img
+							src={galleryImages[0]}
+							alt={item.title}
+							class="aspect-[16/10] w-full rounded-2xl object-cover"
+						/>
+					{:else}
+						<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl">
+							{#each galleryImages as imageUrl, index (imageUrl + index)}
+								<img
+									src={imageUrl}
+									alt={`${item.title} — imagem ${index + 1}`}
+									class="aspect-[16/10] w-[85%] shrink-0 snap-center rounded-2xl object-cover"
+								/>
+							{/each}
+						</div>
+					{/if}
+				{:else}
+					<div class="aspect-[16/10] rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50"></div>
+				{/if}
 
 				<div class="mt-4 flex items-start justify-between gap-3">
 					<div class="min-w-0 flex-1">

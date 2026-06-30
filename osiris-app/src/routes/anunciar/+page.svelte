@@ -5,6 +5,42 @@
     import { ChevronRight, ChevronLeft, Tractor, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
+    import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+
+    function createEmptyImageRow(isCover = false) {
+        return { id: null, url: '', is_cover: isCover, removed: false };
+    }
+
+    function isValidImageUrl(value) {
+        const trimmed = value?.trim();
+        if (!trimmed) return false;
+        try {
+            const parsed = new URL(trimmed);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    }
+
+    function collectImageUrls(images) {
+        return (images ?? [])
+            .filter((img) => !img.removed && isValidImageUrl(img.url))
+            .map((img) => img.url.trim());
+    }
+
+    async function insertProductImages(productId, urls) {
+        const cleaned = (urls ?? []).map((url) => String(url).trim()).filter(isValidImageUrl);
+        if (!cleaned.length) return null;
+
+        const rows = cleaned.map((url, index) => ({
+            product_id: productId,
+            url,
+            is_cover: index === 0
+        }));
+
+        const { error } = await supabase.from('product_images').insert(rows);
+        return error;
+    }
 
     // Step management
     let currentStep = $state(0);
@@ -35,7 +71,10 @@
 
             // Campos específicos de Produto/Insumo
             quantity: 1,
-            stock_unit: 'Sacas'
+            stock_unit: 'Sacas',
+
+            // Imagens (URLs) — product_images
+            images: [createEmptyImageRow(true)]
     });
 
     onMount(async () => {
@@ -83,6 +122,28 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     }
 
+    function formatSaveError(error) {
+        if (error?.code === '23505' && String(error?.message ?? '').includes('serial_number')) {
+            return 'Este número de série já está cadastrado. Informe outro ou deixe o campo em branco.';
+        }
+        if (
+            (error?.code === '42501' || error?.status === 403) &&
+            String(error?.message ?? '').includes('product_images')
+        ) {
+            return 'Não foi possível salvar as imagens. Execute o SQL em supabase/product_images_rls.sql no Supabase (SQL Editor).';
+        }
+        return 'Ocorreu um erro ao publicar o anúncio. Tente novamente.';
+    }
+
+    async function rollbackMachineryAd(productId) {
+        await supabase.from('agricultural_machinery').delete().eq('product_id', productId);
+        await supabase.from('products').delete().eq('id', productId);
+    }
+
+    async function rollbackProductAd(productId) {
+        await supabase.from('products').delete().eq('id', productId);
+    }
+
     async function handleSubmit() {
         loading = true;
         message = { text: '', type: '' };
@@ -123,29 +184,47 @@
                         brand_id: form.brand_id,
                         type_id: form.type_id,
                         model: form.model,
-						serial_number: form.serial_number,
+                        serial_number: form.serial_number?.trim() || null,
                         manufacture_year: parseInt(form.manufacture_year),
                         current_horimeter: parseFloat(form.current_horimeter)
                     });
 
-                if (machineryError) throw machineryError;
+                if (machineryError) {
+                    await supabase.from('products').delete().eq('id', baseProduct.id);
+                    throw machineryError;
+                }
+
+                const imageUrls = collectImageUrls(form.images);
+                const imageError = await insertProductImages(baseProduct.id, imageUrls);
+                if (imageError) {
+                    await rollbackMachineryAd(baseProduct.id);
+                    throw imageError;
+                }
 
             } else if (form.category === 'produto') {
-                // Se for insumo/semente, salva direto na tabela base
-                const { error: productError } = await supabase
+                const { data: baseProduct, error: productError } = await supabase
                     .from('products')
                     .insert({
                         owner_id: user.id,
                         name: form.name,
                         description: form.description,
                         price: form.price,
-                        category: form.product_category, // Usa a categoria que o usuário escolheu no select
-                        quantity: form.quantity, 
+                        category: form.product_category,
+                        quantity: form.quantity,
                         stock_unit: form.stock_unit,
                         status: 'ativo'
-                    });
+                    })
+                    .select('id')
+                    .single();
                 
                 if (productError) throw productError;
+
+                const imageUrls = collectImageUrls(form.images);
+                const imageError = await insertProductImages(baseProduct.id, imageUrls);
+                if (imageError) {
+                    await rollbackProductAd(baseProduct.id);
+                    throw imageError;
+                }
             }
 
             message = { text: 'Anúncio publicado com sucesso no Osíris!', type: 'success' };
@@ -153,7 +232,7 @@
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            message = { text: 'Ocorreu um erro ao publicar o anúncio. Tente novamente.', type: 'error' };
+            message = { text: formatSaveError(error), type: 'error' };
         } finally {
             loading = false;
         }
@@ -310,6 +389,8 @@
                             </div>
                         </div>
                     {/if}
+
+                    <ProductImageUrlsEditor bind:images={form.images} />
                 </div>
             </div>
 

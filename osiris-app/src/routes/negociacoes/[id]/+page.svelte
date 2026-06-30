@@ -56,6 +56,39 @@
 		return negotiation?.products?.name || negotiation?.services?.title || 'Anúncio';
 	}
 
+	function listingHref(negotiation) {
+		if (negotiation?.service_id) return `/anuncio/servico/${negotiation.service_id}`;
+		if (negotiation?.product_id) {
+			return negotiation.products?.category === 'Maquinário'
+				? `/anuncio/maquinario/${negotiation.product_id}`
+				: `/anuncio/produto/${negotiation.product_id}`;
+		}
+		return null;
+	}
+
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	async function fetchProductCoverUrl(productId) {
+		if (!productId) return null;
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('url, is_cover, created_at')
+			.eq('product_id', productId)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar imagens do anúncio:', error);
+			return null;
+		}
+
+		return pickCoverImage(data ?? []);
+	}
+
 	function isNegotiationOpen(status) {
 		return status === 'solicitada' || status === 'em_negociacao';
 	}
@@ -115,6 +148,11 @@
 		return profile?.display_name || 'Participante';
 	}
 
+	function counterpartyPhoto() {
+		const profile = isProvider ? negotiation?.client : negotiation?.provider;
+		return profile?.photo_url || null;
+	}
+
 	async function fetchProfileBrief(profileId) {
 		if (!profileId) return null;
 		const { data } = await supabase
@@ -126,7 +164,7 @@
 	}
 
 	async function enrichNegotiation(row) {
-		const [products, services, client, provider] = await Promise.all([
+		const [products, services, client, provider, coverUrl] = await Promise.all([
 			row.product_id
 				? supabase
 						.from('products')
@@ -144,10 +182,11 @@
 						.then((r) => r.data)
 				: null,
 			fetchProfileBrief(row.client_id),
-			fetchProfileBrief(row.provider_id)
+			fetchProfileBrief(row.provider_id),
+			fetchProductCoverUrl(row.product_id)
 		]);
 
-		return { ...row, products, services, client, provider };
+		return { ...row, products, services, client, provider, coverUrl };
 	}
 
 	async function loadNegotiation() {
@@ -382,12 +421,37 @@
 			<div class="mt-4 grid gap-6 md:grid-cols-2 md:items-start">
 				<div class="space-y-4">
 					<div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+						{#if negotiation.coverUrl}
+							<img
+								src={negotiation.coverUrl}
+								alt={resolveListingTitle(negotiation)}
+								class="mb-4 aspect-[16/10] w-full rounded-xl object-cover"
+							/>
+						{/if}
 						<div class="flex items-start justify-between gap-3">
-							<div>
-								<h1 class="text-xl font-bold text-gray-900">{resolveListingTitle(negotiation)}</h1>
-								<p class="mt-1 text-sm text-gray-500">
-									{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
-								</p>
+							<div class="flex min-w-0 items-start gap-3">
+								{#if counterpartyPhoto()}
+									<img
+										src={counterpartyPhoto()}
+										alt={counterpartyName()}
+										class="h-10 w-10 shrink-0 rounded-full object-cover"
+									/>
+								{/if}
+								<div class="min-w-0">
+									{#if listingHref(negotiation)}
+										<a
+											href={listingHref(negotiation)}
+											class="text-xl font-bold text-gray-900 hover:text-green-700"
+										>
+											{resolveListingTitle(negotiation)}
+										</a>
+									{:else}
+										<h1 class="text-xl font-bold text-gray-900">{resolveListingTitle(negotiation)}</h1>
+									{/if}
+									<p class="mt-1 text-sm text-gray-500">
+										{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
+									</p>
+								</div>
 							</div>
 							<span
 								class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {statusBadgeClass(

@@ -73,8 +73,111 @@
 		}
 	}
 
-	function resolveListingTitle(negotiation) {
-		return negotiation?.products?.name || negotiation?.services?.title || 'Anúncio';
+	function resolveListingTitle(row) {
+		return row?.products?.name || row?.services?.title || 'Anúncio';
+	}
+
+	function listingHref(row) {
+		if (row?.service_id) return `/anuncio/servico/${row.service_id}`;
+		if (row?.product_id) {
+			return row.products?.category === 'Maquinário'
+				? `/anuncio/maquinario/${row.product_id}`
+				: `/anuncio/produto/${row.product_id}`;
+		}
+		return null;
+	}
+
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	function coverUrlFromMap(imagesByProductId, productId) {
+		const images = imagesByProductId.get(productId) ?? [];
+		return pickCoverImage(images);
+	}
+
+	async function fetchProductImagesByProductIds(productIds) {
+		const map = new Map();
+		const uniqueIds = [...new Set((productIds ?? []).filter(Boolean))];
+		if (!uniqueIds.length) return map;
+
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.in('product_id', uniqueIds)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar product_images:', error);
+			return map;
+		}
+
+		for (const row of data ?? []) {
+			if (!map.has(row.product_id)) map.set(row.product_id, []);
+			map.get(row.product_id).push(row);
+		}
+
+		return map;
+	}
+
+	async function fetchMapByIds(table, ids, select) {
+		const uniqueIds = [...new Set((ids ?? []).filter(Boolean))];
+		if (!uniqueIds.length) return new Map();
+
+		const { data, error } = await supabase.from(table).select(select).in('id', uniqueIds);
+		if (error) {
+			console.error(`Erro ao carregar ${table}:`, error);
+			return new Map();
+		}
+
+		return new Map((data ?? []).map((row) => [row.id, row]));
+	}
+
+	async function enrichNegotiations(rows) {
+		const productIds = rows.map((row) => row.product_id);
+		const serviceIds = rows.map((row) => row.service_id);
+		const profileIds = rows.flatMap((row) => [row.client_id, row.provider_id]);
+
+		const [productsMap, servicesMap, profilesMap, imagesMap] = await Promise.all([
+			fetchMapByIds('products', productIds, 'id, name, category'),
+			fetchMapByIds('services', serviceIds, 'id, title'),
+			fetchMapByIds('profiles', profileIds, 'id, display_name, photo_url'),
+			fetchProductImagesByProductIds(productIds)
+		]);
+
+		return rows.map((row) => ({
+			...row,
+			products: row.product_id ? productsMap.get(row.product_id) ?? null : null,
+			services: row.service_id ? servicesMap.get(row.service_id) ?? null : null,
+			client: row.client_id ? profilesMap.get(row.client_id) ?? null : null,
+			provider: row.provider_id ? profilesMap.get(row.provider_id) ?? null : null,
+			coverUrl: row.product_id ? coverUrlFromMap(imagesMap, row.product_id) : null
+		}));
+	}
+
+	async function enrichBookings(rows) {
+		const productIds = rows.map((row) => row.product_id);
+		const serviceIds = rows.map((row) => row.service_id);
+		const profileIds = rows.flatMap((row) => [row.client_id, row.provider_id]);
+
+		const [productsMap, servicesMap, profilesMap, imagesMap] = await Promise.all([
+			fetchMapByIds('products', productIds, 'id, name, category'),
+			fetchMapByIds('services', serviceIds, 'id, title'),
+			fetchMapByIds('profiles', profileIds, 'id, display_name, photo_url'),
+			fetchProductImagesByProductIds(productIds)
+		]);
+
+		return rows.map((row) => ({
+			...row,
+			products: row.product_id ? productsMap.get(row.product_id) ?? null : null,
+			services: row.service_id ? servicesMap.get(row.service_id) ?? null : null,
+			client: row.client_id ? profilesMap.get(row.client_id) ?? null : null,
+			provider: row.provider_id ? profilesMap.get(row.provider_id) ?? null : null,
+			coverUrl: row.product_id ? coverUrlFromMap(imagesMap, row.product_id) : null
+		}));
 	}
 
 	function isNegotiationOpen(status) {
@@ -97,6 +200,15 @@
 	const activeBookings = $derived(
 		bookings.filter((b) => !['finalizada', 'cancelado', 'bloqueado_prestador'].includes(b.status))
 	);
+	const closedBookings = $derived(
+		bookings.filter((b) => ['finalizada', 'cancelado', 'bloqueado_prestador'].includes(b.status))
+	);
+
+	function resolveBookingCounterparty(booking) {
+		const isProvider = authUserId === booking.provider_id;
+		const profile = isProvider ? booking.client : booking.provider;
+		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
+	}
 
 	function statusBadgeClass(tone) {
 		const map = {
@@ -122,64 +234,6 @@
 		return Package;
 	}
 
-	async function fetchProfileBrief(profileId) {
-		if (!profileId) return null;
-		const { data } = await supabase
-			.from('profiles')
-			.select('display_name, photo_url')
-			.eq('id', profileId)
-			.maybeSingle();
-		return data;
-	}
-
-	async function enrichNegotiationRow(row) {
-		const [products, services, client, provider] = await Promise.all([
-			row.product_id
-				? supabase
-						.from('products')
-						.select('name, category')
-						.eq('id', row.product_id)
-						.maybeSingle()
-						.then((r) => r.data)
-				: null,
-			row.service_id
-				? supabase
-						.from('services')
-						.select('title')
-						.eq('id', row.service_id)
-						.maybeSingle()
-						.then((r) => r.data)
-				: null,
-			fetchProfileBrief(row.client_id),
-			fetchProfileBrief(row.provider_id)
-		]);
-
-		return { ...row, products, services, client, provider };
-	}
-
-	async function enrichBookingRow(row) {
-		const [products, services] = await Promise.all([
-			row.product_id
-				? supabase
-						.from('products')
-						.select('name')
-						.eq('id', row.product_id)
-						.maybeSingle()
-						.then((r) => r.data)
-				: null,
-			row.service_id
-				? supabase
-						.from('services')
-						.select('title')
-						.eq('id', row.service_id)
-						.maybeSingle()
-						.then((r) => r.data)
-				: null
-		]);
-
-		return { ...row, products, services };
-	}
-
 	async function loadData() {
 		loading = true;
 		errorMessage = '';
@@ -203,7 +257,9 @@
 				.order('updated_at', { ascending: false }),
 			supabase
 				.from('bookings')
-				.select('id, status, start_date, end_date, total_price, created_at, product_id, service_id')
+				.select(
+					'id, status, start_date, end_date, total_price, created_at, product_id, service_id, client_id, provider_id'
+				)
 				.or(`client_id.eq.${user.id},provider_id.eq.${user.id}`)
 				.order('created_at', { ascending: false })
 		]);
@@ -214,15 +270,17 @@
 				'Não foi possível carregar as negociações. Verifique as políticas RLS de leitura (SELECT) no Supabase.';
 			negotiations = [];
 		} else {
-			const rows = negRes.data ?? [];
-			negotiations = await Promise.all(rows.map(enrichNegotiationRow));
+			negotiations = await enrichNegotiations(negRes.data ?? []);
 		}
 
 		if (bookRes.error) {
 			console.error('Erro ao listar operações:', bookRes.error);
+			if (!errorMessage) {
+				errorMessage = 'Não foi possível carregar as operações.';
+			}
+			bookings = [];
 		} else {
-			const rows = bookRes.data ?? [];
-			bookings = await Promise.all(rows.map(enrichBookingRow));
+			bookings = await enrichBookings(bookRes.data ?? []);
 		}
 
 		loading = false;
@@ -295,9 +353,13 @@
 								class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-green-200"
 							>
 								<div
-									class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50"
+									class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-green-50"
 								>
-									<Icon class="h-5 w-5 text-green-700" />
+									{#if row.coverUrl}
+										<img src={row.coverUrl} alt="" class="h-full w-full object-cover" />
+									{:else}
+										<Icon class="h-5 w-5 text-green-700" />
+									{/if}
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-semibold text-gray-900">{resolveListingTitle(row)}</p>
@@ -308,6 +370,11 @@
 									<p class="mt-0.5 text-sm font-medium text-green-700">
 										{formatCurrency(row.proposed_price)}
 									</p>
+									{#if row.proposed_start_date}
+										<p class="mt-0.5 text-xs text-gray-400">
+											{formatDbDate(row.proposed_start_date)} — {formatDbDate(row.proposed_end_date)}
+										</p>
+									{/if}
 								</div>
 								<div class="flex shrink-0 flex-col items-end gap-1">
 									<span
@@ -362,15 +429,30 @@
 				</div>
 			</section>
 		{:else}
-			<section class="mt-6 space-y-2">
+			<section class="mt-6 space-y-6">
+				<div class="space-y-2">
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Ativas</h2>
 				{#each activeBookings as booking (booking.id)}
+					{@const Icon = listingIcon(booking)}
 					<a
 						href="/operacoes/{booking.id}"
 						class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:border-green-200"
 					>
+						<div
+							class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-green-50"
+						>
+							{#if booking.coverUrl}
+								<img src={booking.coverUrl} alt="" class="h-full w-full object-cover" />
+							{:else}
+								<Icon class="h-5 w-5 text-green-700" />
+							{/if}
+						</div>
 						<div class="min-w-0 flex-1">
 							<p class="truncate font-semibold text-gray-900">
-								{booking.products?.name || booking.services?.title || 'Operação'}
+								{resolveListingTitle(booking)}
+							</p>
+							<p class="text-xs text-gray-500">
+								{resolveBookingCounterparty(booking)}
 							</p>
 							<p class="text-xs text-gray-500">
 								{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
@@ -380,7 +462,7 @@
 							</p>
 						</div>
 						<span
-							class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
+							class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
 								bookingStatusTone(booking.status)
 							)}"
 						>
@@ -397,6 +479,34 @@
 						</p>
 					</div>
 				{/each}
+				</div>
+
+				{#if closedBookings.length}
+					<div class="space-y-2">
+						<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Encerradas</h2>
+						{#each closedBookings as booking (booking.id)}
+							<a
+								href="/operacoes/{booking.id}"
+								class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 opacity-90 shadow-sm"
+							>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-semibold text-gray-900">{resolveListingTitle(booking)}</p>
+									<p class="text-xs text-gray-500">{resolveBookingCounterparty(booking)}</p>
+									<p class="text-xs text-gray-500">
+										{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
+									</p>
+								</div>
+								<span
+									class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
+										bookingStatusTone(booking.status)
+									)}"
+								>
+									{bookingStatusLabel(booking.status)}
+								</span>
+							</a>
+						{/each}
+					</div>
+				{/if}
 			</section>
 		{/if}
 	</main>

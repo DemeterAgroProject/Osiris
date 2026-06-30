@@ -18,6 +18,49 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	function resolveProductImageUrl(images = [], legacyImageUrl = null) {
+		const fromGallery = pickCoverImage(images);
+		if (fromGallery) return fromGallery;
+		const legacy = legacyImageUrl?.trim?.() ?? legacyImageUrl;
+		return legacy || null;
+	}
+
+	function coverUrlFromMap(imagesByProductId, productId, legacyImageUrl = null) {
+		const images = imagesByProductId.get(productId) ?? [];
+		return resolveProductImageUrl(images, legacyImageUrl);
+	}
+
+	async function fetchProductImagesByProductIds(productIds) {
+		const map = new Map();
+		if (!productIds?.length) return map;
+
+		const uniqueIds = [...new Set(productIds.filter(Boolean))];
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.in('product_id', uniqueIds)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar product_images:', error);
+			return map;
+		}
+
+		for (const row of data ?? []) {
+			if (!map.has(row.product_id)) map.set(row.product_id, []);
+			map.get(row.product_id).push(row);
+		}
+
+		return map;
+	}
+
 	function isActiveStatus(status) {
 		const normalized = (status ?? '').toString().toLowerCase();
 		return normalized === 'ativo';
@@ -86,6 +129,7 @@
 	let activeTab = $state('maquinarios');
 	let searchQuery = $state('');
 	let openMenu = $state(null);
+	let menuOpensUp = $state(false);
 
 	let loading = $state(true);
 	let statusMessage = $state({ text: '', type: '' });
@@ -169,8 +213,17 @@
 			maquinarios = [];
 			produtos = [];
 		} else if (allAds) {
-			maquinarios = allAds.filter((ad) => ad.category === 'Maquinário');
-			produtos = allAds.filter((ad) => ad.category !== 'Maquinário');
+			const imagesByProductId = await fetchProductImagesByProductIds(
+				allAds.map((ad) => ad.id)
+			);
+
+			const enrich = (ad) => ({
+				...ad,
+				coverUrl: coverUrlFromMap(imagesByProductId, ad.id)
+			});
+
+			maquinarios = allAds.filter((ad) => ad.category === 'Maquinário').map(enrich);
+			produtos = allAds.filter((ad) => ad.category !== 'Maquinário').map(enrich);
 		}
 
 		loading = false;
@@ -202,6 +255,10 @@
 	function getMachineryTypeName(item) {
 		const machinery = getMachineryFromProduct(item);
 		return machinery?.machinery_types?.name || 'Máquina';
+	}
+
+	function getAdCoverUrl(item) {
+		return item?.coverUrl ?? null;
 	}
 
 	function getAdHref(item) {
@@ -285,6 +342,66 @@
 		deleteConfirmItem = null;
 	}
 
+	async function deleteProductWithDependencies(productId) {
+		const { data: negotiations } = await supabase
+			.from('negotiations')
+			.select('id')
+			.eq('product_id', productId);
+
+		const negotiationIds = (negotiations ?? []).map((row) => row.id);
+		if (negotiationIds.length) {
+			const { error } = await supabase
+				.from('negotiation_messages')
+				.delete()
+				.in('negotiation_id', negotiationIds);
+			if (error) return error;
+
+			const { error: negotiationsError } = await supabase
+				.from('negotiations')
+				.delete()
+				.in('id', negotiationIds);
+			if (negotiationsError) return negotiationsError;
+		}
+
+		const { data: bookings } = await supabase
+			.from('bookings')
+			.select('id')
+			.eq('product_id', productId);
+
+		const bookingIds = (bookings ?? []).map((row) => row.id);
+		if (bookingIds.length) {
+			const { error: reviewsError } = await supabase
+				.from('reviews')
+				.delete()
+				.in('booking_id', bookingIds);
+			if (reviewsError) return reviewsError;
+
+			const { error: bookingsError } = await supabase
+				.from('bookings')
+				.delete()
+				.in('id', bookingIds);
+			if (bookingsError) return bookingsError;
+		}
+
+		const childDeletes = await Promise.all([
+			supabase.from('product_images').delete().eq('product_id', productId),
+			supabase.from('agricultural_machinery').delete().eq('product_id', productId),
+			supabase.from('favorites').delete().eq('product_id', productId)
+		]);
+
+		const childError = childDeletes.find((result) => result.error)?.error;
+		if (childError) return childError;
+
+		return supabase.from('products').delete().eq('id', productId);
+	}
+
+	function formatDeleteError(error) {
+		if (error?.code === '23503' || error?.status === 409) {
+			return 'Não foi possível excluir: este anúncio ainda possui vínculos no sistema (reservas ou negociações).';
+		}
+		return 'Erro ao excluir o anúncio.';
+	}
+
 	async function confirmDelete() {
 		if (!deleteConfirmItem) return;
 
@@ -293,10 +410,10 @@
 		deleteConfirmLoading = true;
 		deletingId = id;
 
-		const { error } = await supabase.from('products').delete().eq('id', id);
+		const { error } = await deleteProductWithDependencies(id);
 
 		if (error) {
-			statusMessage = { text: 'Erro ao excluir o anúncio.', type: 'error' };
+			statusMessage = { text: formatDeleteError(error), type: 'error' };
 		} else {
 			maquinarios = maquinarios.filter((item) => item.id !== id);
 			produtos = produtos.filter((item) => item.id !== id);
@@ -309,10 +426,33 @@
 		deletingId = null;
 	}
 
+	function menuPositionClass() {
+		return menuOpensUp
+			? 'bottom-full mb-0.5 origin-bottom-right'
+			: 'top-full mt-0.5 origin-top-right';
+	}
+
 	function toggleMenu(id, event) {
 		event.preventDefault();
 		event.stopPropagation();
-		openMenu = openMenu === id ? null : id;
+
+		if (openMenu === id) {
+			openMenu = null;
+			return;
+		}
+
+		const trigger = event.currentTarget;
+		if (trigger instanceof HTMLElement) {
+			const rect = trigger.getBoundingClientRect();
+			const menuHeight = 224;
+			const bottomReserve = 112;
+			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
+			menuOpensUp = spaceBelow < menuHeight;
+		} else {
+			menuOpensUp = false;
+		}
+
+		openMenu = id;
 	}
 
 	function handleWindowClick(event) {
@@ -406,8 +546,12 @@
 							: ''}"
 					>
 						<div class="flex gap-4 p-4">
-							<div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-green-50">
-								<Tractor class="h-10 w-10 text-green-600 opacity-80" />
+							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-green-50">
+								{#if getAdCoverUrl(maq)}
+									<img src={getAdCoverUrl(maq)} alt={maq.name} class="h-full w-full object-cover" />
+								{:else}
+									<Tractor class="h-10 w-10 text-green-600 opacity-80" />
+								{/if}
 							</div>
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
 								<h3 class="line-clamp-1 font-bold text-gray-900">{maq.name}</h3>
@@ -445,7 +589,7 @@
 									<ul
 										role="menu"
 										tabindex="-1"
-										class="absolute right-0 top-full z-50 m-0 mt-0.5 w-48 origin-top-right list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl"
+										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl {menuPositionClass()}"
 									>
 										<li role="none">
 											<a
@@ -517,8 +661,12 @@
 							: ''}"
 					>
 						<div class="flex gap-4 p-4">
-							<div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-amber-50">
-								<Leaf class="h-10 w-10 text-amber-600 opacity-80" />
+							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-amber-50">
+								{#if getAdCoverUrl(prod)}
+									<img src={getAdCoverUrl(prod)} alt={prod.name} class="h-full w-full object-cover" />
+								{:else}
+									<Leaf class="h-10 w-10 text-amber-600 opacity-80" />
+								{/if}
 							</div>
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
 								<h3 class="line-clamp-1 font-bold text-gray-900">{prod.name}</h3>
@@ -553,7 +701,7 @@
 									<ul
 										role="menu"
 										tabindex="-1"
-										class="absolute right-0 top-full z-50 m-0 mt-0.5 w-48 origin-top-right list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl"
+										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl {menuPositionClass()}"
 									>
 										<li role="none">
 											<a

@@ -40,6 +40,9 @@
     let profile = $state(null);
     let menuOpen = $state(false);
     let imgError = $state(false);
+    /** @type {import('@supabase/supabase-js').RealtimeChannel | null} */
+    let notificationsChannel = null;
+    let notificationsUserId = null;
 
     // notificações
     let notifOpen = $state(false);
@@ -51,20 +54,29 @@
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
 
-    async function refreshUser() {
+    async function refreshUser(sessionUser = undefined) {
         imgError = false;
-        const { data: { user } } = await supabase.auth.getUser();
+        const user =
+            sessionUser !== undefined
+                ? sessionUser
+                : (await supabase.auth.getUser()).data.user;
         authUser = user;
 
         if (user) {
             const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
             profile = data;
             await loadNotifications(user.id);
-            subscribeToNotifications(user.id);
+
+            if (notificationsUserId !== user.id) {
+                subscribeToNotifications(user.id);
+                notificationsUserId = user.id;
+            }
         } else {
             profile = null;
             menuOpen = false;
             notifications = [];
+            notificationsUserId = null;
+            unsubscribeFromNotifications();
         }
     }
 
@@ -78,9 +90,17 @@
         notifications = data ?? [];
     }
 
+    function unsubscribeFromNotifications() {
+        if (!notificationsChannel) return;
+        supabase.removeChannel(notificationsChannel);
+        notificationsChannel = null;
+    }
+
     function subscribeToNotifications(userId) {
-        supabase
-            .channel('notifications')
+        unsubscribeFromNotifications();
+
+        notificationsChannel = supabase
+            .channel(`notifications:${userId}:${Date.now()}`)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
@@ -143,13 +163,15 @@
     }
 
     onMount(() => {
-        refreshUser();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-            refreshUser();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            refreshUser(session?.user ?? null);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            notificationsUserId = null;
+            unsubscribeFromNotifications();
+        };
     });
 </script>
 

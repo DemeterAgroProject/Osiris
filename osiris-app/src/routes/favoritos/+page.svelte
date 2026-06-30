@@ -7,6 +7,49 @@
 	import { supabase } from '$lib/supabase';
 	import { ChevronLeft } from 'lucide-svelte';
 
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	function resolveProductImageUrl(images = [], legacyImageUrl = null) {
+		const fromGallery = pickCoverImage(images);
+		if (fromGallery) return fromGallery;
+		const legacy = legacyImageUrl?.trim?.() ?? legacyImageUrl;
+		return legacy || null;
+	}
+
+	function coverUrlFromMap(imagesByProductId, productId, legacyImageUrl = null) {
+		const images = imagesByProductId.get(productId) ?? [];
+		return resolveProductImageUrl(images, legacyImageUrl);
+	}
+
+	async function fetchProductImagesByProductIds(productIds) {
+		const map = new Map();
+		if (!productIds?.length) return map;
+
+		const uniqueIds = [...new Set(productIds.filter(Boolean))];
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.in('product_id', uniqueIds)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar product_images:', error);
+			return map;
+		}
+
+		for (const row of data ?? []) {
+			if (!map.has(row.product_id)) map.set(row.product_id, []);
+			map.get(row.product_id).push(row);
+		}
+
+		return map;
+	}
+
 	function resolveProductTipo(category) {
 		return category === 'Maquinário' ? 'maquinario' : 'produto';
 	}
@@ -23,6 +66,10 @@
 				console.error('Erro ao carregar produto favorito:', error);
 			}
 
+			const imagesByProductId = await fetchProductImagesByProductIds(
+				product?.id ? [product.id] : []
+			);
+
 			const tipo = resolveProductTipo(product?.category);
 			return {
 				id: row.id,
@@ -30,7 +77,7 @@
 				tipo,
 				title: product?.name || 'Anúncio favoritado',
 				price: product?.price ?? null,
-				imageUrl: null,
+				imageUrl: coverUrlFromMap(imagesByProductId, product?.id),
 				publishedAt: row.created_at,
 				href: `/anuncio/${tipo}/${row.product_id}`
 			};

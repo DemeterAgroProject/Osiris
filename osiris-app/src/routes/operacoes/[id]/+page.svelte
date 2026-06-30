@@ -88,22 +88,91 @@
 		return booking?.products?.name || booking?.services?.title || 'Operação';
 	}
 
+	function listingHref() {
+		if (!booking) return null;
+		if (booking.service_id) return `/anuncio/servico/${booking.service_id}`;
+		if (booking.product_id) {
+			return booking.products?.category === 'Maquinário'
+				? `/anuncio/maquinario/${booking.product_id}`
+				: `/anuncio/produto/${booking.product_id}`;
+		}
+		return null;
+	}
+
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	async function fetchProductCoverUrl(productId) {
+		if (!productId) return null;
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('url, is_cover, created_at')
+			.eq('product_id', productId)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar imagens do anúncio:', error);
+			return null;
+		}
+
+		return pickCoverImage(data ?? []);
+	}
+
+	function counterpartyName() {
+		if (!booking) return '—';
+		const profile = isProvider ? booking.client : booking.provider;
+		return profile?.display_name || (isProvider ? 'Cliente' : 'Provedor');
+	}
+
+	function counterpartyPhoto() {
+		if (!booking) return null;
+		const profile = isProvider ? booking.client : booking.provider;
+		return profile?.photo_url || null;
+	}
+
 	async function fetchProfileBrief(profileId) {
 		if (!profileId) return null;
 		const { data } = await supabase
 			.from('profiles')
-			.select('display_name')
+			.select('id, display_name, photo_url')
 			.eq('id', profileId)
 			.maybeSingle();
 		return data;
 	}
 
+	async function enrichReviews(reviewRows) {
+		const rows = reviewRows ?? [];
+		if (!rows.length) return [];
+
+		const reviewerIds = [...new Set(rows.map((row) => row.reviewer_id).filter(Boolean))];
+		let profilesById = {};
+
+		if (reviewerIds.length) {
+			const { data } = await supabase
+				.from('profiles')
+				.select('id, display_name, photo_url')
+				.in('id', reviewerIds);
+
+			profilesById = Object.fromEntries((data ?? []).map((profile) => [profile.id, profile]));
+		}
+
+		return rows.map((row) => ({
+			...row,
+			reviewerName: profilesById[row.reviewer_id]?.display_name || 'Usuário',
+			reviewerPhoto: profilesById[row.reviewer_id]?.photo_url || null
+		}));
+	}
+
 	async function enrichBooking(row) {
-		const [products, services, client, provider] = await Promise.all([
+		const [products, services, client, provider, coverUrl] = await Promise.all([
 			row.product_id
 				? supabase
 						.from('products')
-						.select('name, category')
+						.select('id, name, category')
 						.eq('id', row.product_id)
 						.maybeSingle()
 						.then((r) => r.data)
@@ -111,16 +180,17 @@
 			row.service_id
 				? supabase
 						.from('services')
-						.select('title')
+						.select('id, title')
 						.eq('id', row.service_id)
 						.maybeSingle()
 						.then((r) => r.data)
 				: null,
 			fetchProfileBrief(row.client_id),
-			fetchProfileBrief(row.provider_id)
+			fetchProfileBrief(row.provider_id),
+			fetchProductCoverUrl(row.product_id)
 		]);
 
-		return { ...row, products, services, client, provider };
+		return { ...row, products, services, client, provider, coverUrl };
 	}
 
 	async function loadBooking(id) {
@@ -179,7 +249,7 @@
 			console.error('Erro ao carregar avaliações:', reviewsError);
 		}
 
-		reviews = reviewRows ?? [];
+		reviews = await enrichReviews(reviewRows ?? []);
 		loading = false;
 	}
 
@@ -272,15 +342,34 @@
 			<div class="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
 		{:else if booking}
 			<div class="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+				{#if booking.coverUrl}
+					<img
+						src={booking.coverUrl}
+						alt={listingTitle()}
+						class="mb-4 aspect-[16/10] w-full rounded-xl object-cover"
+					/>
+				{/if}
 				<div class="flex items-start justify-between gap-3">
-					<div>
-						<h1 class="text-xl font-bold text-gray-900">{listingTitle()}</h1>
-						<p class="mt-1 text-sm text-gray-500">
-							{isProvider ? 'Cliente' : 'Provedor'}:
-							{isProvider
-								? booking.client?.display_name
-								: booking.provider?.display_name}
-						</p>
+					<div class="flex min-w-0 items-start gap-3">
+						{#if counterpartyPhoto()}
+							<img
+								src={counterpartyPhoto()}
+								alt={counterpartyName()}
+								class="h-10 w-10 shrink-0 rounded-full object-cover"
+							/>
+						{/if}
+						<div class="min-w-0">
+							{#if listingHref()}
+								<a href={listingHref()} class="text-xl font-bold text-gray-900 hover:text-green-700">
+									{listingTitle()}
+								</a>
+							{:else}
+								<h1 class="text-xl font-bold text-gray-900">{listingTitle()}</h1>
+							{/if}
+							<p class="mt-1 text-sm text-gray-500">
+								{isProvider ? 'Cliente' : 'Provedor'}: {counterpartyName()}
+							</p>
+						</div>
 					</div>
 					<span
 						class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {statusBadgeClass(
@@ -425,6 +514,34 @@
 						Operação encerrada.
 					{/if}
 				</div>
+			{/if}
+
+			{#if reviews.length}
+				<section class="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+					<h2 class="text-sm font-bold text-gray-900">Avaliações desta operação</h2>
+					<ul class="mt-3 space-y-3">
+						{#each reviews as review (review.id)}
+							<li class="rounded-xl bg-gray-50 p-3">
+								<div class="flex items-center gap-2">
+									{#if review.reviewerPhoto}
+										<img
+											src={review.reviewerPhoto}
+											alt={review.reviewerName}
+											class="h-8 w-8 rounded-full object-cover"
+										/>
+									{/if}
+									<div>
+										<p class="text-sm font-medium text-gray-900">{review.reviewerName}</p>
+										<p class="text-xs text-amber-600">{review.rating}/5</p>
+									</div>
+								</div>
+								{#if review.comment}
+									<p class="mt-2 text-sm text-gray-600">{review.comment}</p>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				</section>
 			{/if}
 		{/if}
 	</main>

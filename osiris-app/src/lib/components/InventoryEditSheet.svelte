@@ -1,6 +1,103 @@
 <script>
 	import { X } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
+	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+
+	function createEmptyImageRow(isCover = false) {
+		return { id: null, url: '', is_cover: isCover, removed: false };
+	}
+
+	function isValidImageUrl(value) {
+		const trimmed = value?.trim();
+		if (!trimmed) return false;
+		try {
+			const parsed = new URL(trimmed);
+			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+		} catch {
+			return false;
+		}
+	}
+
+	function formatImageError(error) {
+		if (error?.code === '42501' || error?.status === 403) {
+			return 'Sem permissão para salvar imagens. Aplique as políticas RLS em supabase/product_images_rls.sql no Supabase.';
+		}
+		return 'Anúncio salvo, mas falhou ao atualizar as imagens.';
+	}
+
+	function normalizeImageRows(rows) {
+		const active = (rows ?? []).filter((row) => !row.removed && isValidImageUrl(row.url));
+		if (!active.length) return [createEmptyImageRow(true)];
+
+		let hasCover = active.some((row) => row.is_cover);
+		return active.map((row, index) => ({
+			...row,
+			is_cover: hasCover ? Boolean(row.is_cover) : index === 0
+		}));
+	}
+
+	async function fetchProductImages(productId) {
+		if (!productId) return [];
+
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.eq('product_id', productId)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar imagens do produto:', error);
+			return [];
+		}
+
+		return data ?? [];
+	}
+
+	async function syncProductImages(productId, images) {
+		const active = (images ?? []).filter((img) => !img.removed && isValidImageUrl(img.url));
+		const removedIds = (images ?? []).filter((img) => img.removed && img.id).map((img) => img.id);
+
+		if (removedIds.length) {
+			const { error } = await supabase.from('product_images').delete().in('id', removedIds);
+			if (error) return error;
+		}
+
+		if (!active.length) return null;
+
+		const coverIndex = Math.max(0, active.findIndex((img) => img.is_cover));
+		let coverId = null;
+
+		for (let i = 0; i < active.length; i++) {
+			const img = active[i];
+			const url = img.url.trim();
+
+			if (img.id) {
+				const { error } = await supabase.from('product_images').update({ url }).eq('id', img.id);
+				if (error) return error;
+				if (i === coverIndex) coverId = img.id;
+			} else {
+				const { data, error } = await supabase
+					.from('product_images')
+					.insert({ product_id: productId, url, is_cover: false })
+					.select('id')
+					.single();
+				if (error) return error;
+				if (i === coverIndex) coverId = data.id;
+			}
+		}
+
+		await supabase.from('product_images').update({ is_cover: false }).eq('product_id', productId);
+		if (coverId) {
+			const { error } = await supabase
+				.from('product_images')
+				.update({ is_cover: true })
+				.eq('id', coverId);
+			if (error) return error;
+		}
+
+		return null;
+	}
 
 	function getMachineryFromProduct(product) {
 		const machinery = product?.agricultural_machinery;
@@ -36,6 +133,7 @@
 
 	let saving = $state(false);
 	let errorMessage = $state('');
+	let images = $state([createEmptyImageRow(true)]);
 
 	let form = $state({
 		name: '',
@@ -54,6 +152,19 @@
 
 	const isMachinery = $derived(product ? isMachineryProduct(product) : false);
 	const machinery = $derived(product ? getMachineryFromProduct(product) : null);
+
+	async function loadImages(productId) {
+		const rows = await fetchProductImages(productId);
+		images =
+			rows.length > 0
+				? rows.map((row) => ({
+						id: row.id,
+						url: row.url,
+						is_cover: row.is_cover,
+						removed: false
+					}))
+				: [createEmptyImageRow(true)];
+	}
 
 	function resetForm() {
 		if (!product) return;
@@ -75,6 +186,7 @@
 			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : ''
 		};
 		errorMessage = '';
+		void loadImages(product.id);
 	}
 
 	function closeSheet() {
@@ -151,6 +263,13 @@
 				saving = false;
 				return;
 			}
+		}
+
+		const imageError = await syncProductImages(product.id, normalizeImageRows(images));
+		if (imageError) {
+			errorMessage = formatImageError(imageError);
+			saving = false;
+			return;
 		}
 
 		saving = false;
@@ -363,6 +482,8 @@
 						</div>
 					</div>
 				{/if}
+
+				<ProductImageUrlsEditor bind:images />
 
 				<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-gray-100 bg-white pb-4 pt-3">
 					<button
