@@ -2,6 +2,13 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+@import '@skeletonlabs/skeleton'; 
+@import '@skeletonlabs/skeleton-svelte'; 
+@import '@skeletonlabs/skeleton/themes/vox'; 
+@import '../osiris';
+
+@variant dark (&:where(.dark, .dark *));
+
 .hide-scrollbar {
 	-ms-overflow-style: none;
 	scrollbar-width: none;

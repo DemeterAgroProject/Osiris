@@ -471,7 +471,7 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<div class="min-h-screen bg-gray-50 pb-20">
+<div class="min-h-screen  pb-20">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
@@ -521,7 +521,7 @@
 			</button>
 		</div>
 
-		<div class="relative mb-6 shadow-sm">
+		<div class="relative mb-6 shadow-sm rounded-xl">
 			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
 			<input
 				type="search"

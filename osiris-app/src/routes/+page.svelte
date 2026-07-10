@@ -417,7 +417,7 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen pb-24">
 	<Header />
 	
 	<div class="px-4 pb-2">

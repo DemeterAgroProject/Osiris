@@ -416,7 +416,7 @@
 			</button>
 		</div>
 
-		<div class="relative mb-6 shadow-sm">
+		<div class="relative mb-6 shadow-sm rounded-xl">
 			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
 			<input
 				type="search"

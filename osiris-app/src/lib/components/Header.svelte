@@ -175,7 +175,7 @@
     });
 </script>
 
-<header class="sticky top-0 z-50 bg-white px-4 py-3 shadow-sm">
+<header class="sticky top-0 z-50 bg-surface-50 px-4 py-3 shadow-sm">
     <div class="flex items-center justify-between">
         <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
             <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
