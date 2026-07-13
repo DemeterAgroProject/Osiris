@@ -13,15 +13,15 @@
 	}
 </script>
 
-<div class="border-gray-100 px-4 py-3">
+<div class="border-surface-200-800 px-4 py-3">
 	<div class="relative mx-auto max-w-3xl">
 		{#if loading}
 			<Loader2
-				class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-green-600"
+				class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-primary-600"
 				aria-hidden="true"
 			/>
 		{:else}
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" aria-hidden="true" />
 		{/if}
 
 		<input
@@ -31,7 +31,7 @@
 			{placeholder}
 			autocomplete="off"
 			aria-label={placeholder}
-			class="w-full rounded-full border border-gray-200 bg-white py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-500 transition-all focus:border-green-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 disabled:opacity-70"
+			class="w-full rounded-full border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-10 text-sm text-surface-950-50 placeholder:text-surface-600-400 transition-all focus:border-primary-500 focus:bg-surface-50-950 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:opacity-70"
 			disabled={loading}
 		/>
 
@@ -39,7 +39,7 @@
 			<button
 				type="button"
 				onclick={clearSearch}
-				class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+				class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400"
 				aria-label="Limpar busca"
 			>
 				<X class="h-4 w-4" />

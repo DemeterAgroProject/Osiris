@@ -384,19 +384,19 @@
 	<title>Buscar — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar no marketplace..." />
 	<FilterBar bind:filters locations={locationOptions} resultCount={visibleListings.length} />
 
 	{#if loading}
-		<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando anúncios...</div>
+		<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando anúncios...</div>
 	{:else if errorMessage}
-		<div class="mx-4 my-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 	{:else if visibleListings.length === 0}
-		<div class="mx-4 my-8 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
-			<p class="text-sm font-semibold text-gray-800">Nenhum anúncio encontrado</p>
-			<p class="mt-1 text-xs text-gray-500">Tente outros termos ou limpe os filtros.</p>
+		<div class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center">
+			<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
+			<p class="mt-1 text-xs text-surface-600-400">Tente outros termos ou limpe os filtros.</p>
 		</div>
 	{:else}
 		<ProductList title="Resultados da busca" products={visibleListings} />

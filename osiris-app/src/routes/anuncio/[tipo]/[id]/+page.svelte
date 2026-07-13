@@ -425,51 +425,51 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gray-100 pb-24">
+<div class="min-h-screen bg-surface-100-900 pb-24">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl">
 		<a
 			href="/buscar"
-			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600"
+			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
 			<ChevronLeft class="h-4 w-4" />
 			Voltar
 		</a>
 
 		{#if loading}
-			<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando anúncio...</div>
+			<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando anúncio...</div>
 		{:else if errorMessage}
-			<div class="mx-4 mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+			<div class="mx-4 mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if item}
-			<section class="mt-4 rounded-t-3xl bg-white p-4 shadow-sm">
+			<section class="mt-4 rounded-container bg-surface-50-950 p-4 shadow-sm">
 				{#if galleryImages.length > 0}
 					{#if galleryImages.length === 1}
 						<img
 							src={galleryImages[0]}
 							alt={item.title}
-							class="aspect-[16/10] w-full rounded-2xl object-cover"
+							class="aspect-[16/10] w-full rounded-container object-cover"
 						/>
 					{:else}
-						<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-2xl">
+						<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-container">
 							{#each galleryImages as imageUrl, index (imageUrl + index)}
 								<img
 									src={imageUrl}
 									alt={`${item.title} — imagem ${index + 1}`}
-									class="aspect-[16/10] w-[85%] shrink-0 snap-center rounded-2xl object-cover"
+									class="aspect-[16/10] w-[85%] shrink-0 snap-center rounded-container object-cover"
 								/>
 							{/each}
 						</div>
 					{/if}
 				{:else}
-					<div class="aspect-[16/10] rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50"></div>
+					<div class="aspect-[16/10] rounded-container preset-tonal-primary"></div>
 				{/if}
 
 				<div class="mt-4 flex items-start justify-between gap-3">
 					<div class="min-w-0 flex-1">
-						<p class="text-3xl font-extrabold text-green-700">{item.priceLabel}</p>
-						<h1 class="mt-2 text-3xl font-bold text-gray-900">{item.title}</h1>
-						<p class="mt-3 text-base leading-7 text-gray-600">{item.description}</p>
+						<p class="text-3xl font-extrabold text-primary-700">{item.priceLabel}</p>
+						<h1 class="mt-2 text-3xl font-bold text-surface-950-50">{item.title}</h1>
+						<p class="mt-3 text-base leading-7 text-surface-600-400">{item.description}</p>
 					</div>
 					<FavoriteButton
 						productId={item.productId ?? null}
@@ -477,15 +477,15 @@
 					/>
 				</div>
 
-				<div class="mt-6 overflow-hidden rounded-2xl border border-gray-200">
-					<div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
-						<h2 class="text-2xl font-semibold text-gray-900">Detalhes</h2>
+				<div class="mt-6 overflow-hidden rounded-container border border-surface-200-800">
+					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">
+						<h2 class="text-2xl font-semibold text-surface-950-50">Detalhes</h2>
 					</div>
-					<div class="divide-y divide-gray-200 px-4">
+					<div class="divide-y divide-surface-200-800 px-4">
 						{#each item.details as detail}
 							<div class="grid grid-cols-2 gap-3 py-3 text-sm">
-								<p class="font-semibold text-gray-500">{detail.label}</p>
-								<p class="font-medium text-gray-800">{detail.value}</p>
+								<p class="font-semibold text-surface-600-400">{detail.label}</p>
+								<p class="font-medium text-surface-950-50">{detail.value}</p>
 							</div>
 						{/each}
 					</div>
@@ -493,20 +493,20 @@
 
 				<a
 					href={seller.id ? `/perfil/${seller.id}` : '#'}
-					class="mt-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-green-300"
+					class="mt-6 flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 transition-colors hover:border-primary-300"
 				>
 					{#if seller.avatarUrl}
 						<img src={seller.avatarUrl} alt={seller.name} class="h-14 w-14 rounded-full object-cover" />
 					{:else}
 						<div
-							class="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-lg font-bold text-green-700"
+							class="flex h-14 w-14 items-center justify-center rounded-full preset-tonal-primary text-lg font-bold text-primary-700"
 						>
 							{seller.name.slice(0, 1).toUpperCase()}
 						</div>
 					{/if}
 					<div class="min-w-0 flex-1">
-						<p class="text-sm font-semibold text-green-700">Anunciante</p>
-						<p class="truncate text-xl font-semibold text-gray-900">{seller.name}</p>
+						<p class="text-sm font-semibold text-primary-700">Anunciante</p>
+						<p class="truncate text-xl font-semibold text-surface-950-50">{seller.name}</p>
 						<Rating
 							value={sellerReviewStats.average}
 							count={sellerReviewStats.count}
@@ -517,14 +517,14 @@
 
 				<button
 					onclick={() => (showNegotiationModal = true)}
-					class="mt-6 w-full rounded-xl bg-green-700 px-4 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-800"
+					class="mt-6 w-full rounded-container preset-filled-primary-500 px-4 py-4 text-lg font-semibold transition-colors"
 				>
 					Negociar
 				</button>
 
-				<div class="mt-8 overflow-hidden rounded-2xl border border-gray-200">
-					<div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
-						<h2 class="text-lg font-semibold text-gray-900">Avaliações do anúncio</h2>
+				<div class="mt-8 overflow-hidden rounded-container border border-surface-200-800">
+					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">
+						<h2 class="text-lg font-semibold text-surface-950-50">Avaliações do anúncio</h2>
 						<div class="mt-1">
 							<Rating
 								value={productReviewStats.average}

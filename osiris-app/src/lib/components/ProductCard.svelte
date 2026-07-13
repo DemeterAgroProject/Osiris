@@ -38,20 +38,20 @@
 	const resolvedHref = $derived(href || (tipo && adId ? `/anuncio/${tipo}/${adId}` : ''));
 </script>
 
-<article class="overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
+<article class="overflow-hidden rounded-container bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md">
 	{#if resolvedHref}
 		<a href={resolvedHref} class="block" aria-label={`Ver anúncio: ${resolvedTitle}`}>
 			<div class="relative aspect-[4/3] overflow-hidden">
 				{#if resolvedImage}
 					<img src={resolvedImage} alt={resolvedTitle} class="h-full w-full object-cover" />
 				{:else}
-					<div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-100 to-emerald-50 text-xs font-medium text-green-700">
+					<div class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-medium text-primary-700">
 						Sem imagem
 					</div>
 				{/if}
 				{#if sponsored}
 					<span
-						class="absolute left-2 top-2 rounded-md bg-orange-500 px-2 py-1 text-xs font-medium text-white"
+						class="absolute left-2 top-2 rounded-md preset-filled-warning-500 px-2 py-1 text-xs font-medium"
 					>
 						Patrocinado
 					</span>
@@ -59,15 +59,15 @@
 			</div>
 
 			<div class="p-3">
-				<h3 class="truncate text-sm font-medium text-gray-900">{resolvedTitle}</h3>
-				<p class="mt-1 text-base font-bold text-green-600">{resolvedPrice}</p>
+				<h3 class="truncate text-sm font-medium text-surface-950-50">{resolvedTitle}</h3>
+				<p class="mt-1 text-base font-bold text-primary-600">{resolvedPrice}</p>
 
-				<div class="mt-2 flex items-center gap-1 text-xs text-gray-500">
+				<div class="mt-2 flex items-center gap-1 text-xs text-surface-600-400">
 					<MapPin class="h-3 w-3" />
 					<span class="truncate">{location}</span>
 				</div>
 
-				<div class="mt-2 flex items-center justify-between text-xs text-gray-400">
+				<div class="mt-2 flex items-center justify-between text-xs text-surface-600-400">
 					<div class="flex items-center gap-1">
 						<Eye class="h-3 w-3" />
 						<span>{views}</span>
@@ -84,14 +84,14 @@
 			{#if resolvedImage}
 				<img src={resolvedImage} alt={resolvedTitle} class="h-full w-full object-cover" />
 			{:else}
-				<div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-100 to-emerald-50 text-xs font-medium text-green-700">
+				<div class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-medium text-primary-700">
 					Sem imagem
 				</div>
 			{/if}
 		</div>
 		<div class="p-3">
-			<h3 class="truncate text-sm font-medium text-gray-900">{resolvedTitle}</h3>
-			<p class="mt-1 text-base font-bold text-green-600">{resolvedPrice}</p>
+			<h3 class="truncate text-sm font-medium text-surface-950-50">{resolvedTitle}</h3>
+			<p class="mt-1 text-base font-bold text-primary-600">{resolvedPrice}</p>
 		</div>
 	{/if}
 </article>

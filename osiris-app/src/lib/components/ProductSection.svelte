@@ -16,11 +16,11 @@
 {#if visibleProducts.length > 0}
 	<section class="py-3">
 		<div class="flex items-center justify-between gap-3 px-4">
-			<h2 class="text-lg font-bold text-green-700">{title}</h2>
+			<h2 class="text-lg font-bold text-primary-700">{title}</h2>
 			{#if showSeeMore}
 				<a
 					href={seeMoreHref}
-					class="shrink-0 text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
+					class="shrink-0 text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700"
 				>
 					{seeMoreLabel}
 				</a>

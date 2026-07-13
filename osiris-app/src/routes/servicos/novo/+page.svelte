@@ -75,47 +75,47 @@
     }
 </script>
 
-<div class="flex min-h-screen flex-col bg-gray-50 pb-20">
+<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
     <Header /> 
 
     <main class="flex flex-1 flex-col px-4 py-4 max-w-2xl mx-auto w-full">
-        <h1 class="mb-6 text-center text-xl font-bold text-gray-900">Oferecer Serviço</h1>
+        <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Oferecer Serviço</h1>
 
         {#if message.text}
-            <div class="p-4 mb-4 rounded-lg {message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+            <div class="p-4 mb-4 rounded-container {message.type === 'error' ? 'preset-tonal-error' : 'preset-tonal-primary'}">
                 {message.text}
             </div>
         {/if}
 
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 1 de 3</p>
-                <h2 class="mb-4 text-base text-gray-600">Como você vai atuar?</h2>
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 1 de 3</p>
+                <h2 class="mb-4 text-base text-surface-600-400">Como você vai atuar?</h2>
 
                 <div class="space-y-3">
                     <button
                         onclick={() => form.service_type = 'Mão de Obra'}
-                        class="flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all {form.service_type === 'Mão de Obra' ? 'border-green-600 bg-green-50' : 'border-gray-200 bg-white hover:border-green-300'}"
+                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.service_type === 'Mão de Obra' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-500'}"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-primary">
                             <Users class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-medium text-gray-900">Mão de Obra</h3>
-                            <p class="text-xs text-gray-500">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
+                            <h3 class="font-medium text-surface-950-50">Mão de Obra</h3>
+                            <p class="text-xs text-surface-600-400">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
                         </div>
                     </button>
 
                     <button
                         onclick={() => form.service_type = 'Pacote Completo'}
-                        class="flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all {form.service_type === 'Pacote Completo' ? 'border-green-600 bg-green-50' : 'border-gray-200 bg-white hover:border-green-300'}"
+                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.service_type === 'Pacote Completo' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-500'}"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-secondary">
                             <Briefcase class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-medium text-gray-900">Pacote Completo</h3>
-                            <p class="text-xs text-gray-500">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
+                            <h3 class="font-medium text-surface-950-50">Pacote Completo</h3>
+                            <p class="text-xs text-surface-600-400">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
                         </div>
                     </button>
                 </div>
@@ -123,41 +123,41 @@
 
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 2 de 3</p>
-                <h2 class="mb-4 text-lg font-semibold text-gray-900">Detalhes do Serviço</h2>
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 2 de 3</p>
+                <h2 class="mb-4 text-lg font-semibold text-surface-950-50">Detalhes do Serviço</h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="title">Título do Serviço</label>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="title">Título do Serviço</label>
                         <input 
                             type="text" 
                             id="title" 
                             bind:value={form.title} 
                             placeholder={form.service_type === 'Mão de Obra' ? "Ex: Tratorista com experiência" : "Ex: Serviço completo de Reflorestamento"} 
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
+                            class="w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="description">O que está incluso?</label>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="description">O que está incluso?</label>
                         <textarea 
                             id="description" 
                             bind:value={form.description} 
                             rows="4"
                             placeholder="Descreva a sua experiência, quais máquinas você opera ou o que o seu pacote cobre..." 
-                            class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
+                            class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                         ></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="location">Raio de Atendimento</label>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="location">Raio de Atendimento</label>
                         <div class="relative">
-                            <MapPin class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                            <MapPin class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
                             <input 
                                 type="text" 
                                 id="location" 
                                 bind:value={form.location} 
-                                class="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
+                                class="w-full rounded-container border border-surface-200-800 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                             />
                         </div>
                     </div>
@@ -166,13 +166,13 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 3 de 3</p>
-                <h2 class="mb-6 text-lg font-semibold text-gray-900">Como você cobra?</h2>
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 3 de 3</p>
+                <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Como você cobra?</h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="pricing_model">Formato de Cobrança</label>
-                        <select id="pricing_model" bind:value={form.pricing_model} class="w-full rounded-lg border border-gray-300 p-3 bg-white text-sm outline-none focus:border-green-500">
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="pricing_model">Formato de Cobrança</label>
+                        <select id="pricing_model" bind:value={form.pricing_model} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                             <option value="Por Hora">Por Hora</option>
                             <option value="Por Hectare">Por Hectare</option>
                             <option value="Empreitada/Fixo">Empreitada / Fixo</option>
@@ -182,15 +182,15 @@
 
                     {#if form.pricing_model !== 'A Combinar'}
                         <div class="pt-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="price">Valor Base (R$)</label>
+                            <label class="block text-sm font-medium text-surface-700-300 mb-1" for="price">Valor Base (R$)</label>
                             <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">R$</span>
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-600-400">R$</span>
                                 <input
                                     type="number"
                                     id="price"
                                     bind:value={form.price}
                                     placeholder="0,00"
-                                    class="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    class="w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                                 />
                             </div>
                         </div>
@@ -204,22 +204,22 @@
                 <button
                     onclick={handleSubmit}
                     disabled={!canProceed() || loading}
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
                 >
                     {loading ? 'Salvando...' : 'Publicar Serviço'}
                 </button>
-                <button onclick={prevStep} disabled={loading} class="w-full rounded-lg border border-gray-300 bg-white py-3.5 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                <button onclick={prevStep} disabled={loading} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50">
                     Voltar e Revisar
                 </button>
             {:else}
                 <button
                     onclick={nextStep}
                     disabled={!canProceed()}
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
                 >
                     Próximo <ChevronRight class="h-5 w-5" />
                 </button>
-                <button onclick={prevStep} class="w-full rounded-lg border border-gray-300 bg-white py-3.5 font-medium text-gray-700 hover:bg-gray-50">
+                <button onclick={prevStep} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal">
                     {currentStep === 0 ? 'Cancelar' : 'Voltar'}
                 </button>
             {/if}

@@ -58,11 +58,11 @@
 
 <div class="space-y-3">
 	<div class="flex items-center justify-between gap-2">
-		<p class="text-sm font-medium text-gray-700">Imagens (URL)</p>
+		<p class="text-sm font-medium text-surface-700-300">Imagens (URL)</p>
 		<button
 			type="button"
 			onclick={addImage}
-			class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+			class="inline-flex items-center gap-1 rounded-container border border-surface-200-800 px-2.5 py-1.5 text-xs font-medium text-surface-700-300 hover:preset-tonal"
 		>
 			<ImagePlus class="size-3.5" />
 			Adicionar
@@ -70,8 +70,8 @@
 	</div>
 
 	{#each visibleImages as image, index (image.id ?? `new-${index}-${image.url}`)}
-		<div class="rounded-xl border border-gray-200 bg-gray-50/80 p-3">
-			<label class="mb-1 block text-xs font-medium text-gray-600" for={`product-image-url-${index}`}>
+		<div class="rounded-container border border-surface-200-800 bg-surface-50-950/80 p-3">
+			<label class="mb-1 block text-xs font-medium text-surface-600-400" for={`product-image-url-${index}`}>
 				URL da imagem {index + 1}
 			</label>
 			<input
@@ -79,16 +79,16 @@
 				type="url"
 				bind:value={image.url}
 				placeholder="https://..."
-				class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 
 			<div class="mt-2 flex items-center justify-between gap-2">
 				<button
 					type="button"
 					onclick={() => setCover(index)}
-					class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors {image.is_cover
-						? 'bg-green-100 text-green-800'
-						: 'text-gray-600 hover:bg-gray-100'}"
+					class="inline-flex items-center gap-1 rounded-container px-2 py-1 text-xs font-medium transition-colors {image.is_cover
+						? 'preset-tonal-primary text-primary-700'
+						: 'text-surface-600-400 hover:preset-tonal'}"
 				>
 					<Star class="size-3.5 {image.is_cover ? 'fill-current' : ''}" />
 					{image.is_cover ? 'Capa' : 'Definir como capa'}
@@ -97,7 +97,7 @@
 				<button
 					type="button"
 					onclick={() => removeImage(index)}
-					class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+					class="inline-flex items-center gap-1 rounded-container px-2 py-1 text-xs font-medium text-error-500 hover:preset-tonal-error"
 					aria-label="Remover imagem"
 				>
 					<Trash2 class="size-3.5" />
@@ -109,16 +109,16 @@
 				<img
 					src={image.url.trim()}
 					alt="Prévia"
-					class="mt-3 h-28 w-full rounded-lg border border-gray-200 object-cover"
+					class="mt-3 h-28 w-full rounded-container border border-surface-200-800 object-cover"
 					onerror={(event) => {
 						event.currentTarget.style.display = 'none';
 					}}
 				/>
 			{:else if image.url?.trim()}
-				<p class="mt-2 text-xs text-amber-700">Informe uma URL válida começando com http:// ou https://</p>
+				<p class="mt-2 text-xs text-warning-700">Informe uma URL válida começando com http:// ou https://</p>
 			{/if}
 		</div>
 	{/each}
 
-	<p class="text-xs text-gray-500">A primeira capa aparece nos cards e na busca. Serviços não usam esta galeria.</p>
+	<p class="text-xs text-surface-600-400">A primeira capa aparece nos cards e na busca. Serviços não usam esta galeria.</p>
 </div>

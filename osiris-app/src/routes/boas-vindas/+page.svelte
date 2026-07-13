@@ -77,7 +77,7 @@
 {#if showSplash}
 	<button
 		type="button"
-		class="relative flex min-h-screen w-full flex-col overflow-hidden bg-white text-left"
+		class="relative flex min-h-screen w-full flex-col overflow-hidden bg-surface-50-950 text-left"
 		onclick={enterOnboarding}
 		aria-label="Continuar para apresentação do app"
 	>
@@ -92,13 +92,13 @@
 		</div>
 	</button>
 {:else}
-	<div class="flex min-h-screen flex-col bg-white">
+	<div class="flex min-h-screen flex-col bg-surface-50-950">
 		<header class="flex shrink-0 items-center justify-between px-6 pb-2 pt-12">
-			<span class="text-sm font-medium text-gray-400" aria-live="polite">{stepLabel}</span>
+			<span class="text-sm font-medium text-surface-600-400" aria-live="polite">{stepLabel}</span>
 			<button
 				type="button"
 				onclick={skip}
-				class="text-sm font-medium text-gray-800 transition-colors hover:text-green-700"
+				class="text-sm font-medium transition-colors hover:text-primary-700"
 			>
 				Pular
 			</button>
@@ -124,8 +124,8 @@
 						aria-label="Slide {index + 1} de {totalSlides}"
 						onclick={() => goToSlide(index)}
 						class="rounded-full transition-all duration-300 {index === currentSlide
-							? 'h-2 w-8 bg-gray-900'
-							: 'h-2 w-2 bg-gray-300 hover:bg-gray-400'}"
+							? 'h-2 w-8 bg-surface-950-50'
+							: 'h-2 w-2 bg-surface-400-600 hover:preset-tonal'}"
 					></button>
 				{/each}
 			</div>
@@ -135,7 +135,7 @@
 					<button
 						type="button"
 						onclick={prevSlide}
-						class="rounded-full p-2 text-gray-300 transition-colors hover:bg-gray-50 hover:text-gray-500"
+						class="rounded-full p-2 text-surface-400-600 transition-colors hover:preset-tonal hover:text-surface-600-400"
 						aria-label="Slide anterior"
 					>
 						<ChevronLeft class="h-7 w-7" strokeWidth={2} />
@@ -148,7 +148,7 @@
 					<button
 						type="button"
 						onclick={finish}
-						class="text-base font-bold text-green-600 transition-colors hover:text-green-700"
+						class="text-base font-bold text-primary-600 transition-colors hover:text-primary-700"
 					>
 						Começar
 					</button>
@@ -156,7 +156,7 @@
 					<button
 						type="button"
 						onclick={nextSlide}
-						class="rounded-full p-2 text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
+						class="rounded-full p-2 text-primary-600 transition-colors hover:preset-tonal-primary hover:text-primary-700"
 						aria-label="Próximo slide"
 					>
 						<ChevronRight class="h-7 w-7" strokeWidth={2} />

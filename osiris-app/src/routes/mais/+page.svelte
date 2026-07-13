@@ -170,40 +170,40 @@
     <meta name="description" content="Atalhos, conta e descoberta no marketplace agro Osiris." />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
     <Header />
 
-    <section class="bg-gradient-to-br from-green-700 via-green-700 to-emerald-600 px-4 pb-5 pt-2 text-white">
+    <section class="preset-filled-primary-500 px-4 pb-5 pt-2">
         {#if loading}
             <div class="flex items-center gap-3 py-4">
-                <div class="h-14 w-14 animate-pulse rounded-full bg-white/20"></div>
+                <div class="h-14 w-14 animate-pulse rounded-full bg-surface-50-950/20"></div>
                 <div class="flex-1 space-y-2">
-                    <div class="h-4 w-36 animate-pulse rounded bg-white/20"></div>
-                    <div class="h-3 w-24 animate-pulse rounded bg-white/15"></div>
+                    <div class="h-4 w-36 animate-pulse rounded bg-surface-50-950/20"></div>
+                    <div class="h-3 w-24 animate-pulse rounded bg-surface-50-950/15"></div>
                 </div>
             </div>
         {:else if isLoggedIn}
             <a
                 href={profileHref}
-                class="flex items-center gap-3 rounded-2xl py-3 transition-opacity hover:opacity-95"
+                class="flex items-center gap-3 rounded-container py-3 transition-opacity hover:opacity-95"
             >
                 {#if avatarUrl && !imgError}
                     <img
                         src={avatarUrl}
                         alt={displayName}
-                        class="h-14 w-14 shrink-0 rounded-full border-2 border-white/30 object-cover"
+                        class="h-14 w-14 shrink-0 rounded-full border-2 border-surface-50-950/30 object-cover"
                         onerror={() => imgError = true}
                     />
                 {:else}
                     <div
-                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-white/30 bg-white/15 text-lg font-bold"
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-surface-50-950/30 bg-surface-50-950/15 text-lg font-bold"
                     >
                         {initials}
                     </div>
                 {/if}
                 <div class="min-w-0 flex-1">
                     <p class="truncate text-lg font-bold">{displayName}</p>
-                    <p class="mt-0.5 flex items-center gap-1 text-sm text-green-100">
+                    <p class="mt-0.5 flex items-center gap-1 text-sm opacity-90">
                         Meu perfil
                         <ChevronRight class="h-4 w-4" />
                     </p>
@@ -212,10 +212,10 @@
         {:else}
             <div class="py-3">
                 <p class="text-lg font-bold">Olá, visitante</p>
-                <p class="mt-1 text-sm text-green-100">Entre para anunciar, negociar e gerenciar seu inventário.</p>
+                <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
                 <a
                     href="/login"
-                    class="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-green-800 shadow-sm transition-colors hover:bg-green-50"
+                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:preset-tonal"
                 >
                     <LogIn class="h-4 w-4" />
                     Entrar com Google
@@ -226,28 +226,28 @@
         <div class="mt-2 space-y-2">
             <a
                 href="/anunciar"
-                class="flex items-center justify-between rounded-2xl bg-white/15 px-4 py-3.5 backdrop-blur-sm transition-colors hover:bg-white/20"
+                class="flex items-center justify-between rounded-container bg-surface-50-950/15 px-4 py-3.5 backdrop-blur-sm transition-colors hover:bg-surface-50-950/20"
             >
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-50-950/20">
                         <Megaphone class="h-5 w-5" />
                     </div>
                     <div>
                         <p class="text-sm font-semibold">Anuncie no Osiris</p>
-                        <p class="text-xs text-green-100">Maquinário, insumos e mais</p>
+                        <p class="text-xs opacity-90">Maquinário, insumos e mais</p>
                     </div>
                 </div>
-                <ChevronRight class="h-5 w-5 shrink-0 text-green-100" />
+                <ChevronRight class="h-5 w-5 shrink-0 opacity-90" />
             </a>
 
             {#if isLoggedIn}
                 <a
                     href="/painel-de-controle"
-                    class="flex items-center justify-between rounded-2xl bg-amber-50/95 px-4 py-3.5 text-green-900 transition-colors hover:bg-amber-50"
+                    class="flex items-center justify-between rounded-container preset-tonal-warning px-4 py-3.5 transition-colors"
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl"
+                            class="flex h-10 w-10 items-center justify-center rounded-container"
                         >
                             <LayoutDashboard class="h-5 w-5" />
                         </div>
@@ -262,20 +262,20 @@
         </div>
     </section>
 
-    <main class="bg-white">
-        <nav aria-label="Atalhos" class="border-b border-gray-100">
+    <main class="bg-surface-50-950">
+        <nav aria-label="Atalhos" class="border-b border-surface-200-800">
             {#each shortcuts as item (item.label)}
                 {#if item.href}
                     <a
                         href={item.href}
-                        class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-900 transition-colors last:border-b-0 hover:bg-gray-50"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
-                        <item.icon class="h-6 w-6 shrink-0 text-gray-700" strokeWidth={1.75} />
+                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                         <span class="flex-1 text-sm font-medium">{item.label}</span>
                     </a>
                 {:else}
                     <div
-                        class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-500 last:border-b-0"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
                         aria-disabled="true"
                     >
                         <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -284,8 +284,8 @@
                             <span
                                 class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
                                 'accent'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 text-gray-600'}"
+                                    ? 'preset-filled-primary-500'
+                                    : 'preset-tonal-surface'}"
                             >
                                 {item.badge}
                             </span>
@@ -296,7 +296,7 @@
         </nav>
 
         <section aria-labelledby="mais-atividade">
-            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-gray-400">
+            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
                 Minha atividade
             </h2>
             <nav aria-label="Minha atividade">
@@ -304,15 +304,15 @@
                     {#if item.href}
                         <a
                             href={item.href}
-                            class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-900 transition-colors last:border-b-0 hover:bg-gray-50"
+                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                         >
-                            <item.icon class="h-6 w-6 shrink-0 text-gray-700" strokeWidth={1.75} />
+                            <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                             <span class="flex-1 text-sm font-medium">{item.label}</span>
-                            <ChevronRight class="h-4 w-4 shrink-0 text-gray-300" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                         </a>
                     {:else}
                         <div
-                            class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-500 last:border-b-0"
+                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
                             aria-disabled="true"
                         >
                             <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -321,8 +321,8 @@
                                 <span
                                     class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
                                     'accent'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-200 text-gray-600'}"
+                                        ? 'preset-filled-primary-500'
+                                        : 'preset-tonal-surface'}"
                                 >
                                     {item.badge}
                                 </span>
@@ -333,46 +333,46 @@
             </nav>
         </section>
 
-        <section aria-labelledby="mais-descubra" class="border-t border-gray-100">
-            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-gray-400">Descubra</h2>
+        <section aria-labelledby="mais-descubra" class="border-t border-surface-200-800">
+            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">Descubra</h2>
             <nav aria-label="Descubra">
                 {#each discoverItems as item (item.label)}
                     <a
                         href={item.href}
-                        class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-900 transition-colors last:border-b-0 hover:bg-gray-50"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
-                        <item.icon class="h-6 w-6 shrink-0 text-gray-700" strokeWidth={1.75} />
+                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                         <span class="flex-1 text-sm font-medium">{item.label}</span>
                         {#if item.badge}
                             <span
                                 class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
                                 'accent'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 text-gray-600'}"
+                                    ? 'preset-filled-primary-500'
+                                    : 'preset-tonal-surface'}"
                             >
                                 {item.badge}
                             </span>
                         {:else}
-                            <ChevronRight class="h-4 w-4 shrink-0 text-gray-300" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                         {/if}
                     </a>
                 {/each}
             </nav>
         </section>
 
-        <section aria-labelledby="mais-vender" class="border-t border-gray-100">
-            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-gray-400">
+        <section aria-labelledby="mais-vender" class="border-t border-surface-200-800">
+            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
                 Vender e gerir
             </h2>
             <nav aria-label="Vender e gerir">
                 {#each sellItems as item (item.label)}
                     <a
                         href={item.href}
-                        class="flex items-center gap-4 border-b border-gray-50 px-4 py-4 text-gray-900 transition-colors last:border-b-0 hover:bg-gray-50"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
-                        <item.icon class="h-6 w-6 shrink-0 text-gray-700" strokeWidth={1.75} />
+                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                         <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 shrink-0 text-gray-300" />
+                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                     </a>
                 {/each}
 
@@ -381,7 +381,7 @@
                         type="button"
                         onclick={handleSignOut}
                         disabled={signingOut}
-                        class="flex w-full items-center gap-4 border-t border-gray-100 px-4 py-4 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60"
+                        class="flex w-full items-center gap-4 border-t border-surface-200-800 px-4 py-4 text-left text-sm font-medium text-error-500 transition-colors hover:preset-tonal-error disabled:opacity-60"
                     >
                         <LogOut class="h-6 w-6 shrink-0" strokeWidth={1.75} />
                         <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
@@ -390,23 +390,23 @@
             </nav>
         </section>
 
-        <section aria-labelledby="mais-info" class="border-t border-gray-100 px-4 py-6">
+        <section aria-labelledby="mais-info" class="border-t border-surface-200-800 px-4 py-6">
             <h2 id="mais-info" class="sr-only">Informações</h2>
             <ul class="space-y-3">
                 {#each legalLinks as link (link.label)}
                     <li>
-                        <span class="text-sm text-gray-500">{link.label}</span>
+                        <span class="text-sm text-surface-600-400">{link.label}</span>
                     </li>
                 {/each}
             </ul>
-            <div class="mt-6 flex items-start gap-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-500">
-                <Info class="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-600-400">
+                <Info class="mt-0.5 h-4 w-4 shrink-0 text-primary-600" />
                 <p>
                     Marketplace agro da região. Alguns atalhos (negociações, ajuda, termos) serão liberados em
                     atualizações futuras.
                 </p>
             </div>
-            <div class="mt-4 flex items-center gap-2 text-xs text-gray-400">
+            <div class="mt-4 flex items-center gap-2 text-xs text-surface-600-400">
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
             </div>

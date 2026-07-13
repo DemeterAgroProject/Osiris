@@ -79,40 +79,40 @@
 	<meta name="description" content="Faça login no marketplace Osiris com sua conta Google." />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
 	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-8">
 		{#if loading}
 			<div class="flex flex-1 flex-col items-center justify-center py-20">
 				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
-				<p class="mt-4 text-sm text-gray-500">Verificando sessão...</p>
+				<p class="mt-4 text-sm text-surface-600-400">Verificando sessão...</p>
 			</div>
 		{:else}
 			<div class="text-center">
-				<p class="text-xs font-semibold uppercase tracking-wider text-green-700">Marketplace Osiris</p>
-				<h1 class="mt-2 text-2xl font-bold text-gray-900">Bem-vindo de volta</h1>
-				<p class="mt-2 text-sm text-gray-500">
+				<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Marketplace Osiris</p>
+				<h1 class="mt-2 text-2xl font-bold">Bem-vindo de volta</h1>
+				<p class="mt-2 text-sm text-surface-600-400">
 					Entre para anunciar, negociar e gerenciar seu inventário no agro.
 				</p>
 			</div>
 
-			<div class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+			<div class="mt-8 rounded-container border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
 				{#if errorMessage}
-					<div class="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{errorMessage}</div>
+					<div class="mb-4 rounded-container preset-tonal-error p-3 text-sm">{errorMessage}</div>
 				{/if}
 
 				<button
 					type="button"
 					onclick={handleGoogleLogin}
 					disabled={signingIn}
-					class="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-800 transition-all hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+					class="flex w-full items-center justify-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3.5 text-sm font-semibold transition-all hover:preset-tonal disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					{#if signingIn}
 						<span
-							class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-green-600"
+							class="h-5 w-5 animate-spin rounded-full border-2 border-surface-200-800 border-t-primary-500"
 						></span>
 						Conectando...
 					{:else}
@@ -127,23 +127,23 @@
 					{/if}
 				</button>
 
-				<p class="mt-5 text-center text-xs leading-relaxed text-gray-400">
+				<p class="mt-5 text-center text-xs leading-relaxed text-surface-600-400">
 					Ao continuar, você concorda com os termos do marketplace e a criação da sua conta no
 					Osiris.
 				</p>
 			</div>
 
-			<div class="mt-6 rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 p-4 text-white">
+			<div class="mt-6 rounded-container preset-filled-primary-500 p-4">
 				<p class="text-sm font-semibold">Por que entrar?</p>
-				<ul class="mt-2 space-y-1.5 text-xs text-green-100">
+				<ul class="mt-2 space-y-1.5 text-xs opacity-90">
 					<li>• Publique maquinário e insumos</li>
 					<li>• Gerencie anúncios no inventário</li>
 					<li>• Negocie com outros produtores</li>
 				</ul>
 			</div>
 
-			<p class="mt-6 text-center text-sm text-gray-500">
-				<a href="/" class="font-medium text-green-700 hover:text-green-800">Continuar sem login</a>
+			<p class="mt-6 text-center text-sm text-surface-600-400">
+				<a href="/" class="font-medium text-primary-600 hover:text-primary-700">Continuar sem login</a>
 			</p>
 		{/if}
 	</main>

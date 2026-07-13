@@ -175,7 +175,7 @@
     });
 </script>
 
-<header class="sticky top-0 z-50 bg-surface-50 px-4 py-3 shadow-sm">
+<header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 shadow-sm">
     <div class="flex items-center justify-between">
         <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
             <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
@@ -187,12 +187,12 @@
                 <button
                     type="button"
                     onclick={toggleNotif}
-                    class="relative rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                    class="relative rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal"
                     aria-label="Notificações"
                 >
                     <Bell class="h-6 w-6" />
                     {#if unreadCount > 0}
-                        <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full preset-filled-error-500 text-[10px] font-bold">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     {/if}
@@ -208,15 +208,15 @@
                         onclick={() => notifOpen = false}
                     ></button>
 
-                    <div class="absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-gray-200 bg-white shadow-lg">
+                    <div class="absolute right-0 z-50 mt-2 w-80 rounded-container border border-surface-200-800 bg-surface-50-950 shadow-lg">
                         <!-- Cabeçalho -->
-                        <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                            <h2 class="text-sm font-semibold text-gray-900">Notificações</h2>
+                        <div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-3">
+                            <h2 class="text-sm font-semibold text-surface-950-50">Notificações</h2>
                             {#if unreadCount > 0}
                                 <button
                                     type="button"
                                     onclick={markAllAsRead}
-                                    class="text-xs font-medium text-green-600 hover:text-green-700"
+                                    class="text-xs font-medium text-primary-600 hover:text-primary-700"
                                 >
                                     Marcar todas como lidas
                                 </button>
@@ -226,7 +226,7 @@
                         <!-- Lista -->
                         <div class="max-h-96 overflow-y-auto">
                             {#if notifications.length === 0}
-                                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                                <div class="flex flex-col items-center justify-center py-10 text-surface-600-400">
                                     <Bell class="mb-2 h-8 w-8 opacity-30" />
                                     <p class="text-sm">Nenhuma notificação</p>
                                 </div>
@@ -235,19 +235,19 @@
                                     <button
                                         type="button"
                                         onclick={() => markAsRead(notif)}
-                                        class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 {!notif.is_read ? 'bg-green-50' : ''}"
+                                        class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:preset-tonal {!notif.is_read ? 'preset-tonal-primary' : ''}"
                                     >
                                         <!-- Indicador de não lida -->
-                                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {!notif.is_read ? 'bg-green-500' : 'bg-transparent'}"></span>
+                                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {!notif.is_read ? 'bg-primary-500' : 'bg-transparent'}"></span>
 
                                         <div class="flex-1 overflow-hidden">
-                                            <p class="truncate text-sm font-medium text-gray-900">{notif.title}</p>
+                                            <p class="truncate text-sm font-medium text-surface-950-50">{notif.title}</p>
                                             {#if notif.body}
-                                                <p class="mt-0.5 truncate text-xs text-gray-500">{notif.body}</p>
+                                                <p class="mt-0.5 truncate text-xs text-surface-600-400">{notif.body}</p>
                                             {/if}
                                         </div>
 
-                                        <span class="shrink-0 text-xs text-gray-400">{formatTime(notif.created_at)}</span>
+                                        <span class="shrink-0 text-xs text-surface-600-400">{formatTime(notif.created_at)}</span>
                                     </button>
                                 {/each}
                             {/if}
@@ -260,7 +260,7 @@
             <button
                 type="button"
                 onclick={handleProfileClick}
-                class="rounded-full p-0.5 transition-colors hover:bg-gray-100 {isLoggedIn && menuOpen ? 'ring-2 ring-green-500 ring-offset-1' : ''}"
+                class="rounded-full p-0.5 transition-colors hover:preset-tonal {isLoggedIn && menuOpen ? 'ring-2 ring-primary-500 ring-offset-1' : ''}"
                 aria-label={isLoggedIn ? 'Abrir menu do usuário' : 'Fazer login'}
                 aria-expanded={isLoggedIn ? menuOpen : undefined}
                 aria-haspopup={isLoggedIn ? 'menu' : undefined}
@@ -269,15 +269,15 @@
                     <img
                         src={avatarUrl}
                         alt={displayName}
-                        class="h-9 w-9 rounded-full border border-gray-200 object-cover"
+                        class="h-9 w-9 rounded-full border border-surface-200-800 object-cover"
                         onerror={() => imgError = true}
                     />
                 {:else if isLoggedIn}
-                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-emerald-500 text-xs font-bold text-white">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-full preset-filled-primary-500 text-xs font-bold">
                         {initials}
                     </div>
                 {:else}
-                    <span class="flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full text-surface-600-400">
                         <User class="h-6 w-6" />
                     </span>
                 {/if}

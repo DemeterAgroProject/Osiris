@@ -239,47 +239,47 @@
     }
 </script>
 
-<div class="flex min-h-screen flex-col bg-gray-50 pb-20">
+<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
     <Header /> 
 
     <main class="flex flex-1 flex-col px-4 py-4 max-w-2xl mx-auto w-full">
-        <h1 class="mb-6 text-center text-xl font-bold text-gray-900">Novo Anúncio</h1>
+        <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Novo Anúncio</h1>
 
         {#if message.text}
-            <div class="p-4 mb-4 rounded-lg {message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+            <div class="p-4 mb-4 rounded-container {message.type === 'error' ? 'preset-tonal-error' : 'preset-tonal-primary'}">
                 {message.text}
             </div>
         {/if}
 
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 1 de 4</p>
-                <h2 class="mb-4 text-base text-gray-600">O que você deseja anunciar?</h2>
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 1 de 4</p>
+                <h2 class="mb-4 text-base text-surface-600-400">O que você deseja anunciar?</h2>
 
                 <div class="space-y-3">
                     <button
                         onclick={() => form.category = 'maquinario'}
-                        class="flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all {form.category === 'maquinario' ? 'border-green-600 bg-green-50' : 'border-gray-200 bg-white hover:border-green-300'}"
+                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.category === 'maquinario' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-300'}"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-primary text-primary-700">
                             <Tractor class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-medium text-gray-900">Maquinário Agrícola</h3>
-                            <p class="text-xs text-gray-500">Tratores, colheitadeiras, plantadeiras</p>
+                            <h3 class="font-medium text-surface-950-50">Maquinário Agrícola</h3>
+                            <p class="text-xs text-surface-600-400">Tratores, colheitadeiras, plantadeiras</p>
                         </div>
                     </button>
 
                     <button
                         onclick={() => form.category = 'produto'}
-                        class="flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all {form.category === 'produto' ? 'border-green-600 bg-green-50' : 'border-gray-200 bg-white hover:border-green-300'}"
+                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.category === 'produto' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-300'}"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-warning">
                             <span class="text-xl">🌱</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-medium text-gray-900">Insumos ou Produtos</h3>
-                            <p class="text-xs text-gray-500">Sementes, fertilizantes, mudas para reflorestamento</p>
+                            <h3 class="font-medium text-surface-950-50">Insumos ou Produtos</h3>
+                            <p class="text-xs text-surface-600-400">Sementes, fertilizantes, mudas para reflorestamento</p>
                         </div>
                     </button>
                 </div>
@@ -287,39 +287,39 @@
 
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 2 de 4</p>
-                <h2 class="mb-4 text-lg font-semibold text-gray-900">
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 2 de 4</p>
+                <h2 class="mb-4 text-lg font-semibold text-surface-950-50">
                     Detalhes do {form.category === 'maquinario' ? 'Maquinário' : 'Produto'}
                 </h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="name">Título do Anúncio</label>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="name">Título do Anúncio</label>
                         <input 
                             type="text" 
                             id="name" 
                             bind:value={form.name} 
                             placeholder={form.category === 'maquinario' ? "Ex: Trator JD 6100J" : "Ex: Sementes de Soja Branca"} 
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
+                            class="w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="description">Descrição</label>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="description">Descrição</label>
                         <textarea 
                             id="description" 
                             bind:value={form.description} 
                             rows="3"
                             placeholder="Adicione detalhes, estado de conservação, observações importantes..." 
-                            class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20" 
+                            class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                         ></textarea>
                     </div>
 
                     {#if form.category === 'maquinario'}
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1" for="type">Tipo</label>
-                                <select id="type" bind:value={form.type_id} class="w-full rounded-lg border border-gray-300 p-3 bg-white text-sm outline-none focus:border-green-500">
+                                <label class="block text-sm font-medium text-surface-700-300 mb-1" for="type">Tipo</label>
+                                <select id="type" bind:value={form.type_id} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                     <option value="" disabled>Selecione</option>
                                     {#each types as type}
                                         <option value={type.id}>{type.name}</option>
@@ -327,8 +327,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1" for="brand">Marca</label>
-                                <select id="brand" bind:value={form.brand_id} class="w-full rounded-lg border border-gray-300 p-3 bg-white text-sm outline-none focus:border-green-500">
+                                <label class="block text-sm font-medium text-surface-700-300 mb-1" for="brand">Marca</label>
+                                <select id="brand" bind:value={form.brand_id} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                     <option value="" disabled>Selecione</option>
                                     {#each brands as brand}
                                         <option value={brand.id}>{brand.name}</option>
@@ -338,31 +338,31 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="model">Modelo Exato</label>
-                            <input type="text" id="model" bind:value={form.model} placeholder="Ex: 6100J" class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-green-500" />
+                            <label class="block text-sm font-medium text-surface-700-300 mb-1" for="model">Modelo Exato</label>
+                            <input type="text" id="model" bind:value={form.model} placeholder="Ex: 6100J" class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
                         </div>
 
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1" for="serial_number">Número de Série / Chassi </label>
-							<input type="text" id="serial_number" bind:value={form.serial_number} placeholder="Ex: 123456789ABC" class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-green-500" />
+							<label class="block text-sm font-medium text-surface-700-300 mb-1" for="serial_number">Número de Série / Chassi </label>
+							<input type="text" id="serial_number" bind:value={form.serial_number} placeholder="Ex: 123456789ABC" class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
 						</div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1" for="year">Ano de Fab.</label>
-                                <input type="number" id="year" bind:value={form.manufacture_year} placeholder="Ex: 2018" min="1950" class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-green-500" />
+                                <label class="block text-sm font-medium text-surface-700-300 mb-1" for="year">Ano de Fab.</label>
+                                <input type="number" id="year" bind:value={form.manufacture_year} placeholder="Ex: 2018" min="1950" class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1" for="horimeter">Horímetro</label>
-                                <input type="number" id="horimeter" bind:value={form.current_horimeter} placeholder="Em horas" class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-green-500" />
+                                <label class="block text-sm font-medium text-surface-700-300 mb-1" for="horimeter">Horímetro</label>
+                                <input type="number" id="horimeter" bind:value={form.current_horimeter} placeholder="Em horas" class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
                             </div>
                         </div>
 
                     {:else if form.category === 'produto'}
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1" for="prod_category">Categoria do Insumo</label>
-                                <select id="prod_category" bind:value={form.product_category} class="w-full rounded-lg border border-gray-300 p-3 bg-white text-sm outline-none focus:border-green-500">
+                                <label class="block text-sm font-medium text-surface-700-300 mb-1" for="prod_category">Categoria do Insumo</label>
+                                <select id="prod_category" bind:value={form.product_category} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                     <option value="" disabled>Selecione a categoria...</option>
                                     <option value="Sementes">Sementes</option>
                                     <option value="Fertilizantes">Fertilizantes</option>
@@ -373,12 +373,12 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1" for="qty">Quantidade</label>
-                                    <input type="number" id="qty" bind:value={form.quantity} min="1" class="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-green-500" />
+                                    <label class="block text-sm font-medium text-surface-700-300 mb-1" for="qty">Quantidade</label>
+                                    <input type="number" id="qty" bind:value={form.quantity} min="1" class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1" for="unit">Unidade</label>
-                                    <select id="unit" bind:value={form.stock_unit} class="w-full rounded-lg border border-gray-300 p-3 bg-white text-sm outline-none focus:border-green-500">
+                                    <label class="block text-sm font-medium text-surface-700-300 mb-1" for="unit">Unidade</label>
+                                    <select id="unit" bind:value={form.stock_unit} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                         <option value="Sacas">Sacas</option>
                                         <option value="Kg">Kg</option>
                                         <option value="Toneladas">Toneladas</option>
@@ -396,10 +396,10 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 3 de 4</p>
-                <h2 class="mb-4 text-base text-gray-600">Localização</h2>
-                <div class="relative flex-1 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 min-h-[300px]">
-                    <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-100 to-gray-200">
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 3 de 4</p>
+                <h2 class="mb-4 text-base text-surface-600-400">Localização</h2>
+                <div class="relative flex-1 overflow-hidden rounded-container border border-surface-200-800 bg-surface-100-900 min-h-[300px]">
+                    <div class="absolute inset-0 flex items-center justify-center bg-surface-100-900">
                         <svg class="absolute inset-0 h-full w-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
                             {#each Array(10) as _, i}
                                 <line x1="0" y1={i * 10} x2="100" y2={i * 10} stroke="currentColor" stroke-width="0.5" />
@@ -409,16 +409,16 @@
                     </div>
                     <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
                         <div class="relative">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-500 shadow-lg">
-                                <MapPin class="h-5 w-5 text-white" />
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full preset-filled-error-500 shadow-lg">
+                                <MapPin class="h-5 w-5" />
                             </div>
-                            <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-red-500"></div>
+                            <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 preset-filled-error-500"></div>
                         </div>
                     </div>
                     <div class="absolute bottom-4 left-4 right-4">
-                        <div class="rounded-lg bg-white/90 px-4 py-2 shadow-sm backdrop-blur-sm border border-gray-200">
-                            <p class="text-sm font-medium text-gray-900">{form.location}</p>
-                            <p class="text-xs text-gray-500">Alegrete e Região</p>
+                        <div class="rounded-container bg-surface-50-950/90 px-4 py-2 shadow-sm backdrop-blur-sm border border-surface-200-800">
+                            <p class="text-sm font-medium text-surface-950-50">{form.location}</p>
+                            <p class="text-xs text-surface-600-400">Alegrete e Região</p>
                         </div>
                     </div>
                 </div>
@@ -426,26 +426,26 @@
 
         {:else if currentStep === 3}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-gray-500">Etapa 4 de 4</p>
-                <h2 class="mb-6 text-lg font-semibold text-gray-900">Qual é o valor cobrado?</h2>
+                <p class="mb-2 text-sm text-surface-600-400">Etapa 4 de 4</p>
+                <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Qual é o valor cobrado?</h2>
 
                 <div>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">R$</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-600-400">R$</span>
                         <input
                             type="number"
                             bind:value={form.price}
                             placeholder="500"
-                            class="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                            class="w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
-                    <p class="mt-2 text-xs text-gray-500">Valor por hora de trabalho (se for aluguel) ou venda.</p>
+                    <p class="mt-2 text-xs text-surface-600-400">Valor por hora de trabalho (se for aluguel) ou venda.</p>
                 </div>
 
                 {#if form.price && form.price > 0}
-                    <div class="mt-6 rounded-xl bg-green-50 p-4 border border-green-100">
-                        <p class="text-sm text-gray-600">Seu anúncio será publicado por:</p>
-                        <p class="mt-1 text-2xl font-bold text-green-700">{formatPrice(form.price)}</p>
+                    <div class="mt-6 rounded-container preset-tonal-primary p-4 border border-primary-500">
+                        <p class="text-sm text-surface-600-400">Seu anúncio será publicado por:</p>
+                        <p class="mt-1 text-2xl font-bold text-primary-700">{formatPrice(form.price)}</p>
                     </div>
                 {/if}
             </div>
@@ -456,22 +456,22 @@
                 <button
                     onclick={handleSubmit}
                     disabled={!canProceed() || loading}
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
                 >
                     {loading ? 'Salvando no Banco...' : 'Publicar Anúncio'}
                 </button>
-                <button onclick={prevStep} disabled={loading} class="w-full rounded-lg border border-gray-300 bg-white py-3.5 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                <button onclick={prevStep} disabled={loading} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50">
                     Voltar e Revisar
                 </button>
             {:else}
                 <button
                     onclick={nextStep}
                     disabled={!canProceed()}
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
                 >
                     Próximo <ChevronRight class="h-5 w-5" />
                 </button>
-                <button onclick={prevStep} class="w-full rounded-lg border border-gray-300 bg-white py-3.5 font-medium text-gray-700 hover:bg-gray-50">
+                <button onclick={prevStep} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal">
                     {currentStep === 0 ? 'Cancelar' : 'Voltar'}
                 </button>
             {/if}

@@ -247,9 +247,9 @@
 	}
 
 	function statusBadgeClass(status) {
-		if (isActiveStatus(status)) return 'bg-green-100 text-green-700';
-		if (isPausedStatus(status)) return 'bg-amber-100 text-amber-700';
-		return 'bg-gray-100 text-gray-600';
+		if (isActiveStatus(status)) return 'preset-tonal-primary';
+		if (isPausedStatus(status)) return 'preset-tonal-warning';
+		return 'preset-tonal-surface';
 	}
 
 	function getMachineryTypeName(item) {
@@ -476,10 +476,10 @@
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<div class="mb-4 flex items-center justify-between">
-			<h1 class="text-xl font-bold text-gray-900">Meu Inventário</h1>
+			<h1 class="text-xl font-bold text-surface-950-50">Meu Inventário</h1>
 			<a
 				href="/anunciar"
-				class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
+				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm"
 			>
 				<Plus class="h-4 w-4" />
 				Novo Anúncio
@@ -488,9 +488,9 @@
 
 		{#if statusMessage.text}
 			<div
-				class="mb-4 rounded-xl p-3 text-sm {statusMessage.type === 'error'
-					? 'bg-red-50 text-red-700'
-					: 'bg-green-50 text-green-700'}"
+				class="mb-4 rounded-container p-3 text-sm {statusMessage.type === 'error'
+					? 'preset-tonal-error'
+					: 'preset-tonal-primary'}"
 			>
 				{statusMessage.text}
 			</div>
@@ -500,10 +500,10 @@
 			<button
 				type="button"
 				onclick={() => (activeTab = 'maquinarios')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
+				class="flex flex-1 items-center justify-center gap-2 rounded-container border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
 				'maquinarios'
-					? 'border-green-600 bg-green-50 text-green-700'
-					: 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
+					? 'border-primary-500 preset-tonal-primary text-primary-700'
+					: 'border-surface-200-800 bg-surface-50-950 text-surface-600-400 hover:border-primary-500'}"
 			>
 				<Tractor class="h-5 w-5" />
 				Maquinários
@@ -511,57 +511,57 @@
 			<button
 				type="button"
 				onclick={() => (activeTab = 'produtos')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
+				class="flex flex-1 items-center justify-center gap-2 rounded-container border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
 				'produtos'
-					? 'border-green-600 bg-green-50 text-green-700'
-					: 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}"
+					? 'border-primary-500 preset-tonal-primary text-primary-700'
+					: 'border-surface-200-800 bg-surface-50-950 text-surface-600-400 hover:border-primary-500'}"
 			>
 				<Leaf class="h-5 w-5" />
 				Produtos
 			</button>
 		</div>
 
-		<div class="relative mb-6 shadow-sm rounded-xl">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+		<div class="relative mb-6 shadow-sm rounded-container">
+			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
 			<input
 				type="search"
 				placeholder="Buscar nos meus anúncios..."
 				bind:value={searchQuery}
-				class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 		</div>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+				<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
 			</div>
 		{:else if activeTab === 'maquinarios'}
 			<div class="space-y-3">
 				{#each filteredMaquinarios as maq (maq.id)}
 					<article
-						class="relative rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
 							maq.status
 						)
 							? 'opacity-80'
 							: ''}"
 					>
 						<div class="flex gap-4 p-4">
-							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-green-50">
+							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary">
 								{#if getAdCoverUrl(maq)}
 									<img src={getAdCoverUrl(maq)} alt={maq.name} class="h-full w-full object-cover" />
 								{:else}
-									<Tractor class="h-10 w-10 text-green-600 opacity-80" />
+									<Tractor class="h-10 w-10 text-primary-600 opacity-80" />
 								{/if}
 							</div>
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
-								<h3 class="line-clamp-1 font-bold text-gray-900">{maq.name}</h3>
-								<p class="mt-0.5 text-sm font-medium text-green-700">
+								<h3 class="line-clamp-1 font-bold text-surface-950-50">{maq.name}</h3>
+								<p class="mt-0.5 text-sm font-medium text-primary-700">
 									{formatPrice(maq.price)}
-									<span class="text-xs font-normal text-gray-500">/hora</span>
+									<span class="text-xs font-normal text-surface-600-400">/hora</span>
 								</p>
 								<div class="mt-2 flex flex-wrap gap-2">
 									<span
-										class="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600"
+										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
 									>
 										{getMachineryTypeName(maq)}
 									</span>
@@ -578,7 +578,7 @@
 								<button
 									type="button"
 									onclick={(event) => toggleMenu(maq.id, event)}
-									class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 									aria-label="Ações do anúncio"
 									aria-expanded={openMenu === maq.id}
 									aria-haspopup="menu"
@@ -589,13 +589,13 @@
 									<ul
 										role="menu"
 										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl {menuPositionClass()}"
+										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
 									>
 										<li role="none">
 											<a
 												role="menuitem"
 												href={getAdHref(maq)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />
 												Ver anúncio
@@ -606,7 +606,7 @@
 												type="button"
 												role="menuitem"
 												onclick={(event) => openEdit(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<Edit class="h-4 w-4" />
 												Editar
@@ -618,7 +618,7 @@
 												role="menuitem"
 												disabled={togglingId === maq.id}
 												onclick={(event) => requestToggleStatus(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
 											>
 												{#if isActiveStatus(maq.status)}
 													<Pause class="h-4 w-4" />
@@ -635,7 +635,7 @@
 												role="menuitem"
 												disabled={deletingId === maq.id}
 												onclick={(event) => requestDelete(maq, event)}
-												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
 											>
 												<Trash2 class="h-4 w-4" />
 												Excluir
@@ -647,33 +647,33 @@
 						</div>
 					</article>
 				{:else}
-					<div class="py-12 text-center text-gray-500">Nenhum maquinário encontrado.</div>
+					<div class="py-12 text-center text-surface-600-400">Nenhum maquinário encontrado.</div>
 				{/each}
 			</div>
 		{:else}
 			<div class="space-y-3">
 				{#each filteredProdutos as prod (prod.id)}
 					<article
-						class="relative rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
 							prod.status
 						)
 							? 'opacity-80'
 							: ''}"
 					>
 						<div class="flex gap-4 p-4">
-							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-amber-50">
+							<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-warning">
 								{#if getAdCoverUrl(prod)}
 									<img src={getAdCoverUrl(prod)} alt={prod.name} class="h-full w-full object-cover" />
 								{:else}
-									<Leaf class="h-10 w-10 text-amber-600 opacity-80" />
+									<Leaf class="h-10 w-10 text-warning-600 opacity-80" />
 								{/if}
 							</div>
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
-								<h3 class="line-clamp-1 font-bold text-gray-900">{prod.name}</h3>
-								<p class="mt-0.5 text-sm font-extrabold text-amber-700">{formatPrice(prod.price)}</p>
+								<h3 class="line-clamp-1 font-bold text-surface-950-50">{prod.name}</h3>
+								<p class="mt-0.5 text-sm font-extrabold text-warning-700">{formatPrice(prod.price)}</p>
 								<div class="mt-2 flex flex-wrap gap-2">
 									<span
-										class="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600"
+										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
 									>
 										{prod.category}
 									</span>
@@ -690,7 +690,7 @@
 								<button
 									type="button"
 									onclick={(event) => toggleMenu(prod.id, event)}
-									class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 									aria-label="Ações do anúncio"
 									aria-expanded={openMenu === prod.id}
 									aria-haspopup="menu"
@@ -701,13 +701,13 @@
 									<ul
 										role="menu"
 										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl {menuPositionClass()}"
+										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
 									>
 										<li role="none">
 											<a
 												role="menuitem"
 												href={getAdHref(prod)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />
 												Ver anúncio
@@ -718,7 +718,7 @@
 												type="button"
 												role="menuitem"
 												onclick={(event) => openEdit(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<Edit class="h-4 w-4" />
 												Editar
@@ -730,7 +730,7 @@
 												role="menuitem"
 												disabled={togglingId === prod.id}
 												onclick={(event) => requestToggleStatus(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
 											>
 												{#if isActiveStatus(prod.status)}
 													<Pause class="h-4 w-4" />
@@ -747,7 +747,7 @@
 												role="menuitem"
 												disabled={deletingId === prod.id}
 												onclick={(event) => requestDelete(prod, event)}
-												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
 											>
 												<Trash2 class="h-4 w-4" />
 												Excluir
@@ -759,7 +759,7 @@
 						</div>
 					</article>
 				{:else}
-					<div class="py-12 text-center text-gray-500">Nenhum produto/insumo encontrado.</div>
+					<div class="py-12 text-center text-surface-600-400">Nenhum produto/insumo encontrado.</div>
 				{/each}
 			</div>
 		{/if}

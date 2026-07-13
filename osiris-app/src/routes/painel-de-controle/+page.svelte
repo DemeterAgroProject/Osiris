@@ -58,131 +58,131 @@
     const totalAds = $derived(stats.maquinarios + stats.produtos + stats.servicos);
 </script>
 
-<div class="min-h-screen bg-gray-50 pb-20">
+<div class="min-h-screen bg-surface-50-950 pb-20">
     <Header />
 
     <main class="px-4 py-6 max-w-3xl mx-auto w-full space-y-6">
         
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Olá, {userName}!</h1>
-            <p class="text-sm text-gray-500 mt-1">Aqui está o resumo dos seus negócios no Osíris.</p>
+            <h1 class="text-2xl font-bold">Olá, {userName}!</h1>
+            <p class="text-sm text-surface-600-400 mt-1">Aqui está o resumo dos seus negócios no Osíris.</p>
         </div>
 
         {#if loading}
             <div class="flex justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
             </div>
         {:else}
             <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2 flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-gray-100 p-5 text-black shadow-md">
+                <div class="col-span-2 flex items-center justify-between rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 p-5 text-black shadow-md">
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Total de Anúncios Ativos</p>
+                        <p class="text-surface-600-400 text-sm font-medium">Total de Anúncios Ativos</p>
                         <p class="text-3xl font-bold mt-1">{totalAds}</p>
                     </div>
-                    <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center backdrop-blur-sm">
+                    <div class="h-12 w-12 rounded-full bg-surface-100-900 flex items-center justify-center backdrop-blur-sm">
                         <TrendingUp class="h-6 w-6 text-black" />
                     </div>
                 </div>
 
-                <div class="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 flex flex-col justify-between">
+                <div class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between">
                     <div class="flex justify-between items-start">
-                        <div class="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
-                            <Eye class="h-4 w-4 text-blue-600" />
+                        <div class="h-8 w-8 rounded-full preset-tonal-secondary flex items-center justify-center">
+                            <Eye class="h-4 w-4" />
                         </div>
                     </div>
                     <div class="mt-3">
-                        <p class="text-2xl font-bold text-gray-900">124</p>
-                        <p class="text-xs text-gray-500 font-medium mt-0.5">Visitas este mês</p>
+                        <p class="text-2xl font-bold">124</p>
+                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Visitas este mês</p>
                     </div>
                 </div>
 
-                <div class="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 flex flex-col justify-between">
+                <div class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between">
                     <div class="flex justify-between items-start">
-                        <div class="h-8 w-8 rounded-full bg-amber-50 flex items-center justify-center">
-                            <MessageCircle class="h-4 w-4 text-amber-600" />
+                        <div class="h-8 w-8 rounded-full preset-tonal-warning flex items-center justify-center">
+                            <MessageCircle class="h-4 w-4" />
                         </div>
                     </div>
                     <div class="mt-3">
-                        <p class="text-2xl font-bold text-gray-900">3</p>
-                        <p class="text-xs text-gray-500 font-medium mt-0.5">Novos contatos</p>
+                        <p class="text-2xl font-bold">3</p>
+                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Novos contatos</p>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h2 class="text-base font-bold text-gray-900 mb-3">Seu Portfólio</h2>
+                <h2 class="text-base font-bold mb-3">Seu Portfólio</h2>
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="rounded-xl bg-white p-3 border border-gray-100 text-center shadow-sm">
-                        <Tractor class="h-5 w-5 mx-auto text-green-600 mb-2" />
-                        <p class="text-xl font-bold text-gray-900">{stats.maquinarios}</p>
-                        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Máquinas</p>
+                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
+                        <Tractor class="h-5 w-5 mx-auto text-primary-600 mb-2" />
+                        <p class="text-xl font-bold">{stats.maquinarios}</p>
+                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Máquinas</p>
                     </div>
-                    <div class="rounded-xl bg-white p-3 border border-gray-100 text-center shadow-sm">
-                        <Leaf class="h-5 w-5 mx-auto text-amber-600 mb-2" />
-                        <p class="text-xl font-bold text-gray-900">{stats.produtos}</p>
-                        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Insumos</p>
+                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
+                        <Leaf class="h-5 w-5 mx-auto mb-2 text-warning-500" />
+                        <p class="text-xl font-bold">{stats.produtos}</p>
+                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Insumos</p>
                     </div>
-                    <div class="rounded-xl bg-white p-3 border border-gray-100 text-center shadow-sm">
-                        <Briefcase class="h-5 w-5 mx-auto text-blue-600 mb-2" />
-                        <p class="text-xl font-bold text-gray-900">{stats.servicos}</p>
-                        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Serviços</p>
+                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
+                        <Briefcase class="h-5 w-5 mx-auto mb-2 text-secondary-500" />
+                        <p class="text-xl font-bold">{stats.servicos}</p>
+                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Serviços</p>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h2 class="text-base font-bold text-gray-900 mb-3">Ações Rápidas</h2>
+                <h2 class="text-base font-bold mb-3">Ações Rápidas</h2>
                 <div class="space-y-3">
-                    <a href="/painel-de-controle/agenda" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-sky-300 transition-colors">
+                    <a href="/painel-de-controle/agenda" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-sky-50 flex items-center justify-center">
-                                <Calendar class="h-5 w-5 text-sky-600" />
+                            <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
+                                <Calendar class="h-5 w-5" />
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-900">Agenda</p>
-                                <p class="text-xs text-gray-500">Propostas, negociações e operações</p>
+                                <p class="font-semibold">Agenda</p>
+                                <p class="text-xs text-surface-600-400">Propostas, negociações e operações</p>
                             </div>
                         </div>
-                        <ArrowRight class="h-5 w-5 text-gray-400" />
+                        <ArrowRight class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/negociacoes" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-amber-300 transition-colors">
+                    <a href="/negociacoes" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                                <MessageSquare class="h-5 w-5 text-amber-600" />
+                            <div class="h-10 w-10 rounded-container preset-tonal-warning flex items-center justify-center">
+                                <MessageSquare class="h-5 w-5" />
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-900">Negociações</p>
-                                <p class="text-xs text-gray-500">Propostas, chat e operações</p>
+                                <p class="font-semibold">Negociações</p>
+                                <p class="text-xs text-surface-600-400">Propostas, chat e operações</p>
                             </div>
                         </div>
-                        <ArrowRight class="h-5 w-5 text-gray-400" />
+                        <ArrowRight class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/anunciar" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-green-300 transition-colors">
+                    <a href="/anunciar" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:border-primary-500 transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
-                                <Package class="h-5 w-5 text-green-600" />
+                            <div class="h-10 w-10 rounded-container preset-tonal-primary flex items-center justify-center">
+                                <Package class="h-5 w-5" />
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-900">Anunciar Produto/Máquina</p>
-                                <p class="text-xs text-gray-500">Adicionar item ao inventário</p>
+                                <p class="font-semibold">Anunciar Produto/Máquina</p>
+                                <p class="text-xs text-surface-600-400">Adicionar item ao inventário</p>
                             </div>
                         </div>
-                        <PlusCircle class="h-5 w-5 text-gray-400" />
+                        <PlusCircle class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/servicos/novo" class="flex items-center justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm hover:border-blue-300 transition-colors">
+                    <a href="/servicos/novo" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                                <Briefcase class="h-5 w-5 text-blue-600" />
+                            <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
+                                <Briefcase class="h-5 w-5" />
                             </div>
                             <div>
-                                <p class="font-semibold text-gray-900">Oferecer Serviço</p>
-                                <p class="text-xs text-gray-500">Mão de obra ou pacote completo</p>
+                                <p class="font-semibold">Oferecer Serviço</p>
+                                <p class="text-xs text-surface-600-400">Mão de obra ou pacote completo</p>
                             </div>
                         </div>
-                        <PlusCircle class="h-5 w-5 text-gray-400" />
+                        <PlusCircle class="h-5 w-5 text-surface-600-400" />
                     </a>
                 </div>
             </div>

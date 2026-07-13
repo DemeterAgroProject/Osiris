@@ -291,24 +291,24 @@
 {#if open && product}
 	<button
 		type="button"
-		class="fixed inset-0 z-[80] border-0 bg-black/40 p-0"
+		class="fixed inset-0 z-[80] border-0 bg-surface-950/40 p-0"
 		onclick={closeSheet}
 		aria-label="Fechar edição"
 	></button>
 
 	<div
-		class="fixed inset-x-0 bottom-0 z-[90] max-h-[92vh] overflow-hidden rounded-t-3xl bg-white shadow-2xl"
+		class="fixed inset-x-0 bottom-0 z-[90] max-h-[92vh] overflow-hidden rounded-t-3xl bg-surface-50-950 shadow-2xl"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="edit-ad-title"
 	>
 		<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
-			<div class="flex items-center justify-between border-b border-gray-100 px-4 py-4">
-				<h2 id="edit-ad-title" class="text-lg font-bold text-gray-900">Editar anúncio</h2>
+			<div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-4">
+				<h2 id="edit-ad-title" class="text-lg font-bold text-surface-950-50">Editar anúncio</h2>
 				<button
 					type="button"
 					onclick={closeSheet}
-					class="rounded-full p-2 text-gray-400 hover:bg-gray-100"
+					class="rounded-full p-2 text-surface-600-400 hover:preset-tonal"
 					aria-label="Fechar"
 				>
 					<X class="h-5 w-5" />
@@ -317,34 +317,34 @@
 
 			<form class="flex-1 space-y-4 overflow-y-auto px-4 py-4" onsubmit={handleSubmit}>
 				{#if errorMessage}
-					<div class="rounded-xl bg-red-50 p-3 text-sm text-red-700">{errorMessage}</div>
+					<div class="rounded-container preset-tonal-error p-3 text-sm text-error-500">{errorMessage}</div>
 				{/if}
 
 				<div>
-					<label for="edit-name" class="mb-1 block text-sm font-medium text-gray-700">Título</label>
+					<label for="edit-name" class="mb-1 block text-sm font-medium text-surface-700-300">Título</label>
 					<input
 						id="edit-name"
 						type="text"
 						bind:value={form.name}
 						required
-						class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
 				<div>
-					<label for="edit-description" class="mb-1 block text-sm font-medium text-gray-700"
+					<label for="edit-description" class="mb-1 block text-sm font-medium text-surface-700-300"
 						>Descrição</label
 					>
 					<textarea
 						id="edit-description"
 						rows="3"
 						bind:value={form.description}
-						class="w-full resize-none rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					></textarea>
 				</div>
 
 				<div>
-					<label for="edit-price" class="mb-1 block text-sm font-medium text-gray-700">
+					<label for="edit-price" class="mb-1 block text-sm font-medium text-surface-700-300">
 						{isMachinery ? 'Preço por hora (R$)' : 'Preço (R$)'}
 					</label>
 					<input
@@ -354,18 +354,18 @@
 						step="0.01"
 						bind:value={form.price}
 						required
-						class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
 				{#if isMachinery}
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="edit-type" class="mb-1 block text-sm font-medium text-gray-700">Tipo</label>
+							<label for="edit-type" class="mb-1 block text-sm font-medium text-surface-700-300">Tipo</label>
 							<select
 								id="edit-type"
 								bind:value={form.type_id}
-								class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="" disabled>Selecione</option>
 								{#each types as type (type.id)}
@@ -374,11 +374,11 @@
 							</select>
 						</div>
 						<div>
-							<label for="edit-brand" class="mb-1 block text-sm font-medium text-gray-700">Marca</label>
+							<label for="edit-brand" class="mb-1 block text-sm font-medium text-surface-700-300">Marca</label>
 							<select
 								id="edit-brand"
 								bind:value={form.brand_id}
-								class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="" disabled>Selecione</option>
 								{#each brands as brand (brand.id)}
@@ -389,59 +389,59 @@
 					</div>
 
 					<div>
-						<label for="edit-model" class="mb-1 block text-sm font-medium text-gray-700">Modelo</label>
+						<label for="edit-model" class="mb-1 block text-sm font-medium text-surface-700-300">Modelo</label>
 						<input
 							id="edit-model"
 							type="text"
 							bind:value={form.model}
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500"
+							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						/>
 					</div>
 
 					<div>
-						<label for="edit-serial" class="mb-1 block text-sm font-medium text-gray-700"
+						<label for="edit-serial" class="mb-1 block text-sm font-medium text-surface-700-300"
 							>Número de série</label
 						>
 						<input
 							id="edit-serial"
 							type="text"
 							bind:value={form.serial_number}
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500"
+							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						/>
 					</div>
 
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="edit-year" class="mb-1 block text-sm font-medium text-gray-700">Ano</label>
+							<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-700-300">Ano</label>
 							<input
 								id="edit-year"
 								type="number"
 								min="1950"
 								bind:value={form.manufacture_year}
-								class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 						<div>
-							<label for="edit-horimeter" class="mb-1 block text-sm font-medium text-gray-700"
+							<label for="edit-horimeter" class="mb-1 block text-sm font-medium text-surface-700-300"
 								>Horímetro</label
 							>
 							<input
 								id="edit-horimeter"
 								type="number"
 								bind:value={form.current_horimeter}
-								class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 					</div>
 				{:else}
 					<div>
-						<label for="edit-category" class="mb-1 block text-sm font-medium text-gray-700"
+						<label for="edit-category" class="mb-1 block text-sm font-medium text-surface-700-300"
 							>Categoria</label
 						>
 						<select
 							id="edit-category"
 							bind:value={form.category}
-							class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-green-500"
+							class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
 							<option value="" disabled>Selecione</option>
 							<option value="Sementes">Sementes</option>
@@ -455,7 +455,7 @@
 
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="edit-qty" class="mb-1 block text-sm font-medium text-gray-700"
+							<label for="edit-qty" class="mb-1 block text-sm font-medium text-surface-700-300"
 								>Quantidade</label
 							>
 							<input
@@ -463,15 +463,15 @@
 								type="number"
 								min="1"
 								bind:value={form.quantity}
-								class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 						<div>
-							<label for="edit-unit" class="mb-1 block text-sm font-medium text-gray-700">Unidade</label>
+							<label for="edit-unit" class="mb-1 block text-sm font-medium text-surface-700-300">Unidade</label>
 							<select
 								id="edit-unit"
 								bind:value={form.stock_unit}
-								class="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-green-500"
+								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="Sacas">Sacas</option>
 								<option value="Kg">Kg</option>
@@ -485,18 +485,18 @@
 
 				<ProductImageUrlsEditor bind:images />
 
-				<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-gray-100 bg-white pb-4 pt-3">
+				<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-surface-200-800 bg-surface-50-950 pb-4 pt-3">
 					<button
 						type="button"
 						onclick={closeSheet}
-						class="rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+						class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal"
 					>
 						Cancelar
 					</button>
 					<button
 						type="submit"
 						disabled={saving}
-						class="rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+						class="rounded-container preset-filled-primary-500 py-3 text-sm font-semibold disabled:opacity-60"
 					>
 						{saving ? 'Salvando...' : 'Salvar alterações'}
 					</button>

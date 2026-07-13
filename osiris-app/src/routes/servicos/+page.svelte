@@ -108,9 +108,9 @@
 	}
 
 	function statusBadgeClass(status) {
-		if (isActiveStatus(status)) return 'bg-green-100 text-green-700';
-		if (isPausedStatus(status)) return 'bg-amber-100 text-amber-700';
-		return 'bg-gray-100 text-gray-600';
+		if (isActiveStatus(status)) return 'preset-tonal-primary';
+		if (isPausedStatus(status)) return 'preset-tonal-warning';
+		return 'preset-tonal-surface';
 	}
 
 	function serviceIcon(service) {
@@ -366,15 +366,15 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<div class="min-h-screen bg-gray-50 pb-20">
+<div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-xl font-bold text-gray-900">Meus Serviços</h1>
+			<h1 class="text-xl font-bold text-surface-950-50">Meus Serviços</h1>
 			<a
 				href="/servicos/novo"
-				class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700"
+				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm transition-colors"
 			>
 				<Plus class="h-4 w-4" />
 				Oferecer Serviço
@@ -383,22 +383,22 @@
 
 		{#if statusMessage.text}
 			<div
-				class="mb-4 rounded-xl p-3 text-sm {statusMessage.type === 'error'
-					? 'bg-red-50 text-red-700'
-					: 'bg-green-50 text-green-700'}"
+				class="mb-4 rounded-container p-3 text-sm {statusMessage.type === 'error'
+					? 'preset-tonal-error'
+					: 'preset-tonal-primary'}"
 			>
 				{statusMessage.text}
 			</div>
 		{/if}
 
-		<div class="mb-6 flex rounded-xl bg-gray-200 p-1">
+		<div class="mb-6 flex rounded-container bg-surface-200-800 p-1">
 			<button
 				type="button"
 				onclick={() => (activeTab = 'mao_de_obra')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all {activeTab ===
+				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
 				'mao_de_obra'
-					? 'bg-white text-green-700 shadow-sm'
-					: 'text-gray-600 hover:text-gray-900'}"
+					? 'bg-surface-50-950 text-primary-700 shadow-sm'
+					: 'text-surface-600-400 hover:text-surface-950-50'}"
 			>
 				<Users class="h-4 w-4" />
 				Mão de Obra
@@ -406,36 +406,36 @@
 			<button
 				type="button"
 				onclick={() => (activeTab = 'pacote_completo')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all {activeTab ===
+				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
 				'pacote_completo'
-					? 'bg-white text-green-700 shadow-sm'
-					: 'text-gray-600 hover:text-gray-900'}"
+					? 'bg-surface-50-950 text-primary-700 shadow-sm'
+					: 'text-surface-600-400 hover:text-surface-950-50'}"
 			>
 				<Briefcase class="h-4 w-4" />
 				Pacote Completo
 			</button>
 		</div>
 
-		<div class="relative mb-6 shadow-sm rounded-xl">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+		<div class="relative mb-6 shadow-sm rounded-container">
+			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
 			<input
 				type="search"
 				placeholder="Buscar nos meus serviços..."
 				bind:value={searchQuery}
-				class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 		</div>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+				<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
 			</div>
 		{:else}
 			<div class="space-y-3">
 				{#each filteredServices as serv (serv.id)}
 					{@const Icon = serviceIcon(serv)}
 					<article
-						class="relative rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
 							serv.status
 						)
 							? 'opacity-80'
@@ -443,24 +443,24 @@
 					>
 						<div class="flex gap-4 p-4">
 							<div
-								class="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg {serv.service_type ===
+								class="flex h-16 w-16 shrink-0 items-center justify-center rounded-container {serv.service_type ===
 								'Pacote Completo'
-									? 'bg-blue-50'
-									: 'bg-green-50'}"
+									? 'preset-tonal-secondary'
+									: 'preset-tonal-primary'}"
 							>
 								<Icon
 									class="h-8 w-8 {serv.service_type === 'Pacote Completo'
-										? 'text-blue-600'
-										: 'text-green-600'} opacity-80"
+										? 'text-secondary-600'
+										: 'text-primary-600'} opacity-80"
 								/>
 							</div>
 
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
-								<h3 class="line-clamp-1 font-bold text-gray-900">{serv.title}</h3>
-								<p class="mt-0.5 text-sm font-medium text-green-700">
+								<h3 class="line-clamp-1 font-bold text-surface-950-50">{serv.title}</h3>
+								<p class="mt-0.5 text-sm font-medium text-primary-700">
 									{formatPrice(serv.price, serv.pricing_model)}
 								</p>
-								<p class="mt-1 line-clamp-2 text-xs text-gray-500">{serv.description}</p>
+								<p class="mt-1 line-clamp-2 text-xs text-surface-600-400">{serv.description}</p>
 								<div class="mt-2 flex flex-wrap items-center gap-2">
 									<span
 										class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
@@ -469,14 +469,14 @@
 									>
 										{getStatusLabel(serv.status)}
 									</span>
-									<span class="flex items-center gap-1 text-xs text-gray-500">
+									<span class="flex items-center gap-1 text-xs text-surface-600-400">
 										<MapPin class="h-3 w-3" />
 										{serv.location}
 									</span>
 								</div>
 								{#if ownerProfile}
 									<div class="mt-2 flex items-center gap-2">
-										<div class="h-6 w-6 overflow-hidden rounded-full bg-gray-200">
+										<div class="h-6 w-6 overflow-hidden rounded-full bg-surface-200-800">
 											{#if ownerProfile.photo_url && !imgErrors[serv.id]}
 												<img
 													src={ownerProfile.photo_url}
@@ -486,13 +486,13 @@
 												/>
 											{:else}
 												<div
-													class="flex h-full w-full items-center justify-center bg-green-100 text-xs font-bold text-green-700"
+													class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-bold"
 												>
 													{ownerProfile.display_name?.charAt(0) || '?'}
 												</div>
 											{/if}
 										</div>
-										<span class="text-xs font-medium text-gray-700"
+										<span class="text-xs font-medium text-surface-700-300"
 											>{ownerProfile.display_name || 'Usuário'}</span
 										>
 									</div>
@@ -503,7 +503,7 @@
 								<button
 									type="button"
 									onclick={(event) => toggleMenu(serv.id, event)}
-									class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 									aria-label="Ações do serviço"
 									aria-expanded={openMenu === serv.id}
 									aria-haspopup="menu"
@@ -514,13 +514,13 @@
 									<ul
 										role="menu"
 										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-xl border border-gray-200 bg-white p-0 py-1 shadow-2xl {menuPositionClass()}"
+										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
 									>
 										<li role="none">
 											<a
 												role="menuitem"
 												href={getServiceHref(serv)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />
 												Ver anúncio
@@ -531,7 +531,7 @@
 												type="button"
 												role="menuitem"
 												onclick={(event) => openEdit(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<Edit class="h-4 w-4" />
 												Editar
@@ -543,7 +543,7 @@
 												role="menuitem"
 												disabled={togglingId === serv.id}
 												onclick={(event) => requestToggleStatus(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
 											>
 												{#if isActiveStatus(serv.status)}
 													<Pause class="h-4 w-4" />
@@ -560,7 +560,7 @@
 												role="menuitem"
 												disabled={deletingId === serv.id}
 												onclick={(event) => requestDelete(serv, event)}
-												class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
 											>
 												<Trash2 class="h-4 w-4" />
 												Excluir
@@ -574,16 +574,16 @@
 				{:else}
 					<div class="px-4 py-16 text-center">
 						<div
-							class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
+							class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-100-900"
 						>
 							{#if activeTab === 'mao_de_obra'}
-								<Users class="h-8 w-8 text-gray-400" />
+								<Users class="h-8 w-8 text-surface-600-400" />
 							{:else}
-								<Briefcase class="h-8 w-8 text-gray-400" />
+								<Briefcase class="h-8 w-8 text-surface-600-400" />
 							{/if}
 						</div>
-						<h3 class="mb-1 text-lg font-medium text-gray-900">Nenhum serviço encontrado</h3>
-						<p class="text-sm text-gray-500">
+						<h3 class="mb-1 text-lg font-medium text-surface-950-50">Nenhum serviço encontrado</h3>
+						<p class="text-sm text-surface-600-400">
 							Você ainda não possui serviços cadastrados nesta categoria.
 						</p>
 					</div>

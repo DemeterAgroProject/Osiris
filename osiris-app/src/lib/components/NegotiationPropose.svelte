@@ -159,32 +159,32 @@
 {#if open}
 	<button
 		type="button"
-		class="fixed inset-0 z-[90] border-0 bg-black/50 p-0"
+		class="fixed inset-0 z-[90] border-0 bg-surface-950/50 p-0"
 		onclick={closeModal}
 		aria-label="Fechar modal"
 	></button>
 
-	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-white shadow-2xl">
+	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-surface-50-950 shadow-2xl">
 		<div class="mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
-					<h2 class="text-lg font-bold text-gray-900">Fazer proposta</h2>
-					<p class="text-xs text-gray-500">Envie para {sellerName}</p>
+					<h2 class="text-lg font-bold text-surface-950-50">Fazer proposta</h2>
+					<p class="text-xs text-surface-600-400">Envie para {sellerName}</p>
 				</div>
 				<button
 					type="button"
 					onclick={closeModal}
 					aria-label="Fechar modal"
-					class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+					class="rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400"
 				>
 					<X class="h-5 w-5" />
 				</button>
 			</div>
 
 			<div class="overflow-y-auto pb-2">
-					<div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-						<p class="line-clamp-1 text-sm font-semibold text-gray-900">{title}</p>
-						<p class="text-sm font-bold text-green-700">{priceLabel}</p>
+					<div class="rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3">
+						<p class="line-clamp-1 text-sm font-semibold text-surface-950-50">{title}</p>
+						<p class="text-sm font-bold text-primary-700">{priceLabel}</p>
 					</div>
 
 					<form class="mt-4 space-y-3" onsubmit={handleSubmit}>
@@ -193,7 +193,7 @@
 								<div>
 									<label
 										for="startDate"
-										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500"
+										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
 									>
 										Início
 									</label>
@@ -201,13 +201,13 @@
 										id="startDate"
 										type="date"
 										bind:value={startDate}
-										class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+										class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 									/>
 								</div>
 								<div>
 									<label
 										for="endDate"
-										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500"
+										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
 									>
 										Fim
 									</label>
@@ -215,7 +215,7 @@
 										id="endDate"
 										type="date"
 										bind:value={endDate}
-										class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+										class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 									/>
 								</div>
 							</div>
@@ -224,7 +224,7 @@
 						<div>
 							<label
 								for="proposalValue"
-								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500"
+								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
 							>
 								Valor proposto
 							</label>
@@ -233,7 +233,7 @@
 								type="text"
 								bind:value={proposalValue}
 								placeholder="R$ 0,00"
-								class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 								onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
 							/>
 						</div>
@@ -242,7 +242,7 @@
 							<div>
 								<label
 									for="quantity"
-									class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500"
+									class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
 								>
 									Quantidade
 								</label>
@@ -252,7 +252,7 @@
 									min="1"
 									step="1"
 									bind:value={quantity}
-									class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+									class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 								/>
 							</div>
 						{/if}
@@ -260,7 +260,7 @@
 						<div>
 							<label
 								for="message"
-								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500"
+								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
 							>
 								Mensagem
 							</label>
@@ -269,26 +269,26 @@
 								rows="4"
 								bind:value={message}
 								placeholder="Detalhes da proposta, logística, frete..."
-								class="w-full resize-none rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+								class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 							></textarea>
 						</div>
 
 						{#if error}
-							<p class="text-xs font-medium text-red-600">{error}</p>
+							<p class="text-xs font-medium text-error-500">{error}</p>
 						{/if}
 
-						<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-gray-100 bg-white pt-3">
+						<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-surface-200-800 bg-surface-50-950 pt-3">
 							<button
 								type="button"
 								onclick={closeModal}
-								class="rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+								class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal"
 							>
 								Cancelar
 							</button>
 							<button
 								type="submit"
 								disabled={sending}
-								class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-60"
+								class="inline-flex items-center justify-center gap-2 rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold disabled:opacity-60"
 							>
 								{#if sending}
 									Enviando...

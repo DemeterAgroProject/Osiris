@@ -15,10 +15,10 @@
 
 	const confirmButtonClass = $derived(
 		variant === 'danger'
-			? 'bg-red-600 hover:bg-red-700 focus:ring-red-500/30'
+			? 'preset-filled-error-500 focus:ring-error-500/30'
 			: variant === 'warning'
-				? 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500/30'
-				: 'bg-green-600 hover:bg-green-700 focus:ring-green-500/30'
+				? 'preset-filled-warning-500 focus:ring-warning-500/30'
+				: 'preset-filled-primary-500 focus:ring-primary-500/30'
 	);
 
 	function close() {
@@ -46,14 +46,14 @@
 	>
 		<button
 			type="button"
-			class="absolute inset-0 z-0 border-0 bg-black/50 p-0"
+			class="absolute inset-0 z-0 border-0 bg-surface-950/50 p-0"
 			onclick={close}
 			aria-label="Fechar diálogo"
 			disabled={loading}
 		></button>
 
 		<div
-			class="relative z-10 w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+			class="relative z-10 w-full max-w-sm rounded-container bg-surface-50-950 p-5 shadow-2xl"
 			role="alertdialog"
 			aria-modal="true"
 			aria-labelledby="confirm-dialog-title"
@@ -61,9 +61,9 @@
 		>
 			<div class="mb-4 flex items-start justify-between gap-3">
 				<div class="min-w-0 flex-1">
-					<h2 id="confirm-dialog-title" class="text-lg font-bold text-gray-900">{title}</h2>
+					<h2 id="confirm-dialog-title" class="text-lg font-bold text-surface-950-50">{title}</h2>
 					{#if message}
-						<p id="confirm-dialog-message" class="mt-2 text-sm leading-relaxed text-gray-600">
+						<p id="confirm-dialog-message" class="mt-2 text-sm leading-relaxed text-surface-600-400">
 							{message}
 						</p>
 					{/if}
@@ -72,7 +72,7 @@
 					type="button"
 					onclick={close}
 					disabled={loading}
-					class="shrink-0 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+					class="shrink-0 rounded-full p-1.5 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400 disabled:opacity-50"
 					aria-label="Fechar"
 				>
 					<X class="h-5 w-5" />
@@ -84,7 +84,7 @@
 					type="button"
 					onclick={close}
 					disabled={loading}
-					class="rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+					class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal disabled:opacity-50"
 				>
 					{cancelLabel}
 				</button>
@@ -92,7 +92,7 @@
 					type="button"
 					onclick={handleConfirm}
 					disabled={loading}
-					class="rounded-xl py-3 text-sm font-semibold text-white transition-colors focus:ring-2 focus:ring-offset-1 disabled:opacity-60 {confirmButtonClass}"
+					class="rounded-container py-3 text-sm font-semibold transition-colors focus:ring-2 focus:ring-offset-1 disabled:opacity-60 {confirmButtonClass}"
 				>
 					{loading ? 'Aguarde...' : confirmLabel}
 				</button>
