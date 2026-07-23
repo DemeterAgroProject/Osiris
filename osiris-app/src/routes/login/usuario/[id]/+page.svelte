@@ -1,91 +1,122 @@
 <script>
-    import { page } from '$app/state';
-    import { goto } from '$app/navigation';
-    import Header from '$lib/components/Header.svelte';
-    import BottomNav from '$lib/components/BottomNav.svelte';
-    import Rating from '$lib/components/Rating.svelte';
-    import ReviewList from '$lib/components/ReviewList.svelte';
-    import { supabase } from '$lib/supabase';
-    import {
-        Star,
-        Mail,
-        Phone,
-        Check,
-        AlertCircle,
-        SquarePen,
-        ArrowLeft,
-        Camera,
-        User,
-        IdCard,
-        Award,
-        Megaphone,
-        ChevronRight
-    } from 'lucide-svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import Header from '$lib/components/Header.svelte';
+	import BottomNav from '$lib/components/BottomNav.svelte';
+	import ReviewList from '$lib/components/ReviewList.svelte';
+	import { supabase } from '$lib/supabase';
+	import {
+		AppBar,
+		Avatar,
+		Accordion,
+		Progress,
+		RatingGroup,
+		Toast,
+		createToaster
+	} from '@skeletonlabs/skeleton-svelte';
+	import {
+		Mail,
+		Phone,
+		Check,
+		SquarePen,
+		ArrowLeft,
+		User,
+		IdCard,
+		Award,
+		Megaphone,
+		Star,
+		ChevronDown,
+		ChevronRight
+	} from 'lucide-svelte';
 
-    function resolveDisplayName(profile, authUser) {
-        return (
-            profile?.display_name ||
-            authUser?.user_metadata?.full_name ||
-            authUser?.user_metadata?.name ||
-            authUser?.email?.split('@')[0] ||
-            'Usuário'
-        );
-    }
+	function resolveDisplayName(profile, authUser) {
+		return (
+			profile?.display_name ||
+			authUser?.user_metadata?.full_name ||
+			authUser?.user_metadata?.name ||
+			authUser?.email?.split('@')[0] ||
+			'Usuário'
+		);
+	}
 
-    function resolveAvatarUrl(profile, authUser) {
-        return (
-            profile?.avatar_url ||
-            profile?.photo_url ||
-            profile?.image_url ||
-            authUser?.user_metadata?.avatar_url ||
-            null
-        );
-    }
+	function resolveAvatarUrl(profile, authUser) {
+		return (
+			profile?.avatar_url ||
+			profile?.photo_url ||
+			profile?.image_url ||
+			authUser?.user_metadata?.avatar_url ||
+			null
+		);
+	}
 
-    function resolveInitials(name) {
-        return (
-            name
-                .split(' ')
-                .filter(Boolean)
-                .slice(0, 2)
-                .map((part) => part[0]?.toUpperCase())
-                .join('') || 'U'
-        );
-    }
+	function resolveInitials(name) {
+		return (
+			name
+				.split(' ')
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((part) => part[0]?.toUpperCase())
+				.join('') || 'U'
+		);
+	}
 
-    function mapReviewRow(row) {
-        const reviewer = row.reviewer ?? row.profiles ?? null;
-        const reviewerName = resolveDisplayName(reviewer, null);
-        const reviewerPhoto = resolveAvatarUrl(reviewer, null);
+	function onlyDigits(value, maxLength) {
+		return String(value ?? '')
+			.replace(/\D/g, '')
+			.slice(0, maxLength);
+	}
 
-        return {
-            id: row.id,
-            rating: Number(row.rating) || 0,
-            comment: row.comment || '',
-            createdAt: row.created_at,
-            reviewerName,
-            reviewerPhoto,
-            reviewerInitials: resolveInitials(reviewerName)
-        };
-    }
+	/** @param {string} value */
+	function maskCpf(value) {
+		const digits = onlyDigits(value, 11);
+		return digits
+			.replace(/(\d{3})(\d)/, '$1.$2')
+			.replace(/(\d{3})(\d)/, '$1.$2')
+			.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+	}
 
-    function computeReviewStats(reviewList) {
-        if (!reviewList?.length) {
-            return { average: 0, count: 0 };
-        }
-        const sum = reviewList.reduce((total, review) => total + (Number(review.rating) || 0), 0);
-        return { average: sum / reviewList.length, count: reviewList.length };
-    }
+	/** @param {string} value */
+	function maskPhone(value) {
+		const digits = onlyDigits(value, 11);
+		if (digits.length <= 10) {
+			return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+		}
+		return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+	}
 
-    async function fetchReviewsForUser(revieweeId) {
-        if (!revieweeId) {
-            return { reviews: [], error: null };
-        }
+	function mapReviewRow(row) {
+		const reviewer = row.reviewer ?? row.profiles ?? null;
+		const reviewerName = resolveDisplayName(reviewer, null);
+		const reviewerPhoto = resolveAvatarUrl(reviewer, null);
 
-        let { data, error } = await supabase
-            .from('reviews')
-            .select(
-                `
+		return {
+			id: row.id,
+			rating: Number(row.rating) || 0,
+			comment: row.comment || '',
+			createdAt: row.created_at,
+			reviewerName,
+			reviewerPhoto,
+			reviewerInitials: resolveInitials(reviewerName)
+		};
+	}
+
+	function computeReviewStats(reviewList) {
+		if (!reviewList?.length) {
+			return { average: 0, count: 0 };
+		}
+		const sum = reviewList.reduce((total, review) => total + (Number(review.rating) || 0), 0);
+		return { average: sum / reviewList.length, count: reviewList.length };
+	}
+
+	async function fetchReviewsForUser(revieweeId) {
+		if (!revieweeId) {
+			return { reviews: [], error: null };
+		}
+
+		let { data, error } = await supabase
+			.from('reviews')
+			.select(
+				`
                 id,
                 rating,
                 comment,
@@ -96,15 +127,15 @@
                     photo_url
                 )
             `
-            )
-            .eq('reviewee_id', revieweeId)
-            .order('created_at', { ascending: false });
+			)
+			.eq('reviewee_id', revieweeId)
+			.order('created_at', { ascending: false });
 
-        if (error) {
-            const fallback = await supabase
-                .from('reviews')
-                .select(
-                    `
+		if (error) {
+			const fallback = await supabase
+				.from('reviews')
+				.select(
+					`
                     id,
                     rating,
                     comment,
@@ -115,688 +146,825 @@
                         photo_url
                     )
                 `
-                )
-                .eq('reviewee_id', revieweeId)
-                .order('created_at', { ascending: false });
+				)
+				.eq('reviewee_id', revieweeId)
+				.order('created_at', { ascending: false });
 
-            data = fallback.data;
-            error = fallback.error;
-        }
+			data = fallback.data;
+			error = fallback.error;
+		}
 
-        if (error) {
-            const plain = await supabase
-                .from('reviews')
-                .select('id, rating, comment, created_at, booking_id, reviewer_id')
-                .eq('reviewee_id', revieweeId)
-                .order('created_at', { ascending: false });
+		if (error) {
+			const plain = await supabase
+				.from('reviews')
+				.select('id, rating, comment, created_at, booking_id, reviewer_id')
+				.eq('reviewee_id', revieweeId)
+				.order('created_at', { ascending: false });
 
-            if (plain.error) {
-                return { reviews: [], error: plain.error };
-            }
+			if (plain.error) {
+				return { reviews: [], error: plain.error };
+			}
 
-            const rows = plain.data ?? [];
-            const enriched = await Promise.all(
-                rows.map(async (row) => {
-                    const { data: reviewer } = await supabase
-                        .from('profiles')
-                        .select('display_name, photo_url')
-                        .eq('id', row.reviewer_id)
-                        .maybeSingle();
-                    return mapReviewRow({ ...row, reviewer });
-                })
-            );
+			const rows = plain.data ?? [];
+			const enriched = await Promise.all(
+				rows.map(async (row) => {
+					const { data: reviewer } = await supabase
+						.from('profiles')
+						.select('display_name, photo_url')
+						.eq('id', row.reviewer_id)
+						.maybeSingle();
+					return mapReviewRow({ ...row, reviewer });
+				})
+			);
 
-            return { reviews: enriched, error: null };
-        }
+			return { reviews: enriched, error: null };
+		}
 
-        return {
-            reviews: (data ?? []).map(mapReviewRow),
-            error: null
-        };
-    }
+		return {
+			reviews: (data ?? []).map(mapReviewRow),
+			error: null
+		};
+	}
 
-    /** @typedef {'profile' | 'verification' | 'edit' | 'reviews'} ProfileView */
+	/** @typedef {'profile' | 'verification' | 'edit' | 'reviews'} ProfileView */
 
-    let loading = $state(true);
-    let saving = $state(false);
-    let errorMessage = $state('');
-    let saveMessage = $state({ text: '', type: '' });
-    let imgError = $state(false); 
-    /** @type {ProfileView} */
-    let view = $state('profile');
+	let loading = $state(true);
+	let saving = $state(false);
+	let errorMessage = $state('');
+	let saveMessage = $state({ text: '', type: '' });
+	/** @type {ProfileView} */
+	let view = $state('profile');
 
-    let authUser = $state(null);
-    let profile = $state(null);
-    let reviews = $state([]);
-    let reviewsLoading = $state(false);
+	let authUser = $state(null);
+	let profile = $state(null);
+	let reviews = $state([]);
+	let reviewsLoading = $state(false);
 
-    let form = $state({
-        displayName: '',
-        email: '',
-        phone: '',
-        cpf: '',
-        photoUrl: ''
-    });
+	let form = $state({
+		displayName: '',
+		email: '',
+		phone: '',
+		cpf: '',
+		photoUrl: ''
+	});
 
-    const userId = $derived(page.params.id);
-    const isOwner = $derived(Boolean(authUser?.id && userId && authUser.id === userId));
+	const toaster = createToaster({ placement: 'top', overlap: true });
 
-    const displayName = $derived(resolveDisplayName(profile, authUser));
-    const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
-    const initials = $derived(resolveInitials(displayName));
+	const userId = $derived(page.params.id);
+	const isOwner = $derived(Boolean(authUser?.id && userId && authUser.id === userId));
 
-    const email = $derived(profile?.email || authUser?.email || '');
-    const phone = $derived(profile?.phone_number || profile?.phone || '');
-    const cpf = $derived(profile?.cpf || '');
+	const displayName = $derived(resolveDisplayName(profile, authUser));
+	const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
+	const initials = $derived(resolveInitials(displayName));
 
-    const emailVerified = $derived(
-        Boolean(
-            authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google'
-        )
-    );
+	const email = $derived(profile?.email || authUser?.email || '');
+	const phone = $derived(profile?.phone_number || profile?.phone || '');
+	const cpf = $derived(profile?.cpf || '');
 
-    const phoneVerified = $derived(false);
+	const emailVerified = $derived(
+		Boolean(authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google')
+	);
 
-    const canBecomeAdvertiser = $derived(emailVerified && phoneVerified);
+	const phoneVerified = $derived(false);
 
-    const reviewStats = $derived(computeReviewStats(reviews));
-    const rating = $derived(reviewStats.average);
-    const reviewCount = $derived(reviewStats.count);
+	const canBecomeAdvertiser = $derived(emailVerified && phoneVerified);
 
-    const pageTitle = $derived(
-        view === 'edit'
-            ? 'Editar Perfil'
-            : view === 'verification'
-                ? 'Verificação'
-                : view === 'reviews'
-                    ? 'Avaliações'
-                    : 'Meu perfil'
-    );
+	const advertiserProgress = $derived((emailVerified ? 50 : 0) + (phoneVerified ? 50 : 0));
 
-    async function loadReviews() {
-        if (!userId) return;
+	const reviewStats = $derived(computeReviewStats(reviews));
+	const rating = $derived(reviewStats.average);
+	const reviewCount = $derived(reviewStats.count);
 
-        reviewsLoading = true;
-        const { reviews: data, error } = await fetchReviewsForUser(userId);
-        reviews = data;
+	const pageTitle = $derived(
+		view === 'edit'
+			? 'Editar Perfil'
+			: view === 'verification'
+				? 'Verificação'
+				: view === 'reviews'
+					? 'Avaliações'
+					: 'Meu perfil'
+	);
 
-        if (error) {
-            console.error('Erro ao carregar avaliações:', error.message);
-        }
+	function notify(type, text) {
+		saveMessage = { text, type };
+		if (!text) return;
+		if (type === 'error') {
+			toaster.error({ title: 'Atenção', description: text });
+		} else {
+			toaster.success({ title: 'Sucesso', description: text });
+		}
+	}
 
-        reviewsLoading = false;
-    }
+	async function loadReviews() {
+		if (!userId) return;
 
-    function syncFormFromProfile() {
-        form = {
-            displayName: profile?.display_name || displayName,
-            email: profile?.email || authUser?.email || '',
-            phone: profile?.phone_number || profile?.phone || '',
-            cpf: profile?.cpf || '',
-            photoUrl: profile?.photo_url || profile?.avatar_url || ''
-        };
-    }
+		reviewsLoading = true;
+		const { reviews: data, error } = await fetchReviewsForUser(userId);
+		reviews = data;
 
-    async function loadProfile() {
-        if (!userId) {
-            errorMessage = 'Perfil inválido.';
-            loading = false;
-            return;
-        }
+		if (error) {
+			console.error('Erro ao carregar avaliações:', error.message);
+		}
 
-        loading = true;
-        errorMessage = '';
-        imgError = false; 
+		reviewsLoading = false;
+	}
 
-        const {
-            data: { user }
-        } = await supabase.auth.getUser();
-        authUser = user;
+	function syncFormFromProfile() {
+		form = {
+			displayName: profile?.display_name || displayName,
+			email: profile?.email || authUser?.email || '',
+			phone: maskPhone(profile?.phone_number || profile?.phone || ''),
+			cpf: maskCpf(profile?.cpf || ''),
+			photoUrl: profile?.photo_url || profile?.avatar_url || ''
+		};
+	}
 
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, display_name, email, phone_number, photo_url, role, cpf')
-            .eq('id', userId)
-            .maybeSingle();
+	/** @param {Event & { currentTarget: HTMLInputElement }} event */
+	function onPhoneInput(event) {
+		form.phone = maskPhone(event.currentTarget.value);
+	}
 
-        if (error) {
-            errorMessage = 'Não foi possível carregar o perfil.';
-            profile = null;
-        } else {
-            profile = data;
-        }
+	/** @param {Event & { currentTarget: HTMLInputElement }} event */
+	function onCpfInput(event) {
+		form.cpf = maskCpf(event.currentTarget.value);
+	}
 
-        if (!profile && user?.id === userId) {
-            profile = {
-                id: user.id,
-                email: user.email,
-                display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-                photo_url: user.user_metadata?.avatar_url || null
-            };
-        }
+	async function loadProfile() {
+		if (!userId) {
+			errorMessage = 'Perfil inválido.';
+			loading = false;
+			return;
+		}
 
-        syncFormFromProfile();
-        await loadReviews();
-        loading = false;
-    }
+		loading = true;
+		errorMessage = '';
 
-    function openView(nextView) {
-        if (nextView === 'edit' && !isOwner) return;
-        saveMessage = { text: '', type: '' };
-        if (nextView === 'edit') syncFormFromProfile();
-        view = nextView;
-    }
+		const {
+			data: { user }
+		} = await supabase.auth.getUser();
+		authUser = user;
 
-    function goBack() {
-        saveMessage = { text: '', type: '' };
-        view = 'profile';
-    }
+		const { data, error } = await supabase
+			.from('profiles')
+			.select('id, display_name, email, phone_number, photo_url, role, cpf')
+			.eq('id', userId)
+			.maybeSingle();
 
-    async function handleSaveProfile(event) {
-        event.preventDefault();
-        saveMessage = { text: '', type: '' };
+		if (error) {
+			errorMessage = 'Não foi possível carregar o perfil.';
+			profile = null;
+		} else {
+			profile = data;
+		}
 
-        if (!isOwner || !authUser?.id) {
-            saveMessage = { text: 'Você só pode editar o seu próprio perfil.', type: 'error' };
-            return;
-        }
+		if (!profile && user?.id === userId) {
+			profile = {
+				id: user.id,
+				email: user.email,
+				display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+				photo_url: user.user_metadata?.avatar_url || null
+			};
+		}
 
-        const display_name = form.displayName.trim();
-        const email = form.email.trim();
+		syncFormFromProfile();
+		await loadReviews();
+		loading = false;
+	}
 
-        if (!display_name) {
-            saveMessage = { text: 'Informe o nome.', type: 'error' };
-            return;
-        }
+	function openView(nextView) {
+		if (nextView === 'edit' && !isOwner) return;
+		saveMessage = { text: '', type: '' };
+		if (nextView === 'edit') syncFormFromProfile();
+		view = nextView;
+	}
 
-        if (!email) {
-            saveMessage = { text: 'Informe o e-mail.', type: 'error' };
-            return;
-        }
+	function goBack() {
+		saveMessage = { text: '', type: '' };
+		view = 'profile';
+	}
 
-        saving = true;
+	async function handleSaveProfile(event) {
+		event.preventDefault();
+		saveMessage = { text: '', type: '' };
 
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({
-                display_name,
-                email,
-                phone_number: form.phone.trim() || null,
-                cpf: form.cpf.trim() || null,
-                photo_url: form.photoUrl.trim() || null
-            })
-            .eq('id', authUser.id)
-            .select('id, display_name, email, phone_number, photo_url, role, cpf')
-            .maybeSingle();
+		if (!isOwner || !authUser?.id) {
+			notify('error', 'Você só pode editar o seu próprio perfil.');
+			return;
+		}
 
-        if (error) {
-            console.error('Erro ao salvar perfil:', error);
-            saveMessage = { text: error.message || 'Não foi possível salvar as alterações.', type: 'error' };
-            saving = false;
-            return;
-        }
+		const display_name = form.displayName.trim();
+		const emailValue = form.email.trim();
 
-        profile = data ?? {
-            ...profile,
-            display_name,
-            email,
-            phone_number: form.phone.trim() || null,
-            cpf: form.cpf.trim() || null,
-            photo_url: form.photoUrl.trim() || null
-        };
-        syncFormFromProfile();
-        imgError = false;
-        saveMessage = { text: 'Perfil atualizado com sucesso!', type: 'success' };
-        saving = false;
-        setTimeout(() => {
-            view = 'profile';
-            saveMessage = { text: '', type: '' };
-        }, 1200);
-    }
+		if (!display_name) {
+			notify('error', 'Informe o nome.');
+			return;
+		}
 
-    async function handleValidatePhone() {
-        saveMessage = { text: '', type: '' };
-        if (!phone?.trim()) {
-            openView('edit');
-            saveMessage = { text: 'Cadastre um telefone antes de validar.', type: 'error' };
-            return;
-        }
-        // Fluxo de SMS/OTP pode ser integrado depois
-        saveMessage = {
-            text: 'Validação por SMS em breve. Por enquanto, complete o telefone no perfil.',
-            type: 'error'
-        };
-    }
+		if (!emailValue) {
+			notify('error', 'Informe o e-mail.');
+			return;
+		}
 
-    $effect(() => {
-        void userId;
-        loadProfile();
-    });
+		saving = true;
+
+		const { data, error } = await supabase
+			.from('profiles')
+			.update({
+				display_name,
+				email: emailValue,
+				phone_number: form.phone.trim() || null,
+				cpf: form.cpf.trim() || null,
+				photo_url: form.photoUrl.trim() || null
+			})
+			.eq('id', authUser.id)
+			.select('id, display_name, email, phone_number, photo_url, role, cpf')
+			.maybeSingle();
+
+		if (error) {
+			console.error('Erro ao salvar perfil:', error);
+			notify('error', error.message || 'Não foi possível salvar as alterações.');
+			saving = false;
+			return;
+		}
+
+		profile = data ?? {
+			...profile,
+			display_name,
+			email: emailValue,
+			phone_number: form.phone.trim() || null,
+			cpf: form.cpf.trim() || null,
+			photo_url: form.photoUrl.trim() || null
+		};
+		syncFormFromProfile();
+		notify('success', 'Perfil atualizado com sucesso!');
+		saving = false;
+		setTimeout(() => {
+			view = 'profile';
+			saveMessage = { text: '', type: '' };
+		}, 1200);
+	}
+
+	async function handleValidatePhone() {
+		saveMessage = { text: '', type: '' };
+		if (!phone?.trim()) {
+			openView('edit');
+			notify('error', 'Cadastre um telefone antes de validar.');
+			return;
+		}
+		notify(
+			'error',
+			'Validação por SMS em breve. Por enquanto, complete o telefone no perfil.'
+		);
+	}
+
+	$effect(() => {
+		void userId;
+		loadProfile();
+	});
 </script>
 
 <svelte:head>
-    <title>{pageTitle} — Osiris</title>
+	<title>{pageTitle} — Osiris</title>
 </svelte:head>
 
 <div class="min-h-screen bg-surface-50-950 pb-24">
-    <Header />
+	<Header />
 
-    <main class="mx-auto w-full max-w-lg px-4 py-4">
-        <div class="mb-4 flex items-center gap-3">
-            {#if view !== 'profile'}
-                <button
-                    type="button"
-                    onclick={goBack}
-                    class="flex h-10 w-10 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-600-400 shadow-sm transition-colors hover:preset-tonal"
-                    aria-label="Voltar"
-                >
-                    <ArrowLeft class="h-5 w-5" />
-                </button>
-            {/if}
-            <h1 class="flex-1 text-center text-xl font-bold {view === 'profile' ? '' : 'pr-10'}">
-                {pageTitle}
-            </h1>
-        </div>
+	<main class="mx-auto w-full max-w-lg px-4 py-4">
+		<AppBar class="mb-4 bg-transparent p-0!">
+			<AppBar.Toolbar class="grid-cols-[auto_1fr_auto]">
+				<AppBar.Lead>
+					{#if view !== 'profile'}
+						<button
+							type="button"
+							onclick={goBack}
+							class="btn-icon hover:preset-tonal"
+							aria-label="Voltar"
+						>
+							<ArrowLeft class="size-5" />
+						</button>
+					{/if}
+				</AppBar.Lead>
+				<AppBar.Headline class="flex justify-center">
+					<h1 class="text-xl font-bold">{pageTitle}</h1>
+				</AppBar.Headline>
+				<AppBar.Trail />
+			</AppBar.Toolbar>
+		</AppBar>
 
-        {#if loading}
-            <div class="flex justify-center py-16">
-                <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-            </div>
-        {:else if errorMessage && !profile}
-            <div class="rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
-        {:else}
-            {#if saveMessage.text && view !== 'edit'}
-                <div
-                    class="mb-4 rounded-container p-3 text-sm {saveMessage.type === 'error'
-                        ? 'preset-tonal-error'
-                        : 'preset-tonal-primary'}"
-                >
-                    {saveMessage.text}
-                </div>
-            {/if}
+		{#if loading}
+			<div class="flex flex-col items-center justify-center gap-3 py-16">
+				<Progress value={null} class="items-center">
+					<Progress.Circle style="--size: 2.5rem; --thickness: 0.2rem;">
+						<Progress.CircleTrack />
+						<Progress.CircleRange />
+					</Progress.Circle>
+				</Progress>
+				<p class="text-sm text-surface-600-400">Carregando perfil...</p>
+			</div>
+		{:else if errorMessage && !profile}
+			<div class="card rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+		{:else if view === 'profile'}
+			<section class="card overflow-hidden rounded-container p-5 shadow-sm">
+				<div class="flex flex-col items-center">
+					<Avatar class="size-24 ring-2 ring-primary-500/20">
+						{#if avatarUrl}
+							<Avatar.Image src={avatarUrl} alt={displayName} />
+						{/if}
+						<Avatar.Fallback class="preset-filled-primary-500 text-2xl font-bold">
+							{initials}
+						</Avatar.Fallback>
+					</Avatar>
 
-            {#if view === 'profile'}
-                <section
-                    class="overflow-hidden rounded-container bg-surface-50-950 shadow-sm"
-                >
-                    <div class="flex flex-col items-center px-5 pb-5 pt-6">
-                        
-                        {#if avatarUrl && !imgError}
-                            <img
-                                src={avatarUrl}
-                                alt={displayName}
-                                class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover shadow-md ring-2 ring-primary-500/20"
-                                onerror={() => imgError = true}
-                            />
-                        {:else}
-                            <div
-                                class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold shadow-md ring-2 ring-primary-500/20"
-                            >
-                                {initials}
-                            </div>
-                        {/if}
+					<h2 class="mt-4 text-center text-lg font-bold">{displayName}</h2>
 
-                        <h2 class="mt-4 text-center text-lg font-bold">{displayName}</h2>
+					<div class="mt-2 flex flex-wrap items-center justify-center gap-2">
+						<RatingGroup count={5} value={rating} allowHalf={true} readOnly={true}>
+							<RatingGroup.Control>
+								<RatingGroup.Context>
+									{#snippet children(ratingGroup)}
+										{#each ratingGroup().items as index (index)}
+											<RatingGroup.Item {index}>
+												{#snippet empty()}
+													<Star class="size-4 text-surface-400-600" />
+												{/snippet}
+												{#snippet half()}
+													<Star class="size-4 fill-warning-400 text-warning-400 opacity-80" />
+												{/snippet}
+												{#snippet full()}
+													<Star class="size-4 fill-warning-400 text-warning-400" />
+												{/snippet}
+											</RatingGroup.Item>
+										{/each}
+									{/snippet}
+								</RatingGroup.Context>
+							</RatingGroup.Control>
+							<RatingGroup.HiddenInput />
+						</RatingGroup>
+						<span class="text-xs text-surface-600-400">
+							{#if reviewCount > 0}
+								{rating.toFixed(1)} ({reviewCount}
+								{reviewCount === 1 ? 'avaliação' : 'avaliações'})
+							{:else}
+								Sem avaliações
+							{/if}
+						</span>
+					</div>
 
-                        <div class="mt-2">
-                            <Rating value={rating} count={reviewCount} size="sm" />
-                        </div>
+					{#if isOwner}
+						<hr class="hr mt-5 w-full" />
+						<div class="mt-5 w-full space-y-3">
+							<div class="flex items-start justify-between gap-3">
+								<div class="flex min-w-0 items-start gap-2">
+									<Mail class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+									<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
+								</div>
+								<span
+									class="badge shrink-0 {emailVerified
+										? 'preset-tonal-primary'
+										: 'preset-tonal-warning'}"
+								>
+									{#if emailVerified}<Check class="size-3" />{/if}
+									{emailVerified ? 'Validado' : 'Pendente'}
+								</span>
+							</div>
 
-                        {#if isOwner}
-                            <div class="mt-5 w-full space-y-3 border-t border-surface-200-800 pt-5">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex min-w-0 items-start gap-2">
-                                        <Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
-                                        <span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
-                                    </div>
-                                    {#if emailVerified}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {:else}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {/if}
-                                </div>
+							<div class="flex items-start justify-between gap-3">
+								<div class="flex min-w-0 items-start gap-2">
+									<Phone class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+									<span class="truncate text-sm text-surface-700-300"
+										>{phone || 'Não informado'}</span
+									>
+								</div>
+								<span
+									class="badge shrink-0 {phoneVerified
+										? 'preset-tonal-primary'
+										: 'preset-tonal-warning'}"
+								>
+									{#if phoneVerified}<Check class="size-3" />{/if}
+									{phoneVerified ? 'Validado' : 'Pendente'}
+								</span>
+							</div>
 
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex min-w-0 items-start gap-2">
-                                        <Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
-                                        <span class="truncate text-sm text-surface-700-300">{phone || 'Não informado'}</span>
-                                    </div>
-                                    {#if phoneVerified}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {:else}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {/if}
-                                </div>
+							<div class="flex items-start gap-2">
+								<IdCard class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+								<span class="truncate text-sm text-surface-700-300"
+									>{cpf || 'CPF não informado'}</span
+								>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</section>
 
-                                <div class="flex items-start gap-2">
-                                    <IdCard class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
-                                    <span class="truncate text-sm text-surface-700-300">{cpf || 'CPF não informado'}</span>
-                                </div>
-                            </div>
-                        {/if}
-                    </div>
-                </section>
+			<section class="card mt-4 rounded-container border border-surface-200-800 p-4 shadow-sm">
+				<div class="flex items-start gap-3">
+					<div class="flex size-10 items-center justify-center rounded-container bg-surface-100-900">
+						<Star class="size-5 fill-warning-400 text-warning-400" />
+					</div>
+					<div class="flex-1">
+						<h3 class="font-semibold">Ver avaliações</h3>
+						<p class="mt-0.5 text-sm text-surface-700-300">
+							Confira o que outros usuários dizem sobre você no marketplace.
+						</p>
+					</div>
+				</div>
+				<button
+					type="button"
+					onclick={() => openView('reviews')}
+					class="btn mt-4 w-full preset-filled-primary-500"
+				>
+					{reviewCount > 0 ? `Ver todas as ${reviewCount} avaliações` : 'Ver avaliações'}
+				</button>
+			</section>
 
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-                            <Star class="h-5 w-5 text-surface-950-50" />
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-semibold">Ver avaliações</h3>
-                            <p class="mt-0.5 text-sm text-surface-700-300">
-                                Confira o que outros usuários dizem sobre você no marketplace.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onclick={() => openView('reviews')}
-                        class="mt-4 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold transition-colors"
-                    >
-                        {reviewCount > 0
-                            ? `Ver todas as ${reviewCount} avaliações`
-                            : 'Ver avaliações'}
-                    </button>
-                </section>
+			{#if isOwner}
+				<section class="card mt-4 rounded-container border border-surface-200-800 p-4 shadow-sm">
+					<div class="flex items-start gap-3">
+						<div class="flex size-10 items-center justify-center rounded-container bg-surface-100-900">
+							<SquarePen class="size-5" />
+						</div>
+						<div class="flex-1">
+							<h3 class="font-semibold">Editar perfil</h3>
+							<p class="mt-0.5 text-sm text-surface-700-300">
+								Atualize nome, telefone e dados do seu perfil público.
+							</p>
+						</div>
+					</div>
+					<button
+						type="button"
+						onclick={() => openView('edit')}
+						class="btn mt-4 w-full preset-filled-primary-500"
+					>
+						Editar perfil
+					</button>
+				</section>
 
-                {#if isOwner}
-                    <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                        <div class="flex items-start gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-                                <SquarePen class="h-5 w-5 text-surface-950-50" />
-                            </div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold">Editar perfil</h3>
-                                <p class="mt-0.5 text-sm text-surface-700-300">
-                                    Atualize nome, telefone e foto do seu perfil público.
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onclick={() => openView('edit')}
-                            class="mt-4 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold transition-colors"
-                        >
-                            Editar perfil
-                        </button>
-                    </section>
+				<button
+					type="button"
+					onclick={() => openView('verification')}
+					class="card mt-4 flex w-full items-center justify-between rounded-container border border-surface-200-800 px-4 py-4 text-left shadow-sm transition-colors hover:border-primary-500"
+				>
+					<div class="flex items-center gap-3">
+						<div
+							class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
+						>
+							<Check class="size-5" />
+						</div>
+						<div>
+							<p class="font-semibold text-surface-950-50">Verificação e status</p>
+							<p class="text-xs text-surface-700-300">Email, telefone e anunciante</p>
+						</div>
+					</div>
+					<ChevronRight class="size-5 text-surface-800-200" />
+				</button>
+			{/if}
+		{:else if view === 'reviews'}
+			<section class="card rounded-container border border-surface-200-800 p-4 shadow-sm">
+				<div class="mb-4 flex items-center justify-between gap-3">
+					<div>
+						<h2 class="text-base font-semibold">Avaliações recebidas</h2>
+						<p class="mt-0.5 text-xs text-surface-600-400">
+							Feedback de outros usuários sobre {displayName}
+						</p>
+					</div>
+					<RatingGroup count={5} value={rating} allowHalf={true} readOnly={true}>
+						<RatingGroup.Control>
+							<RatingGroup.Context>
+								{#snippet children(ratingGroup)}
+									{#each ratingGroup().items as index (index)}
+										<RatingGroup.Item {index}>
+											{#snippet empty()}
+												<Star class="size-4 text-surface-400-600" />
+											{/snippet}
+											{#snippet half()}
+												<Star class="size-4 fill-warning-400 text-warning-400 opacity-80" />
+											{/snippet}
+											{#snippet full()}
+												<Star class="size-4 fill-warning-400 text-warning-400" />
+											{/snippet}
+										</RatingGroup.Item>
+									{/each}
+								{/snippet}
+							</RatingGroup.Context>
+						</RatingGroup.Control>
+						<RatingGroup.HiddenInput />
+					</RatingGroup>
+				</div>
 
-                    <button
-                        type="button"
-                        onclick={() => openView('verification')}
-                        class="mt-4 flex w-full items-center justify-between rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-4 text-left shadow-sm transition-colors hover:border-primary-500"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-                                <Check class="h-5 w-5 text-surface-950-50" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Verificação e status</p>
-                                <p class="text-xs text-surface-700-300">Email, telefone e anunciante</p>
-                            </div>
-                        </div>
-                        <ChevronRight class="h-5 w-5 text-surface-600-400" />
-                    </button>
-                {/if}
-            {:else if view === 'reviews'}
-                <section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                            <h2 class="text-base font-semibold">Avaliações recebidas</h2>
-                            <p class="mt-0.5 text-xs text-surface-600-400">
-                                Feedback de outros usuários sobre {displayName}
-                            </p>
-                        </div>
-                        <Rating value={rating} count={reviewCount} size="sm" />
-                    </div>
+				<ReviewList
+					{reviews}
+					loading={reviewsLoading}
+					showProductName={false}
+					emptyTitle="Nenhuma avaliação recebida"
+					emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
+				/>
+			</section>
+		{:else if view === 'verification'}
+			<section class="card mb-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+				<div class="mb-3 flex items-center justify-between">
+					<h2 class="text-base font-bold text-surface-950-50">Status da conta</h2>
+					<span class="badge preset-filled-primary-500">{advertiserProgress}%</span>
+				</div>
+				<Progress value={advertiserProgress}>
+					<Progress.Track class="bg-surface-200-800">
+						<Progress.Range class="bg-primary-500!" />
+					</Progress.Track>
+				</Progress>
+			</section>
 
-                    <ReviewList
-                        {reviews}
-                        loading={reviewsLoading}
-                        showProductName={false}
-                        emptyTitle="Nenhuma avaliação recebida"
-                        emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
-                    />
-                </section>
-            {:else if view === 'verification'}
-                <section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Mail class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Validar email</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                {emailVerified
-                                    ? 'Seu email já está validado.'
-                                    : 'Confirme seu email para aumentar a confiança da sua conta.'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={emailVerified}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {emailVerified
-                            ? 'bg-surface-100-900 text-surface-600-400'
-                            : 'preset-filled-primary-500'}"
-                    >
-                        {emailVerified ? 'Email validado' : 'Validar email'}
-                    </button>
-                </section>
+			<Accordion value={['email']} collapsible multiple class="space-y-3">
+				<Accordion.Item
+					value="email"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+				>
+					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+						<span class="flex items-center gap-3">
+							<span
+								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
+							>
+								<Mail class="size-5" />
+							</span>
+							<span>
+								<span class="block font-semibold text-surface-950-50">Validar email</span>
+								<span
+									class="badge mt-1 {emailVerified
+										? 'preset-filled-success-500'
+										: 'preset-filled-warning-500'}"
+								>
+									{emailVerified ? 'Verificado' : 'Pendente'}
+								</span>
+							</span>
+						</span>
+						<Accordion.ItemIndicator>
+							<ChevronDown class="size-5 text-surface-800-200" />
+						</Accordion.ItemIndicator>
+					</Accordion.ItemTrigger>
+					<Accordion.ItemContent>
+						<p class="mb-4 text-sm text-surface-700-300">
+							{emailVerified
+								? 'Seu email já está validado.'
+								: 'Confirme seu email para aumentar a confiança da sua conta.'}
+						</p>
+						<button
+							type="button"
+							disabled={emailVerified}
+							class="btn w-full {emailVerified
+								? 'preset-filled-success-500'
+								: 'preset-filled-primary-500'}"
+						>
+							{emailVerified ? 'Email validado' : 'Validar email'}
+						</button>
+					</Accordion.ItemContent>
+				</Accordion.Item>
 
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Phone class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Validar telefone</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                Valide seu número de telefone para aumentar a segurança da sua conta.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={phoneVerified}
-                        onclick={handleValidatePhone}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {phoneVerified
-                            ? 'bg-surface-100-900 text-surface-600-400'
-                            : 'preset-filled-primary-500'}"
-                    >
-                        {phoneVerified ? 'Telefone validado' : 'Validar telefone'}
-                    </button>
-                </section>
+				<Accordion.Item
+					value="phone"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+				>
+					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+						<span class="flex items-center gap-3">
+							<span
+								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
+							>
+								<Phone class="size-5" />
+							</span>
+							<span>
+								<span class="block font-semibold text-surface-950-50">Validar telefone</span>
+								<span
+									class="badge mt-1 {phoneVerified
+										? 'preset-filled-success-500'
+										: 'preset-filled-warning-500'}"
+								>
+									{phoneVerified ? 'Verificado' : 'Pendente'}
+								</span>
+							</span>
+						</span>
+						<Accordion.ItemIndicator>
+							<ChevronDown class="size-5 text-surface-800-200" />
+						</Accordion.ItemIndicator>
+					</Accordion.ItemTrigger>
+					<Accordion.ItemContent>
+						<p class="mb-4 text-sm text-surface-700-300">
+							Valide seu número de telefone para aumentar a segurança da sua conta.
+						</p>
+						<button
+							type="button"
+							disabled={phoneVerified}
+							onclick={handleValidatePhone}
+							class="btn w-full {phoneVerified
+								? 'preset-filled-success-500'
+								: 'preset-filled-primary-500'}"
+						>
+							{phoneVerified ? 'Telefone validado' : 'Validar telefone'}
+						</button>
+					</Accordion.ItemContent>
+				</Accordion.Item>
 
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Megaphone class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Torne-se um anunciante</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                Complete seu perfil, verifique seu email e telefone para se tornar um anunciante
-                                e publicar no Osiris.
-                            </p>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase {emailVerified
-                                        ? 'preset-tonal-primary'
-                                        : 'preset-tonal-warning'}"
-                                >
-                                    {emailVerified ? 'Email verificado' : 'Email não verificado'}
-                                </span>
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase {phoneVerified
-                                        ? 'preset-tonal-primary'
-                                        : 'preset-tonal-warning'}"
-                                >
-                                    {phoneVerified ? 'Telefone verificado' : 'Telefone não verificado'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={!canBecomeAdvertiser}
-                        onclick={() => goto('/anunciar')}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {canBecomeAdvertiser
-                            ? 'preset-filled-primary-500'
-                            : 'bg-surface-100-900 text-surface-600-400'}"
-                    >
-                        {canBecomeAdvertiser ? 'Começar a anunciar' : 'Evoluir para Anunciante'}
-                    </button>
-                </section>
+				<Accordion.Item
+					value="advertiser"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+				>
+					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+						<span class="flex items-center gap-3">
+							<span
+								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
+							>
+								<Megaphone class="size-5" />
+							</span>
+							<span>
+								<span class="block font-semibold text-surface-950-50">Torne-se um anunciante</span>
+								<span
+									class="badge mt-1 {canBecomeAdvertiser
+										? 'preset-filled-success-500'
+										: 'preset-filled-warning-500'}"
+								>
+									{canBecomeAdvertiser ? 'Pronto' : 'Incompleto'}
+								</span>
+							</span>
+						</span>
+						<Accordion.ItemIndicator>
+							<ChevronDown class="size-5 text-surface-800-200" />
+						</Accordion.ItemIndicator>
+					</Accordion.ItemTrigger>
+					<Accordion.ItemContent>
+						<p class="mb-3 text-sm text-surface-700-300">
+							Complete seu perfil, verifique seu email e telefone para se tornar um anunciante e publicar
+							no Osiris.
+						</p>
+						<div class="mb-4 flex flex-wrap gap-2">
+							<span
+								class="badge {emailVerified
+									? 'preset-filled-success-500'
+									: 'preset-filled-warning-500'}"
+							>
+								{emailVerified ? 'Email verificado' : 'Email não verificado'}
+							</span>
+							<span
+								class="badge {phoneVerified
+									? 'preset-filled-success-500'
+									: 'preset-filled-warning-500'}"
+							>
+								{phoneVerified ? 'Telefone verificado' : 'Telefone não verificado'}
+							</span>
+						</div>
+						<button
+							type="button"
+							disabled={!canBecomeAdvertiser}
+							onclick={() => goto('/anunciar')}
+							class="btn w-full {canBecomeAdvertiser
+								? 'preset-filled-primary-500'
+								: 'preset-outlined-surface-500'}"
+						>
+							{canBecomeAdvertiser ? 'Começar a anunciar' : 'Evoluir para Anunciante'}
+						</button>
+					</Accordion.ItemContent>
+				</Accordion.Item>
 
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Award class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Certificados</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                {profile?.certificates?.length
-                                    ? `Você possui ${profile.certificates.length} certificado(s).`
-                                    : 'Você não possui certificados.'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        class="mt-4 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold transition-colors"
-                    >
-                        Gerenciar certificados
-                    </button>
-                </section>
-            {:else if view === 'edit' && isOwner}
-                <form class="space-y-4" onsubmit={handleSaveProfile}>
-                    {#if saveMessage.text}
-                        <div
-                            class="rounded-container p-3 text-sm {saveMessage.type === 'error'
-                                ? 'preset-tonal-error'
-                                : 'preset-tonal-primary'}"
-                        >
-                            {saveMessage.text}
-                        </div>
-                    {/if}
+				<Accordion.Item
+					value="certs"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+				>
+					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+						<span class="flex items-center gap-3">
+							<span
+								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
+							>
+								<Award class="size-5" />
+							</span>
+							<span class="font-semibold text-surface-950-50">Certificados</span>
+						</span>
+						<Accordion.ItemIndicator>
+							<ChevronDown class="size-5 text-surface-800-200" />
+						</Accordion.ItemIndicator>
+					</Accordion.ItemTrigger>
+					<Accordion.ItemContent>
+						<p class="mb-4 text-sm text-surface-700-300">
+							{profile?.certificates?.length
+								? `Você possui ${profile.certificates.length} certificado(s).`
+								: 'Você não possui certificados.'}
+						</p>
+						<button type="button" class="btn w-full preset-filled-primary-500">
+							Gerenciar certificados
+						</button>
+					</Accordion.ItemContent>
+				</Accordion.Item>
+			</Accordion>
+		{:else if view === 'edit' && isOwner}
+			<form
+				class="card space-y-4 rounded-container border border-surface-200-800 p-4 shadow-sm"
+				onsubmit={handleSaveProfile}
+			>
+				<div class="flex justify-center">
+					<Avatar class="size-24 ring-2 ring-primary-500/20">
+						{#if form.photoUrl || avatarUrl}
+							<Avatar.Image src={form.photoUrl || avatarUrl} alt={displayName} />
+						{/if}
+						<Avatar.Fallback class="preset-filled-primary-500 text-2xl font-bold">
+							{initials}
+						</Avatar.Fallback>
+					</Avatar>
+				</div>
+				<p class="text-center text-xs text-surface-600-400">Foto do perfil (somente visualização)</p>
 
-                    <div class="flex justify-center">
-                        <div class="relative">
-                            {#if (form.photoUrl || avatarUrl) && !imgError}
-                                <img
-                                    src={form.photoUrl || avatarUrl}
-                                    alt={displayName}
-                                    class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover shadow-md ring-2 ring-primary-500/20"
-                                    onerror={() => (imgError = true)}
-                                />
-                            {:else}
-                                <div
-                                    class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold shadow-md ring-2 ring-primary-500/20"
-                                >
-                                    {initials}
-                                </div>
-                            {/if}
-                            <span
-                                class="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-950-50 shadow-md"
-                                aria-hidden="true"
-                            >
-                                <Camera class="h-4 w-4" />
-                            </span>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="displayName" class="mb-1 block text-sm font-medium text-surface-700-300">Nome</label>
-                        <div class="relative">
-                            <input
-                                id="displayName"
-                                type="text"
-                                bind:value={form.displayName}
-                                required
-                                class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-                            />
-                            <User class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-                        </div>
-                    </div>
+				<label class="label">
+					<span class="label-text">Nome</span>
+					<div class="input-group grid-cols-[1fr_auto]">
+						<input
+							id="displayName"
+							type="text"
+							class="ig-input"
+							bind:value={form.displayName}
+							required
+						/>
+						<span class="ig-cell text-surface-600-400"><User class="size-5" /></span>
+					</div>
+				</label>
 
-                    <div>
-                        <label for="email" class="mb-1 block text-sm font-medium text-surface-700-300">E-mail</label>
-                        <div class="relative">
-                            <input
-                                id="email"
-                                type="email"
-                                bind:value={form.email}
-                                required
-                                autocomplete="email"
-                                class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-                            />
-                            <Mail class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-                        </div>
-                    </div>
+				<label class="label">
+					<span class="label-text">E-mail</span>
+					<div class="input-group grid-cols-[1fr_auto]">
+						<input
+							id="email"
+							type="email"
+							class="ig-input"
+							bind:value={form.email}
+							required
+							autocomplete="email"
+						/>
+						<span class="ig-cell text-surface-600-400"><Mail class="size-5" /></span>
+					</div>
+				</label>
 
-                    <div>
-                        <label for="phone" class="mb-1 block text-sm font-medium text-surface-700-300">Telefone</label>
-                        <div class="relative">
-                            <input
-                                id="phone"
-                                type="tel"
-                                bind:value={form.phone}
-                                placeholder="(00) 00000-0000"
-                                autocomplete="tel"
-                                class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-                            />
-                            <Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-                        </div>
-                    </div>
+				<label class="label">
+					<span class="label-text">Telefone</span>
+					<div class="input-group grid-cols-[1fr_auto]">
+						<input
+							id="phone"
+							type="tel"
+							class="ig-input"
+							value={form.phone}
+							oninput={onPhoneInput}
+							placeholder="(00) 00000-0000"
+							autocomplete="tel"
+							inputmode="numeric"
+							maxlength="15"
+						/>
+						<span class="ig-cell text-surface-600-400"><Phone class="size-5" /></span>
+					</div>
+				</label>
 
-                    <div>
-                        <label for="cpf" class="mb-1 block text-sm font-medium text-surface-700-300">CPF</label>
-                        <div class="relative">
-                            <input
-                                id="cpf"
-                                type="text"
-                                bind:value={form.cpf}
-                                placeholder="000.000.000-00"
-                                inputmode="numeric"
-                                class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-                            />
-                            <IdCard class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-                        </div>
-                    </div>
+				<label class="label">
+					<span class="label-text">CPF</span>
+					<div class="input-group grid-cols-[1fr_auto]">
+						<input
+							id="cpf"
+							type="text"
+							class="ig-input"
+							value={form.cpf}
+							oninput={onCpfInput}
+							placeholder="000.000.000-00"
+							inputmode="numeric"
+							maxlength="14"
+						/>
+						<span class="ig-cell text-surface-600-400"><IdCard class="size-5" /></span>
+					</div>
+				</label>
 
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        class="w-full rounded-container preset-filled-primary-500 py-3.5 text-sm font-semibold transition-colors disabled:opacity-60"
-                    >
-                        {saving ? 'Salvando...' : 'Salvar alterações'}
-                    </button>
-                </form>
-            {/if}
-        {/if}
-    </main>
+				<button
+					type="submit"
+					disabled={saving}
+					class="btn w-full preset-filled-primary-500 disabled:opacity-60"
+				>
+					{#if saving}
+						<span class="flex items-center justify-center gap-2">
+							<Progress value={null} class="items-center">
+								<Progress.Circle style="--size: 1.25rem; --thickness: 0.15rem;">
+									<Progress.CircleTrack />
+									<Progress.CircleRange />
+								</Progress.Circle>
+							</Progress>
+							Salvando...
+						</span>
+					{:else}
+						Salvar alterações
+					{/if}
+				</button>
+			</form>
+		{/if}
+	</main>
 
-    <BottomNav active="mais" />
+	<BottomNav active="mais" />
+
+	<Toast.Group {toaster}>
+		{#snippet children(toast)}
+			<Toast {toast}>
+				<Toast.Message>
+					<Toast.Title>{toast.title}</Toast.Title>
+					<Toast.Description>{toast.description}</Toast.Description>
+				</Toast.Message>
+				<Toast.CloseTrigger />
+			</Toast>
+		{/snippet}
+	</Toast.Group>
 </div>
