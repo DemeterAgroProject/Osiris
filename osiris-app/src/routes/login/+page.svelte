@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import { supabase } from '$lib/supabase';
 	import { subscribeToPush } from '$lib/push';
 
@@ -64,7 +65,7 @@
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			if (session?.user) {
-				subscribeToPush(session.user.id); 
+				subscribeToPush(session.user.id);
 				const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
 				goto(target, { replaceState: true });
 			}
@@ -85,21 +86,18 @@
 	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-8">
 		{#if loading}
 			<div class="flex flex-1 flex-col items-center justify-center py-20">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
-				<p class="mt-4 text-sm text-surface-600-400">Verificando sessão...</p>
+				<LoadingIndicator label="Verificando sessão..." />
 			</div>
 		{:else}
 			<div class="text-center">
 				<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Marketplace Osiris</p>
 				<h1 class="mt-2 text-2xl font-bold">Bem-vindo de volta</h1>
-				<p class="mt-2 text-sm text-surface-600-400">
+				<p class="mt-2 text-sm text-surface-700-300">
 					Entre para anunciar, negociar e gerenciar seu inventário no agro.
 				</p>
 			</div>
 
-			<div class="mt-8 rounded-container border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
+			<div class="mt-8 rounded-container border border-surface-200-800 bg-surface-50-950 p-6 ">
 				{#if errorMessage}
 					<div class="mb-4 rounded-container preset-tonal-error p-3 text-sm">{errorMessage}</div>
 				{/if}
@@ -111,9 +109,12 @@
 					class="flex w-full items-center justify-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3.5 text-sm font-semibold transition-all hover:preset-tonal disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					{#if signingIn}
-						<span
-							class="h-5 w-5 animate-spin rounded-full border-2 border-surface-200-800 border-t-primary-500"
-						></span>
+						<LoadingIndicator
+							label="Conectando..."
+							size="1.25rem"
+							compact={true}
+							showLabel={false}
+						/>
 						Conectando...
 					{:else}
 						<img
@@ -127,7 +128,7 @@
 					{/if}
 				</button>
 
-				<p class="mt-5 text-center text-xs leading-relaxed text-surface-600-400">
+				<p class="mt-5 text-center text-xs leading-relaxed text-surface-700-300">
 					Ao continuar, você concorda com os termos do marketplace e a criação da sua conta no
 					Osiris.
 				</p>
@@ -142,7 +143,7 @@
 				</ul>
 			</div>
 
-			<p class="mt-6 text-center text-sm text-surface-600-400">
+			<p class="mt-6 text-center text-sm text-surface-700-300">
 				<a href="/" class="font-medium text-primary-600 hover:text-primary-700">Continuar sem login</a>
 			</p>
 		{/if}

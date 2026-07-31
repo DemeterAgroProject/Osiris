@@ -1,5 +1,6 @@
 <script>
 	import { X } from 'lucide-svelte';
+	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { supabase } from '$lib/supabase';
 	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
 
@@ -194,6 +195,10 @@
 		errorMessage = '';
 	}
 
+	function handleOpenChange(details) {
+		if (!details.open) closeSheet();
+	}
+
 	function validate() {
 		if (!form.name.trim()) {
 			errorMessage = 'Informe o título do anúncio.';
@@ -282,33 +287,19 @@
 	});
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (open && event.key === 'Escape') closeSheet();
-	}}
-/>
-
-{#if open && product}
-	<button
-		type="button"
-		class="fixed inset-0 z-[80] border-0 bg-surface-950/40 p-0"
-		onclick={closeSheet}
-		aria-label="Fechar edição"
-	></button>
-
-	<div
-		class="fixed inset-x-0 bottom-0 z-[90] max-h-[92vh] overflow-hidden rounded-t-3xl bg-surface-50-950 shadow-2xl"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="edit-ad-title"
-	>
-		<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
+<Dialog {open} onOpenChange={handleOpenChange} closeOnInteractOutside={!saving} closeOnEscape={!saving}>
+	{#if open && product}
+		<Portal>
+			<Dialog.Backdrop class="fixed inset-0 z-[80] bg-surface-950/40" />
+			<Dialog.Positioner class="fixed inset-0 z-[90] flex items-end justify-center">
+				<Dialog.Content class="max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-surface-50-950 outline-none">
+					<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
 			<div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-4">
-				<h2 id="edit-ad-title" class="text-lg font-bold text-surface-950-50">Editar anúncio</h2>
+				<Dialog.Title id="edit-ad-title" class="text-lg font-bold text-surface-950-50">Editar anúncio</Dialog.Title>
 				<button
 					type="button"
 					onclick={closeSheet}
-					class="rounded-full p-2 text-surface-600-400 hover:preset-tonal"
+					class="rounded-full p-2 text-surface-700-300 hover:preset-tonal"
 					aria-label="Fechar"
 				>
 					<X class="h-5 w-5" />
@@ -327,7 +318,7 @@
 						type="text"
 						bind:value={form.name}
 						required
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
@@ -339,7 +330,7 @@
 						id="edit-description"
 						rows="3"
 						bind:value={form.description}
-						class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="textarea w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					></textarea>
 				</div>
 
@@ -354,7 +345,7 @@
 						step="0.01"
 						bind:value={form.price}
 						required
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
@@ -365,7 +356,7 @@
 							<select
 								id="edit-type"
 								bind:value={form.type_id}
-								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="" disabled>Selecione</option>
 								{#each types as type (type.id)}
@@ -378,7 +369,7 @@
 							<select
 								id="edit-brand"
 								bind:value={form.brand_id}
-								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="" disabled>Selecione</option>
 								{#each brands as brand (brand.id)}
@@ -394,7 +385,7 @@
 							id="edit-model"
 							type="text"
 							bind:value={form.model}
-							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						/>
 					</div>
 
@@ -406,7 +397,7 @@
 							id="edit-serial"
 							type="text"
 							bind:value={form.serial_number}
-							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						/>
 					</div>
 
@@ -418,7 +409,7 @@
 								type="number"
 								min="1950"
 								bind:value={form.manufacture_year}
-								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 						<div>
@@ -429,7 +420,7 @@
 								id="edit-horimeter"
 								type="number"
 								bind:value={form.current_horimeter}
-								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 					</div>
@@ -441,7 +432,7 @@
 						<select
 							id="edit-category"
 							bind:value={form.category}
-							class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
 							<option value="" disabled>Selecione</option>
 							<option value="Sementes">Sementes</option>
@@ -463,7 +454,7 @@
 								type="number"
 								min="1"
 								bind:value={form.quantity}
-								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							/>
 						</div>
 						<div>
@@ -471,7 +462,7 @@
 							<select
 								id="edit-unit"
 								bind:value={form.stock_unit}
-								class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+								class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 							>
 								<option value="Sacas">Sacas</option>
 								<option value="Kg">Kg</option>
@@ -502,6 +493,9 @@
 					</button>
 				</div>
 			</form>
-		</div>
-	</div>
-{/if}
+					</div>
+				</Dialog.Content>
+			</Dialog.Positioner>
+		</Portal>
+	{/if}
+</Dialog>

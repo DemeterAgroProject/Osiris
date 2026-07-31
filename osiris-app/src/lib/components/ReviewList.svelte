@@ -24,35 +24,40 @@
 </script>
 
 {#if loading}
-	<div class="space-y-3">
+	<div class="space-y-3" role="status" aria-live="polite" aria-busy="true">
+		<span class="sr-only">Carregando avaliações...</span>
 		{#each Array(3) as _, index (index)}
-			<div class="animate-pulse rounded-container border border-surface-200-800 bg-surface-50-950 p-4">
+			<div class="card rounded-container border border-surface-200-800 bg-surface-50-950 p-4" aria-hidden="true">
 				<div class="flex gap-3">
-					<div class="h-10 w-10 rounded-full bg-surface-200-800"></div>
+					<div class="placeholder-circle size-10 shrink-0 animate-pulse"></div>
 					<div class="flex-1 space-y-2">
-						<div class="h-3 w-28 rounded bg-surface-200-800"></div>
-						<div class="h-3 w-full rounded bg-surface-200-800"></div>
-						<div class="h-3 w-2/3 rounded bg-surface-200-800"></div>
+						<div class="placeholder h-3 w-28 animate-pulse"></div>
+						<div class="placeholder h-3 w-full animate-pulse"></div>
+						<div class="placeholder h-3 w-2/3 animate-pulse"></div>
 					</div>
 				</div>
 			</div>
 		{/each}
 	</div>
 {:else if reviews.length === 0}
-	<div class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center">
-		<MessageSquare class="mx-auto h-8 w-8 text-surface-400-600" />
+	<div class="card rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-10 text-center">
+		<div class="mx-auto flex size-12 items-center justify-center rounded-full preset-tonal-primary">
+			<MessageSquare class="h-6 w-6 text-primary-700-300" aria-hidden="true" />
+		</div>
 		<p class="mt-3 text-sm font-semibold text-surface-700-300">{emptyTitle}</p>
-		<p class="mt-1 text-xs text-surface-600-400">{emptyDescription}</p>
+		<p class="mt-1 text-xs text-surface-700-300">{emptyDescription}</p>
 	</div>
 {:else}
 	<div class="space-y-3">
 		{#each reviews as review (review.id ?? `${review.createdAt}-${review.reviewerName}`)}
-			<article class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<article class="card rounded-container border border-surface-200-800 bg-surface-50-950 p-4">
 				<div class="flex gap-3">
 					{#if review.reviewerPhoto}
 						<img
 							src={review.reviewerPhoto}
 							alt={review.reviewerName}
+							loading="lazy"
+							decoding="async"
 							class="h-10 w-10 shrink-0 rounded-full object-cover"
 						/>
 					{:else}
@@ -71,7 +76,7 @@
 									<p class="mt-0.5 truncate text-xs text-primary-700">{review.productName}</p>
 								{/if}
 							</div>
-							<time class="shrink-0 text-[11px] text-surface-600-400">
+							<time class="shrink-0 text-[11px] text-surface-700-300">
 								{formatReviewDate(review.createdAt)}
 							</time>
 						</div>
@@ -81,7 +86,7 @@
 						</div>
 
 						{#if review.comment}
-							<p class="mt-2 text-sm leading-relaxed text-surface-600-400">{review.comment}</p>
+							<p class="mt-2 text-sm leading-relaxed text-surface-700-300">{review.comment}</p>
 						{/if}
 					</div>
 				</div>

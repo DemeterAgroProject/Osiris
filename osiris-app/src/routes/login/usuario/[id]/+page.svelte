@@ -4,15 +4,15 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import Rating from '$lib/components/Rating.svelte';
+	import { useToaster } from '$lib/toast';
 	import { supabase } from '$lib/supabase';
 	import {
 		AppBar,
 		Avatar,
 		Accordion,
-		Progress,
-		RatingGroup,
-		Toast,
-		createToaster
+		Progress
 	} from '@skeletonlabs/skeleton-svelte';
 	import {
 		Mail,
@@ -208,7 +208,7 @@
 		photoUrl: ''
 	});
 
-	const toaster = createToaster({ placement: 'top', overlap: true });
+	const toaster = useToaster();
 
 	const userId = $derived(page.params.id);
 	const isOwner = $derived(Boolean(authUser?.id && userId && authUser.id === userId));
@@ -438,10 +438,10 @@
 						<button
 							type="button"
 							onclick={goBack}
-							class="btn-icon hover:preset-tonal"
+							class="btn-icon preset-outlined-surface-500 text-surface-800-200"
 							aria-label="Voltar"
 						>
-							<ArrowLeft class="size-5" />
+							<ArrowLeft class="size-5" aria-hidden="true" />
 						</button>
 					{/if}
 				</AppBar.Lead>
@@ -453,19 +453,13 @@
 		</AppBar>
 
 		{#if loading}
-			<div class="flex flex-col items-center justify-center gap-3 py-16">
-				<Progress value={null} class="items-center">
-					<Progress.Circle style="--size: 2.5rem; --thickness: 0.2rem;">
-						<Progress.CircleTrack />
-						<Progress.CircleRange />
-					</Progress.Circle>
-				</Progress>
-				<p class="text-sm text-surface-600-400">Carregando perfil...</p>
+			<div class="py-16">
+				<LoadingIndicator label="Carregando perfil..." size="2.5rem" />
 			</div>
 		{:else if errorMessage && !profile}
 			<div class="card rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if view === 'profile'}
-			<section class="card overflow-hidden rounded-container p-5 shadow-sm">
+			<section class="card overflow-hidden rounded-container p-5 ">
 				<div class="flex flex-col items-center">
 					<Avatar class="size-24 ring-2 ring-primary-500/20">
 						{#if avatarUrl}
@@ -479,29 +473,8 @@
 					<h2 class="mt-4 text-center text-lg font-bold">{displayName}</h2>
 
 					<div class="mt-2 flex flex-wrap items-center justify-center gap-2">
-						<RatingGroup count={5} value={rating} allowHalf={true} readOnly={true}>
-							<RatingGroup.Control>
-								<RatingGroup.Context>
-									{#snippet children(ratingGroup)}
-										{#each ratingGroup().items as index (index)}
-											<RatingGroup.Item {index}>
-												{#snippet empty()}
-													<Star class="size-4 text-surface-400-600" />
-												{/snippet}
-												{#snippet half()}
-													<Star class="size-4 fill-warning-400 text-warning-400 opacity-80" />
-												{/snippet}
-												{#snippet full()}
-													<Star class="size-4 fill-warning-400 text-warning-400" />
-												{/snippet}
-											</RatingGroup.Item>
-										{/each}
-									{/snippet}
-								</RatingGroup.Context>
-							</RatingGroup.Control>
-							<RatingGroup.HiddenInput />
-						</RatingGroup>
-						<span class="text-xs text-surface-600-400">
+						<Rating value={rating} count={reviewCount} size="sm" showCount={false} showValue={false} />
+						<span class="text-xs text-surface-700-300">
 							{#if reviewCount > 0}
 								{rating.toFixed(1)} ({reviewCount}
 								{reviewCount === 1 ? 'avaliação' : 'avaliações'})
@@ -516,7 +489,7 @@
 						<div class="mt-5 w-full space-y-3">
 							<div class="flex items-start justify-between gap-3">
 								<div class="flex min-w-0 items-start gap-2">
-									<Mail class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+									<Mail class="mt-0.5 size-4 shrink-0 text-surface-700-300" />
 									<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
 								</div>
 								<span
@@ -531,7 +504,7 @@
 
 							<div class="flex items-start justify-between gap-3">
 								<div class="flex min-w-0 items-start gap-2">
-									<Phone class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+									<Phone class="mt-0.5 size-4 shrink-0 text-surface-700-300" />
 									<span class="truncate text-sm text-surface-700-300"
 										>{phone || 'Não informado'}</span
 									>
@@ -547,7 +520,7 @@
 							</div>
 
 							<div class="flex items-start gap-2">
-								<IdCard class="mt-0.5 size-4 shrink-0 text-surface-600-400" />
+								<IdCard class="mt-0.5 size-4 shrink-0 text-surface-700-300" />
 								<span class="truncate text-sm text-surface-700-300"
 									>{cpf || 'CPF não informado'}</span
 								>
@@ -557,7 +530,7 @@
 				</div>
 			</section>
 
-			<section class="card mt-4 rounded-container border border-surface-200-800 p-4 shadow-sm">
+			<section class="card mt-4 rounded-container border border-surface-200-800 p-4 ">
 				<div class="flex items-start gap-3">
 					<div class="flex size-10 items-center justify-center rounded-container bg-surface-100-900">
 						<Star class="size-5 fill-warning-400 text-warning-400" />
@@ -579,7 +552,7 @@
 			</section>
 
 			{#if isOwner}
-				<section class="card mt-4 rounded-container border border-surface-200-800 p-4 shadow-sm">
+				<section class="card mt-4 rounded-container border border-surface-200-800 p-4 ">
 					<div class="flex items-start gap-3">
 						<div class="flex size-10 items-center justify-center rounded-container bg-surface-100-900">
 							<SquarePen class="size-5" />
@@ -603,7 +576,7 @@
 				<button
 					type="button"
 					onclick={() => openView('verification')}
-					class="card mt-4 flex w-full items-center justify-between rounded-container border border-surface-200-800 px-4 py-4 text-left shadow-sm transition-colors hover:border-primary-500"
+					class="card mt-4 flex w-full items-center justify-between rounded-container border border-surface-200-800 px-4 py-4 text-left  transition-colors hover:border-primary-500"
 				>
 					<div class="flex items-center gap-3">
 						<div
@@ -620,36 +593,21 @@
 				</button>
 			{/if}
 		{:else if view === 'reviews'}
-			<section class="card rounded-container border border-surface-200-800 p-4 shadow-sm">
+			<section class="card rounded-container border border-surface-200-800 p-4 ">
 				<div class="mb-4 flex items-center justify-between gap-3">
 					<div>
 						<h2 class="text-base font-semibold">Avaliações recebidas</h2>
-						<p class="mt-0.5 text-xs text-surface-600-400">
+						<p class="mt-0.5 text-xs text-surface-700-300">
 							Feedback de outros usuários sobre {displayName}
 						</p>
 					</div>
-					<RatingGroup count={5} value={rating} allowHalf={true} readOnly={true}>
-						<RatingGroup.Control>
-							<RatingGroup.Context>
-								{#snippet children(ratingGroup)}
-									{#each ratingGroup().items as index (index)}
-										<RatingGroup.Item {index}>
-											{#snippet empty()}
-												<Star class="size-4 text-surface-400-600" />
-											{/snippet}
-											{#snippet half()}
-												<Star class="size-4 fill-warning-400 text-warning-400 opacity-80" />
-											{/snippet}
-											{#snippet full()}
-												<Star class="size-4 fill-warning-400 text-warning-400" />
-											{/snippet}
-										</RatingGroup.Item>
-									{/each}
-								{/snippet}
-							</RatingGroup.Context>
-						</RatingGroup.Control>
-						<RatingGroup.HiddenInput />
-					</RatingGroup>
+					<Rating
+						value={rating}
+						count={reviewCount}
+						size="sm"
+						showCount={false}
+						showValue={false}
+					/>
 				</div>
 
 				<ReviewList
@@ -661,24 +619,24 @@
 				/>
 			</section>
 		{:else if view === 'verification'}
-			<section class="card mb-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<section class="card mb-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 				<div class="mb-3 flex items-center justify-between">
 					<h2 class="text-base font-bold text-surface-950-50">Status da conta</h2>
 					<span class="badge preset-filled-primary-500">{advertiserProgress}%</span>
 				</div>
 				<Progress value={advertiserProgress}>
 					<Progress.Track class="bg-surface-200-800">
-						<Progress.Range class="bg-primary-500!" />
+						<Progress.Range class="bg-primary-500" />
 					</Progress.Track>
 				</Progress>
 			</section>
 
-			<Accordion value={['email']} collapsible multiple class="space-y-3">
+			<Accordion defaultValue={['email']} collapsible multiple class="space-y-3">
 				<Accordion.Item
 					value="email"
-					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 "
 				>
-					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+					<Accordion.ItemTrigger class="group flex items-center justify-between gap-3 px-4 py-3">
 						<span class="flex items-center gap-3">
 							<span
 								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
@@ -697,10 +655,10 @@
 							</span>
 						</span>
 						<Accordion.ItemIndicator>
-							<ChevronDown class="size-5 text-surface-800-200" />
+							<ChevronDown class="size-5 text-surface-800-200 transition-transform group-data-[state=open]:rotate-180" />
 						</Accordion.ItemIndicator>
 					</Accordion.ItemTrigger>
-					<Accordion.ItemContent>
+					<Accordion.ItemContent class="px-4 pb-4">
 						<p class="mb-4 text-sm text-surface-700-300">
 							{emailVerified
 								? 'Seu email já está validado.'
@@ -720,9 +678,9 @@
 
 				<Accordion.Item
 					value="phone"
-					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 "
 				>
-					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+					<Accordion.ItemTrigger class="group flex items-center justify-between gap-3 px-4 py-3">
 						<span class="flex items-center gap-3">
 							<span
 								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
@@ -741,10 +699,10 @@
 							</span>
 						</span>
 						<Accordion.ItemIndicator>
-							<ChevronDown class="size-5 text-surface-800-200" />
+							<ChevronDown class="size-5 text-surface-800-200 transition-transform group-data-[state=open]:rotate-180" />
 						</Accordion.ItemIndicator>
 					</Accordion.ItemTrigger>
-					<Accordion.ItemContent>
+					<Accordion.ItemContent class="px-4 pb-4">
 						<p class="mb-4 text-sm text-surface-700-300">
 							Valide seu número de telefone para aumentar a segurança da sua conta.
 						</p>
@@ -763,9 +721,9 @@
 
 				<Accordion.Item
 					value="advertiser"
-					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 "
 				>
-					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+					<Accordion.ItemTrigger class="group flex items-center justify-between gap-3 px-4 py-3">
 						<span class="flex items-center gap-3">
 							<span
 								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
@@ -784,10 +742,10 @@
 							</span>
 						</span>
 						<Accordion.ItemIndicator>
-							<ChevronDown class="size-5 text-surface-800-200" />
+							<ChevronDown class="size-5 text-surface-800-200 transition-transform group-data-[state=open]:rotate-180" />
 						</Accordion.ItemIndicator>
 					</Accordion.ItemTrigger>
-					<Accordion.ItemContent>
+					<Accordion.ItemContent class="px-4 pb-4">
 						<p class="mb-3 text-sm text-surface-700-300">
 							Complete seu perfil, verifique seu email e telefone para se tornar um anunciante e publicar
 							no Osiris.
@@ -823,9 +781,9 @@
 
 				<Accordion.Item
 					value="certs"
-					class="card rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+					class="card rounded-container border border-surface-200-800 bg-surface-50-950 "
 				>
-					<Accordion.ItemTrigger class="flex items-center justify-between gap-3 px-4 py-3">
+					<Accordion.ItemTrigger class="group flex items-center justify-between gap-3 px-4 py-3">
 						<span class="flex items-center gap-3">
 							<span
 								class="flex size-10 items-center justify-center rounded-container preset-filled-primary-500"
@@ -835,10 +793,10 @@
 							<span class="font-semibold text-surface-950-50">Certificados</span>
 						</span>
 						<Accordion.ItemIndicator>
-							<ChevronDown class="size-5 text-surface-800-200" />
+							<ChevronDown class="size-5 text-surface-800-200 transition-transform group-data-[state=open]:rotate-180" />
 						</Accordion.ItemIndicator>
 					</Accordion.ItemTrigger>
-					<Accordion.ItemContent>
+					<Accordion.ItemContent class="px-4 pb-4">
 						<p class="mb-4 text-sm text-surface-700-300">
 							{profile?.certificates?.length
 								? `Você possui ${profile.certificates.length} certificado(s).`
@@ -852,7 +810,7 @@
 			</Accordion>
 		{:else if view === 'edit' && isOwner}
 			<form
-				class="card space-y-4 rounded-container border border-surface-200-800 p-4 shadow-sm"
+				class="card space-y-4 rounded-container border border-surface-200-800 p-4 "
 				onsubmit={handleSaveProfile}
 			>
 				<div class="flex justify-center">
@@ -865,7 +823,7 @@
 						</Avatar.Fallback>
 					</Avatar>
 				</div>
-				<p class="text-center text-xs text-surface-600-400">Foto do perfil (somente visualização)</p>
+				<p class="text-center text-xs text-surface-700-300">Foto do perfil (somente visualização)</p>
 
 				<label class="label">
 					<span class="label-text">Nome</span>
@@ -877,7 +835,7 @@
 							bind:value={form.displayName}
 							required
 						/>
-						<span class="ig-cell text-surface-600-400"><User class="size-5" /></span>
+						<span class="ig-cell text-surface-700-300"><User class="size-5" /></span>
 					</div>
 				</label>
 
@@ -892,7 +850,7 @@
 							required
 							autocomplete="email"
 						/>
-						<span class="ig-cell text-surface-600-400"><Mail class="size-5" /></span>
+						<span class="ig-cell text-surface-700-300"><Mail class="size-5" /></span>
 					</div>
 				</label>
 
@@ -910,7 +868,7 @@
 							inputmode="numeric"
 							maxlength="15"
 						/>
-						<span class="ig-cell text-surface-600-400"><Phone class="size-5" /></span>
+						<span class="ig-cell text-surface-700-300"><Phone class="size-5" /></span>
 					</div>
 				</label>
 
@@ -927,7 +885,7 @@
 							inputmode="numeric"
 							maxlength="14"
 						/>
-						<span class="ig-cell text-surface-600-400"><IdCard class="size-5" /></span>
+						<span class="ig-cell text-surface-700-300"><IdCard class="size-5" /></span>
 					</div>
 				</label>
 
@@ -938,12 +896,12 @@
 				>
 					{#if saving}
 						<span class="flex items-center justify-center gap-2">
-							<Progress value={null} class="items-center">
-								<Progress.Circle style="--size: 1.25rem; --thickness: 0.15rem;">
-									<Progress.CircleTrack />
-									<Progress.CircleRange />
-								</Progress.Circle>
-							</Progress>
+							<LoadingIndicator
+								label="Salvando..."
+								size="1.25rem"
+								compact={true}
+								showLabel={false}
+							/>
 							Salvando...
 						</span>
 					{:else}
@@ -955,16 +913,4 @@
 	</main>
 
 	<BottomNav active="mais" />
-
-	<Toast.Group {toaster}>
-		{#snippet children(toast)}
-			<Toast {toast}>
-				<Toast.Message>
-					<Toast.Title>{toast.title}</Toast.Title>
-					<Toast.Description>{toast.description}</Toast.Description>
-				</Toast.Message>
-				<Toast.CloseTrigger />
-			</Toast>
-		{/snippet}
-	</Toast.Group>
 </div>

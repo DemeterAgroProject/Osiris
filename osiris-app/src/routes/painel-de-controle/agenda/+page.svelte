@@ -8,11 +8,12 @@
 		Clock,
 		CheckCircle2,
 		XCircle,
-		AlertCircle,
 		MessageSquare
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	const monthNames = [
 		'Janeiro',
@@ -243,17 +244,17 @@
 	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
 		<div>
 			<h1 class="text-xl font-bold text-surface-950-50">Minha Agenda</h1>
-			<p class="mt-0.5 text-sm text-surface-600-400">
+			<p class="mt-0.5 text-sm text-surface-700-300">
 				Propostas em negociação e operações confirmadas no calendário.
 			</p>
 		</div>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-500"></div>
+				<LoadingIndicator label="Carregando agenda..." />
 			</div>
 		{:else}
-			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="text-base font-bold text-surface-950-50">{monthNames[currentMonth]} {currentYear}</h2>
 					<div class="flex gap-1">
@@ -262,21 +263,21 @@
 							onclick={() => changeMonth(-1)}
 							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronLeft class="h-4 w-4 text-surface-600-400" />
+							<ChevronLeft class="h-4 w-4 text-surface-700-300" />
 						</button>
 						<button
 							type="button"
 							onclick={() => changeMonth(1)}
 							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronRight class="h-4 w-4 text-surface-600-400" />
+							<ChevronRight class="h-4 w-4 text-surface-700-300" />
 						</button>
 					</div>
 				</div>
 
 				<div
 					style="display: grid; grid-template-columns: repeat(7, 1fr);"
-					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-600-400"
+					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-700-300"
 				>
 					<div>Dom</div>
 					<div>Seg</div>
@@ -294,15 +295,15 @@
 							class="relative flex items-center justify-center rounded-container border text-sm transition-all
 							{day
 								? cellState === 'conflito'
-									? 'preset-filled-error-500 font-bold shadow-sm'
+									? 'preset-filled-error-500 font-bold '
 									: cellState === 'em_operacao'
-										? 'preset-filled-primary-500 font-bold shadow-sm'
+										? 'preset-filled-primary-500 font-bold '
 										: cellState === 'pendente'
-											? 'animate-pulse preset-tonal-warning font-bold shadow-sm'
+											? 'animate-pulse preset-tonal-warning font-bold '
 											: cellState === 'em_negociacao'
-												? 'preset-filled-secondary-500 font-bold shadow-sm'
+												? 'preset-filled-secondary-500 font-bold '
 												: cellState === 'solicitada'
-													? 'preset-tonal-secondary font-bold shadow-sm'
+													? 'preset-tonal-secondary font-bold '
 													: 'border-surface-200-800 bg-surface-50-950 text-surface-950-50'
 								: 'border-none bg-transparent text-transparent'}"
 						>
@@ -338,7 +339,7 @@
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4  {conflict
 							? 'border-error-500 ring-1 ring-error-500/20'
 							: 'border-surface-200-800'}"
 					>
@@ -354,7 +355,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{neg.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(neg.start_date)} até {formatDbDate(neg.end_date)}
 								</p>
@@ -384,7 +385,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
 					>
 						Nenhuma proposta com datas no momento.
 					</div>
@@ -397,7 +398,7 @@
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4  {conflict
 							? 'border-error-500 ring-1 ring-error-500/20'
 							: 'border-surface-200-800'}"
 					>
@@ -411,7 +412,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{req.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(req.start_date)} até {formatDbDate(req.end_date)}
 								</p>
@@ -445,7 +446,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
 					>
 						Nenhum booking pendente no momento.
 					</div>
@@ -457,7 +458,7 @@
 
 				{#each operatingBookings as conf (conf.id)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm"
+						class="flex flex-col justify-between gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 "
 					>
 						<div class="flex items-start gap-3">
 							<div
@@ -467,7 +468,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{conf.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(conf.start_date)} até {formatDbDate(conf.end_date)}
 								</p>
@@ -492,7 +493,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
 					>
 						Nenhuma operação em campo no momento.
 					</div>
@@ -504,33 +505,13 @@
 	<BottomNav active="inicio" />
 </div>
 
-{#if showCancelModal}
-	<div class="fixed inset-0 z-[100] flex items-center justify-center bg-surface-950/40 px-4 backdrop-blur-sm">
-		<div class="w-full max-w-sm rounded-container bg-surface-50-950 p-6 text-center shadow-xl">
-			<div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full preset-tonal-error">
-				<AlertCircle class="h-7 w-7 text-error-500" />
-			</div>
-			<h3 class="text-lg font-bold text-surface-950-50">Cancelar atividade?</h3>
-			<p class="mt-2 text-sm text-surface-600-400">
-				As datas serão liberadas no calendário para novos agendamentos.
-			</p>
-
-			<div class="mt-6 flex gap-3">
-				<button
-					type="button"
-					onclick={closeCancelModal}
-					class="flex-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-3 text-sm font-semibold text-surface-700-300 hover:preset-tonal"
-				>
-					Voltar
-				</button>
-				<button
-					type="button"
-					onclick={confirmCancellation}
-					class="flex-1 rounded-container preset-filled-error-500 py-3 text-sm font-semibold"
-				>
-					Sim, cancelar
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
+<ConfirmDialog
+	bind:open={showCancelModal}
+	title="Cancelar atividade?"
+	message="As datas serão liberadas no calendário para novos agendamentos."
+	confirmLabel="Sim, cancelar"
+	cancelLabel="Voltar"
+	variant="danger"
+	onconfirm={confirmCancellation}
+	oncancel={closeCancelModal}
+/>

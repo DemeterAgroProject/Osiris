@@ -1,9 +1,11 @@
 <script>
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { MessageSquare, ChevronRight, Tractor, Briefcase, Package } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function formatCurrency(value) {
@@ -307,50 +309,35 @@
 	<main class="mx-auto w-full max-w-3xl px-4 py-6">
 		<div>
 			<h1 class="text-2xl font-bold text-surface-950-50">Negociações</h1>
-			<p class="mt-1 text-sm text-surface-600-400">Propostas, chat e contratos ativos no campo.</p>
+			<p class="mt-1 text-sm text-surface-700-300">Propostas, chat e contratos ativos no campo.</p>
 		</div>
 
-		<div class="mt-4 flex gap-2 rounded-container bg-surface-50-950 p-1 shadow-sm ring-1 ring-surface-200-800">
-			<button
-				type="button"
-				onclick={() => (activeTab = 'propostas')}
-				class="flex-1 rounded-container py-2.5 text-sm font-semibold transition-colors {activeTab ===
-				'propostas'
-					? 'preset-filled-primary-500'
-					: 'text-surface-600-400 hover:preset-tonal'}"
-			>
+		<Tabs value={activeTab} onValueChange={(details) => (activeTab = details.value)} class="mt-4">
+			<Tabs.List class="relative flex gap-2 rounded-container bg-surface-50-950 p-1 ring-1 ring-surface-200-800" aria-label="Área de negociações">
+			<Tabs.Trigger value="propostas" class="flex-1 rounded-container py-2.5 text-sm font-semibold text-surface-700-300 transition-colors data-[selected]:preset-filled-primary-500">
 				Propostas
-			</button>
-			<button
-				type="button"
-				onclick={() => (activeTab = 'operacoes')}
-				class="flex-1 rounded-container py-2.5 text-sm font-semibold transition-colors {activeTab ===
-				'operacoes'
-					? 'preset-filled-primary-500'
-					: 'text-surface-600-400 hover:preset-tonal'}"
-			>
+			</Tabs.Trigger>
+			<Tabs.Trigger value="operacoes" class="flex-1 rounded-container py-2.5 text-sm font-semibold text-surface-700-300 transition-colors data-[selected]:preset-filled-primary-500">
 				Operações
-			</button>
-		</div>
+			</Tabs.Trigger>
+			<Tabs.Indicator class="absolute bottom-0 h-0.5 bg-primary-500" />
+			</Tabs.List>
 
 		{#if loading}
-			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
-			</div>
+			<ListingSkeleton variant="list" count={4} label="Carregando negociações..." />
 		{:else if errorMessage}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if activeTab === 'propostas'}
+			<Tabs.Content value="propostas">
 			<section class="mt-6 space-y-6">
 				<div>
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Em andamento</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Em andamento</h2>
 					<div class="mt-3 space-y-2">
 						{#each openNegotiations as row (row.id)}
 							{@const Icon = listingIcon(row)}
 							<a
 								href="/negociacoes/{row.id}"
-								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4  transition-colors hover:border-primary-500"
 							>
 								<div
 									class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
@@ -363,7 +350,7 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
-									<p class="text-xs text-surface-600-400">
+									<p class="text-xs text-surface-700-300">
 										{authUserId === row.provider_id ? 'Cliente' : 'Anunciante'}:
 										{resolveCounterpartyName(row)}
 									</p>
@@ -371,7 +358,7 @@
 										{formatCurrency(row.proposed_price)}
 									</p>
 									{#if row.proposed_start_date}
-										<p class="mt-0.5 text-xs text-surface-600-400">
+										<p class="mt-0.5 text-xs text-surface-700-300">
 											{formatDbDate(row.proposed_start_date)} — {formatDbDate(row.proposed_end_date)}
 										</p>
 									{/if}
@@ -384,12 +371,12 @@
 									>
 										{negotiationStatusLabel(row.status)}
 									</span>
-									<ChevronRight class="h-4 w-4 text-surface-400-600" />
+									<ChevronRight class="h-4 w-4 text-surface-700-300" />
 								</div>
 							</a>
 						{:else}
 							<div
-								class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center text-sm text-surface-600-400"
+								class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center text-sm text-surface-700-300"
 							>
 								Nenhuma proposta em andamento.
 							</div>
@@ -398,21 +385,21 @@
 				</div>
 
 				<div>
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Encerradas</h2>
 					<div class="mt-3 space-y-2">
 						{#each closedNegotiations as row (row.id)}
 							<a
 								href="/negociacoes/{row.id}"
-								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 "
 							>
 								<div
 									class="flex h-11 w-11 shrink-0 items-center justify-center rounded-container bg-surface-50-950"
 								>
-									<MessageSquare class="h-5 w-5 text-surface-600-400" />
+									<MessageSquare class="h-5 w-5 text-surface-700-300" />
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
-									<p class="text-xs text-surface-600-400">{resolveCounterpartyName(row)}</p>
+									<p class="text-xs text-surface-700-300">{resolveCounterpartyName(row)}</p>
 								</div>
 								<span
 									class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
@@ -423,20 +410,22 @@
 								</span>
 							</a>
 						{:else}
-							<p class="text-center text-sm text-surface-600-400 py-4">Nenhuma negociação encerrada.</p>
+							<p class="text-center text-sm text-surface-700-300 py-4">Nenhuma negociação encerrada.</p>
 						{/each}
 					</div>
 				</div>
 			</section>
+			</Tabs.Content>
 		{:else}
+			<Tabs.Content value="operacoes">
 			<section class="mt-6 space-y-6">
 				<div class="space-y-2">
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Ativas</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Ativas</h2>
 				{#each activeBookings as booking (booking.id)}
 					{@const Icon = listingIcon(booking)}
 					<a
 						href="/operacoes/{booking.id}"
-						class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm hover:border-primary-500"
+						class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4  hover:border-primary-500"
 					>
 						<div
 							class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
@@ -451,10 +440,10 @@
 							<p class="truncate font-semibold text-surface-950-50">
 								{resolveListingTitle(booking)}
 							</p>
-							<p class="text-xs text-surface-600-400">
+							<p class="text-xs text-surface-700-300">
 								{resolveBookingCounterparty(booking)}
 							</p>
-							<p class="text-xs text-surface-600-400">
+							<p class="text-xs text-surface-700-300">
 								{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 							</p>
 							<p class="mt-0.5 text-sm font-medium text-primary-700">
@@ -474,7 +463,7 @@
 						class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 					>
 						<p class="text-sm font-semibold text-surface-950-50">Nenhuma operação ativa</p>
-						<p class="mt-1 text-xs text-surface-600-400">
+						<p class="mt-1 text-xs text-surface-700-300">
 							Quando uma proposta for aceita, o contrato aparecerá aqui.
 						</p>
 					</div>
@@ -483,16 +472,16 @@
 
 				{#if closedBookings.length}
 					<div class="space-y-2">
-						<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
+						<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Encerradas</h2>
 						{#each closedBookings as booking (booking.id)}
 							<a
 								href="/operacoes/{booking.id}"
-								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 "
 							>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(booking)}</p>
-									<p class="text-xs text-surface-600-400">{resolveBookingCounterparty(booking)}</p>
-									<p class="text-xs text-surface-600-400">
+									<p class="text-xs text-surface-700-300">{resolveBookingCounterparty(booking)}</p>
+									<p class="text-xs text-surface-700-300">
 										{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 									</p>
 								</div>
@@ -508,7 +497,9 @@
 					</div>
 				{/if}
 			</section>
+			</Tabs.Content>
 		{/if}
+		</Tabs>
 	</main>
 
 	<BottomNav active="mais" />

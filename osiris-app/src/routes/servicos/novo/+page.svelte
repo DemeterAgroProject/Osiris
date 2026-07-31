@@ -1,4 +1,5 @@
 <script>
+    import { Steps, ToggleGroup } from '@skeletonlabs/skeleton-svelte';
     import { goto } from '$app/navigation';
     import { supabase } from '$lib/supabase';
     import { ChevronRight, Users, Briefcase, MapPin } from 'lucide-svelte';
@@ -76,7 +77,7 @@
 </script>
 
 <div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
-    <Header /> 
+    <Header />
 
     <main class="flex flex-1 flex-col px-4 py-4 max-w-2xl mx-auto w-full">
         <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Oferecer Serviço</h1>
@@ -87,77 +88,106 @@
             </div>
         {/if}
 
+        <Steps
+            step={currentStep}
+            count={totalSteps}
+            linear
+            onStepChange={(details) => {
+                if (details.step <= currentStep) currentStep = details.step;
+            }}
+            class="mb-7"
+        >
+            <Steps.List class="flex items-start" aria-label="Etapas do novo serviço">
+                {#each ['Tipo', 'Detalhes', 'Cobrança'] as label, index (label)}
+                    <Steps.Item {index} class="flex flex-1 items-start">
+                        <Steps.Trigger disabled={index > currentStep} class="group flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center">
+                            <Steps.Indicator class="flex size-8 items-center justify-center rounded-full border border-surface-300-700 bg-surface-50-950 text-xs font-bold text-surface-700-300 data-[complete]:border-primary-500 data-[complete]:preset-filled-primary-500 data-[current]:border-primary-500 data-[current]:preset-filled-primary-500">
+                                {index + 1}
+                            </Steps.Indicator>
+                            <span class="text-[11px] font-medium text-surface-700-300">{label}</span>
+                        </Steps.Trigger>
+                        {#if index < totalSteps - 1}
+                            <Steps.Separator class="mt-4 h-px flex-1 bg-surface-300-700 data-[complete]:bg-primary-500" />
+                        {/if}
+                    </Steps.Item>
+                {/each}
+            </Steps.List>
+        </Steps>
+
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 1 de 3</p>
-                <h2 class="mb-4 text-base text-surface-600-400">Como você vai atuar?</h2>
+                <h2 class="mb-4 text-base text-surface-700-300">Como você vai atuar?</h2>
 
-                <div class="space-y-3">
-                    <button
-                        onclick={() => form.service_type = 'Mão de Obra'}
-                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.service_type === 'Mão de Obra' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-500'}"
+                <ToggleGroup
+                    value={form.service_type ? [form.service_type] : []}
+                    deselectable={false}
+                    onValueChange={(details) => (form.service_type = details.value[0] ?? form.service_type)}
+                    class="space-y-3"
+                >
+                    <ToggleGroup.Item
+                        value="Mão de Obra"
+                        class="flex w-full items-center gap-3 rounded-container border-2 border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary"
                     >
                         <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-primary">
                             <Users class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
                             <h3 class="font-medium text-surface-950-50">Mão de Obra</h3>
-                            <p class="text-xs text-surface-600-400">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
+                            <p class="text-xs text-surface-700-300">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
                         </div>
-                    </button>
+                    </ToggleGroup.Item>
 
-                    <button
-                        onclick={() => form.service_type = 'Pacote Completo'}
-                        class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.service_type === 'Pacote Completo' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-500'}"
+                    <ToggleGroup.Item
+                        value="Pacote Completo"
+                        class="flex w-full items-center gap-3 rounded-container border-2 border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary"
                     >
                         <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-secondary">
                             <Briefcase class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
                             <h3 class="font-medium text-surface-950-50">Pacote Completo</h3>
-                            <p class="text-xs text-surface-600-400">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
+                            <p class="text-xs text-surface-700-300">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
                         </div>
-                    </button>
-                </div>
+                    </ToggleGroup.Item>
+                </ToggleGroup>
             </div>
 
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 2 de 3</p>
                 <h2 class="mb-4 text-lg font-semibold text-surface-950-50">Detalhes do Serviço</h2>
 
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-surface-700-300 mb-1" for="title">Título do Serviço</label>
-                        <input 
-                            type="text" 
-                            id="title" 
-                            bind:value={form.title} 
-                            placeholder={form.service_type === 'Mão de Obra' ? "Ex: Tratorista com experiência" : "Ex: Serviço completo de Reflorestamento"} 
-                            class="w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
+                        <input
+                            type="text"
+                            id="title"
+                            bind:value={form.title}
+                            placeholder={form.service_type === 'Mão de Obra' ? "Ex: Tratorista com experiência" : "Ex: Serviço completo de Reflorestamento"}
+                            class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-surface-700-300 mb-1" for="description">O que está incluso?</label>
-                        <textarea 
-                            id="description" 
-                            bind:value={form.description} 
+                        <textarea
+                            id="description"
+                            bind:value={form.description}
                             rows="4"
-                            placeholder="Descreva a sua experiência, quais máquinas você opera ou o que o seu pacote cobre..." 
-                            class="w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
+                            placeholder="Descreva a sua experiência, quais máquinas você opera ou o que o seu pacote cobre..."
+                            class="textarea w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         ></textarea>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-surface-700-300 mb-1" for="location">Raio de Atendimento</label>
                         <div class="relative">
-                            <MapPin class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-                            <input 
-                                type="text" 
-                                id="location" 
-                                bind:value={form.location} 
-                                class="w-full rounded-container border border-surface-200-800 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
+                            <MapPin class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
+                            <input
+                                type="text"
+                                id="location"
+                                bind:value={form.location}
+                                class="input w-full rounded-container border border-surface-200-800 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                             />
                         </div>
                     </div>
@@ -166,13 +196,12 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 3 de 3</p>
                 <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Como você cobra?</h2>
 
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-surface-700-300 mb-1" for="pricing_model">Formato de Cobrança</label>
-                        <select id="pricing_model" bind:value={form.pricing_model} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
+                        <select id="pricing_model" bind:value={form.pricing_model} class="select w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                             <option value="Por Hora">Por Hora</option>
                             <option value="Por Hectare">Por Hectare</option>
                             <option value="Empreitada/Fixo">Empreitada / Fixo</option>
@@ -184,13 +213,13 @@
                         <div class="pt-2">
                             <label class="block text-sm font-medium text-surface-700-300 mb-1" for="price">Valor Base (R$)</label>
                             <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-600-400">R$</span>
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-700-300">R$</span>
                                 <input
                                     type="number"
                                     id="price"
                                     bind:value={form.price}
                                     placeholder="0,00"
-                                    class="w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                                    class="input w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                                 />
                             </div>
                         </div>

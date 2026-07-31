@@ -1,4 +1,5 @@
 <script>
+	import { goto } from '$app/navigation';
 	import {
 		Plus,
 		Search,
@@ -15,6 +16,8 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import InventoryEditSheet from '$lib/components/InventoryEditSheet.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
+	import { Menu, Portal, Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 
@@ -128,8 +131,6 @@
 
 	let activeTab = $state('maquinarios');
 	let searchQuery = $state('');
-	let openMenu = $state(null);
-	let menuOpensUp = $state(false);
 
 	let loading = $state(true);
 	let statusMessage = $state({ text: '', type: '' });
@@ -287,14 +288,12 @@
 
 	function openEdit(item, event) {
 		event.stopPropagation();
-		openMenu = null;
 		editingProduct = item;
 		editOpen = true;
 	}
 
 	function requestToggleStatus(item, event) {
 		event.stopPropagation();
-		openMenu = null;
 		statusConfirmItem = item;
 		statusConfirmOpen = true;
 	}
@@ -333,7 +332,6 @@
 
 	function requestDelete(item, event) {
 		event.stopPropagation();
-		openMenu = null;
 		deleteConfirmItem = item;
 		deleteConfirmOpen = true;
 	}
@@ -426,50 +424,69 @@
 		deletingId = null;
 	}
 
-	function menuPositionClass() {
-		return menuOpensUp
-			? 'bottom-full mb-0.5 origin-bottom-right'
-			: 'top-full mt-0.5 origin-top-right';
-	}
-
-	function toggleMenu(id, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (openMenu === id) {
-			openMenu = null;
-			return;
-		}
-
-		const trigger = event.currentTarget;
-		if (trigger instanceof HTMLElement) {
-			const rect = trigger.getBoundingClientRect();
-			const menuHeight = 224;
-			const bottomReserve = 112;
-			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
-			menuOpensUp = spaceBelow < menuHeight;
-		} else {
-			menuOpensUp = false;
-		}
-
-		openMenu = id;
-	}
-
-	function handleWindowClick(event) {
-		if (!openMenu) return;
-		if (event.target instanceof Element && event.target.closest('[data-inventory-menu]')) {
-			return;
-		}
-		openMenu = null;
-	}
-
 	async function handleEditSaved() {
 		await loadAllAds();
 		statusMessage = { text: 'Anúncio atualizado com sucesso.', type: 'success' };
 	}
 </script>
 
-<svelte:window onclick={handleWindowClick} />
+{#snippet inventoryActions(item)}
+	<Menu positioning={{ placement: 'bottom-end', gutter: 4 }}>
+		<Menu.Trigger
+			type="button"
+			class="flex size-9 shrink-0 items-center justify-center rounded-container text-surface-700-300 hover:bg-surface-100-900 hover:text-surface-700-300"
+			aria-label="Ações do anúncio"
+		>
+			<MoreVertical class="size-5 shrink-0" />
+		</Menu.Trigger>
+		<Portal>
+			<Menu.Positioner class="z-[60]">
+				<Menu.Content class="w-48 rounded-container border border-surface-200-800 bg-surface-50-950 p-1 outline-none">
+					<Menu.Item
+						value={`view-${item.id}`}
+						onclick={() => goto(getAdHref(item))}
+						class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal"
+					>
+						<ExternalLink class="size-4 shrink-0" />
+						<Menu.ItemText class="min-w-0">Ver anúncio</Menu.ItemText>
+					</Menu.Item>
+					<Menu.Item
+						value={`edit-${item.id}`}
+						onclick={(event) => openEdit(item, event)}
+						class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal"
+					>
+						<Edit class="size-4 shrink-0" />
+						<Menu.ItemText class="min-w-0">Editar</Menu.ItemText>
+					</Menu.Item>
+					<Menu.Item
+						value={`status-${item.id}`}
+						disabled={togglingId === item.id}
+						onclick={(event) => requestToggleStatus(item, event)}
+						class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+					>
+						{#if isActiveStatus(item.status)}
+							<Pause class="size-4 shrink-0" />
+							<Menu.ItemText class="min-w-0">Pausar anúncio</Menu.ItemText>
+						{:else}
+							<Play class="size-4 shrink-0" />
+							<Menu.ItemText class="min-w-0">Ativar anúncio</Menu.ItemText>
+						{/if}
+					</Menu.Item>
+					<Menu.Separator class="border-t border-surface-200-800" />
+					<Menu.Item
+						value={`delete-${item.id}`}
+						disabled={deletingId === item.id}
+						onclick={(event) => requestDelete(item, event)}
+						class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
+					>
+						<Trash2 class="size-4 shrink-0" />
+						<Menu.ItemText class="min-w-0">Excluir</Menu.ItemText>
+					</Menu.Item>
+				</Menu.Content>
+			</Menu.Positioner>
+		</Portal>
+	</Menu>
+{/snippet}
 
 <div class="min-h-screen  pb-20">
 	<Header />
@@ -479,7 +496,7 @@
 			<h1 class="text-xl font-bold text-surface-950-50">Meu Inventário</h1>
 			<a
 				href="/anunciar"
-				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm"
+				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium "
 			>
 				<Plus class="h-4 w-4" />
 				Novo Anúncio
@@ -496,50 +513,37 @@
 			</div>
 		{/if}
 
-		<div class="mb-6 flex gap-2">
-			<button
-				type="button"
-				onclick={() => (activeTab = 'maquinarios')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
-				'maquinarios'
-					? 'border-primary-500 preset-tonal-primary text-primary-700'
-					: 'border-surface-200-800 bg-surface-50-950 text-surface-600-400 hover:border-primary-500'}"
-			>
+		<Tabs value={activeTab} onValueChange={(details) => (activeTab = details.value)} class="mb-6">
+			<Tabs.List class="relative flex gap-2" aria-label="Tipo de inventário">
+			<Tabs.Trigger value="maquinarios" class="flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 transition-colors data-[selected]:border-primary-500 data-[selected]:preset-tonal-primary data-[selected]:text-primary-700">
 				<Tractor class="h-5 w-5" />
 				Maquinários
-			</button>
-			<button
-				type="button"
-				onclick={() => (activeTab = 'produtos')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container border-2 px-4 py-3 text-sm font-medium transition-all {activeTab ===
-				'produtos'
-					? 'border-primary-500 preset-tonal-primary text-primary-700'
-					: 'border-surface-200-800 bg-surface-50-950 text-surface-600-400 hover:border-primary-500'}"
-			>
+			</Tabs.Trigger>
+			<Tabs.Trigger value="produtos" class="flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 transition-colors data-[selected]:border-primary-500 data-[selected]:preset-tonal-primary data-[selected]:text-primary-700">
 				<Leaf class="h-5 w-5" />
 				Produtos
-			</button>
-		</div>
+			</Tabs.Trigger>
+			<Tabs.Indicator class="absolute bottom-0 h-0.5 bg-primary-500" />
+			</Tabs.List>
 
-		<div class="relative mb-6 shadow-sm rounded-container">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+		<div class="relative mb-6  rounded-container">
+			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
 			<input
 				type="search"
 				placeholder="Buscar nos meus anúncios..."
 				bind:value={searchQuery}
-				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				class="input w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 		</div>
 
 		{#if loading}
-			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-			</div>
+			<ListingSkeleton variant="list" count={4} label="Carregando inventário..." />
 		{:else if activeTab === 'maquinarios'}
+			<Tabs.Content value="maquinarios">
 			<div class="space-y-3">
 				{#each filteredMaquinarios as maq (maq.id)}
 					<article
-						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 transition-opacity {isPausedStatus(
 							maq.status
 						)
 							? 'opacity-80'
@@ -557,11 +561,11 @@
 								<h3 class="line-clamp-1 font-bold text-surface-950-50">{maq.name}</h3>
 								<p class="mt-0.5 text-sm font-medium text-primary-700">
 									{formatPrice(maq.price)}
-									<span class="text-xs font-normal text-surface-600-400">/hora</span>
+									<span class="text-xs font-normal text-surface-700-300">/hora</span>
 								</p>
 								<div class="mt-2 flex flex-wrap gap-2">
 									<span
-										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
+										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-700-300"
 									>
 										{getMachineryTypeName(maq)}
 									</span>
@@ -574,87 +578,22 @@
 									</span>
 								</div>
 							</div>
-							<div class="relative z-10 shrink-0 self-start" data-inventory-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(maq.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do anúncio"
-									aria-expanded={openMenu === maq.id}
-									aria-haspopup="menu"
-								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === maq.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={getAdHref(maq)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === maq.id}
-												onclick={(event) => requestToggleStatus(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(maq.status)}
-													<Pause class="h-4 w-4" />
-													Pausar anúncio
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar anúncio
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === maq.id}
-												onclick={(event) => requestDelete(maq, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+							<div class="relative z-10 shrink-0 self-start">
+								{@render inventoryActions(maq)}
 							</div>
 						</div>
 					</article>
 				{:else}
-					<div class="py-12 text-center text-surface-600-400">Nenhum maquinário encontrado.</div>
+					<div class="py-12 text-center text-surface-700-300">Nenhum maquinário encontrado.</div>
 				{/each}
 			</div>
+			</Tabs.Content>
 		{:else}
+			<Tabs.Content value="produtos">
 			<div class="space-y-3">
 				{#each filteredProdutos as prod (prod.id)}
 					<article
-						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 transition-opacity {isPausedStatus(
 							prod.status
 						)
 							? 'opacity-80'
@@ -673,7 +612,7 @@
 								<p class="mt-0.5 text-sm font-extrabold text-warning-700">{formatPrice(prod.price)}</p>
 								<div class="mt-2 flex flex-wrap gap-2">
 									<span
-										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
+										class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-700-300"
 									>
 										{prod.category}
 									</span>
@@ -686,83 +625,18 @@
 									</span>
 								</div>
 							</div>
-							<div class="relative z-10 shrink-0 self-start" data-inventory-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(prod.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do anúncio"
-									aria-expanded={openMenu === prod.id}
-									aria-haspopup="menu"
-								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === prod.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={getAdHref(prod)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === prod.id}
-												onclick={(event) => requestToggleStatus(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(prod.status)}
-													<Pause class="h-4 w-4" />
-													Pausar anúncio
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar anúncio
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === prod.id}
-												onclick={(event) => requestDelete(prod, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+							<div class="relative z-10 shrink-0 self-start">
+								{@render inventoryActions(prod)}
 							</div>
 						</div>
 					</article>
 				{:else}
-					<div class="py-12 text-center text-surface-600-400">Nenhum produto/insumo encontrado.</div>
+					<div class="py-12 text-center text-surface-700-300">Nenhum produto/insumo encontrado.</div>
 				{/each}
 			</div>
+			</Tabs.Content>
 		{/if}
+		</Tabs>
 	</main>
 
 	<InventoryEditSheet

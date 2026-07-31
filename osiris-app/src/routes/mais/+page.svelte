@@ -62,7 +62,7 @@
     let authUser = $state(null);
     let profile = $state(null);
     let signingOut = $state(false);
-    let imgError = $state(false); 
+    let imgError = $state(false);
 
     const displayName = $derived(resolveDisplayName(profile, authUser));
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
@@ -126,7 +126,7 @@
 
     async function refreshUser() {
         loading = true;
-        imgError = false; 
+        imgError = false;
 
         const {
             data: { user }
@@ -215,7 +215,7 @@
                 <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
                 <a
                     href="/login"
-                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:preset-tonal"
+                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700  transition-colors hover:preset-tonal"
                 >
                     <LogIn class="h-4 w-4" />
                     Entrar com Google
@@ -275,7 +275,7 @@
                     </a>
                 {:else}
                     <div
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-700-300 last:border-b-0"
                         aria-disabled="true"
                     >
                         <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -296,7 +296,7 @@
         </nav>
 
         <section aria-labelledby="mais-atividade">
-            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
+            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">
                 Minha atividade
             </h2>
             <nav aria-label="Minha atividade">
@@ -308,11 +308,11 @@
                         >
                             <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                             <span class="flex-1 text-sm font-medium">{item.label}</span>
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
                         </a>
                     {:else}
                         <div
-                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
+                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-700-300 last:border-b-0"
                             aria-disabled="true"
                         >
                             <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -334,7 +334,7 @@
         </section>
 
         <section aria-labelledby="mais-descubra" class="border-t border-surface-200-800">
-            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">Descubra</h2>
+            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">Descubra</h2>
             <nav aria-label="Descubra">
                 {#each discoverItems as item (item.label)}
                     <a
@@ -353,7 +353,7 @@
                                 {item.badge}
                             </span>
                         {:else}
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
                         {/if}
                     </a>
                 {/each}
@@ -361,7 +361,7 @@
         </section>
 
         <section aria-labelledby="mais-vender" class="border-t border-surface-200-800">
-            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
+            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">
                 Vender e gerir
             </h2>
             <nav aria-label="Vender e gerir">
@@ -372,7 +372,7 @@
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                         <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
+                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
                     </a>
                 {/each}
 
@@ -395,18 +395,18 @@
             <ul class="space-y-3">
                 {#each legalLinks as link (link.label)}
                     <li>
-                        <span class="text-sm text-surface-600-400">{link.label}</span>
+                        <span class="text-sm text-surface-700-300">{link.label}</span>
                     </li>
                 {/each}
             </ul>
-            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-600-400">
+            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-700-300">
                 <Info class="mt-0.5 h-4 w-4 shrink-0 text-primary-600" />
                 <p>
                     Marketplace agro da região. Alguns atalhos (negociações, ajuda, termos) serão liberados em
                     atualizações futuras.
                 </p>
             </div>
-            <div class="mt-4 flex items-center gap-2 text-xs text-surface-600-400">
+            <div class="mt-4 flex items-center gap-2 text-xs text-surface-700-300">
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
             </div>

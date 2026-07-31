@@ -1,5 +1,6 @@
 <script>
 	import { X } from 'lucide-svelte';
+	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { supabase } from '$lib/supabase';
 
 	let { open = $bindable(false), service = null, onsaved = () => {} } = $props();
@@ -31,6 +32,10 @@
 		if (saving) return;
 		open = false;
 		errorMessage = '';
+	}
+
+	function handleOpenChange(details) {
+		if (!details.open) closeSheet();
 	}
 
 	async function handleSubmit(event) {
@@ -86,33 +91,19 @@
 	});
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (open && event.key === 'Escape') closeSheet();
-	}}
-/>
-
-{#if open && service}
-	<button
-		type="button"
-		class="fixed inset-0 z-[80] border-0 bg-surface-950/40 p-0"
-		onclick={closeSheet}
-		aria-label="Fechar edição"
-	></button>
-
-	<div
-		class="fixed inset-x-0 bottom-0 z-[90] max-h-[92vh] overflow-hidden rounded-t-3xl bg-surface-50-950 shadow-2xl"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="edit-service-title"
-	>
-		<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
+<Dialog {open} onOpenChange={handleOpenChange} closeOnInteractOutside={!saving} closeOnEscape={!saving}>
+	{#if open && service}
+		<Portal>
+			<Dialog.Backdrop class="fixed inset-0 z-[80] bg-surface-950/40" />
+			<Dialog.Positioner class="fixed inset-0 z-[90] flex items-end justify-center">
+				<Dialog.Content class="max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-surface-50-950 outline-none">
+					<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
 			<div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-4">
-				<h2 id="edit-service-title" class="text-lg font-bold text-surface-950-50">Editar serviço</h2>
+				<Dialog.Title id="edit-service-title" class="text-lg font-bold text-surface-950-50">Editar serviço</Dialog.Title>
 				<button
 					type="button"
 					onclick={closeSheet}
-					class="rounded-full p-2 text-surface-600-400 hover:preset-tonal"
+					class="rounded-full p-2 text-surface-700-300 hover:preset-tonal"
 					aria-label="Fechar"
 				>
 					<X class="h-5 w-5" />
@@ -133,7 +124,7 @@
 						type="text"
 						bind:value={form.title}
 						required
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
@@ -146,7 +137,7 @@
 						rows="3"
 						bind:value={form.description}
 						required
-						class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="textarea w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					></textarea>
 				</div>
 
@@ -159,7 +150,7 @@
 						type="text"
 						bind:value={form.location}
 						required
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
@@ -170,7 +161,7 @@
 					<select
 						id="edit-service-pricing"
 						bind:value={form.pricing_model}
-						class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+						class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 					>
 						<option value="Por Hora">Por Hora</option>
 						<option value="Por Hectare">Por Hectare</option>
@@ -191,7 +182,7 @@
 							step="0.01"
 							bind:value={form.price}
 							required
-							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
 					</div>
 				{/if}
@@ -204,6 +195,9 @@
 					{saving ? 'Salvando...' : 'Salvar alterações'}
 				</button>
 			</form>
-		</div>
-	</div>
-{/if}
+					</div>
+				</Dialog.Content>
+			</Dialog.Positioner>
+		</Portal>
+	{/if}
+</Dialog>

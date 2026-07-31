@@ -71,7 +71,7 @@
 
 	{#each visibleImages as image, index (image.id ?? `new-${index}-${image.url}`)}
 		<div class="rounded-container border border-surface-200-800 bg-surface-50-950/80 p-3">
-			<label class="mb-1 block text-xs font-medium text-surface-600-400" for={`product-image-url-${index}`}>
+			<label class="mb-1 block text-xs font-medium text-surface-700-300" for={`product-image-url-${index}`}>
 				URL da imagem {index + 1}
 			</label>
 			<input
@@ -79,7 +79,7 @@
 				type="url"
 				bind:value={image.url}
 				placeholder="https://..."
-				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				class="input w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 
 			<div class="mt-2 flex items-center justify-between gap-2">
@@ -88,7 +88,7 @@
 					onclick={() => setCover(index)}
 					class="inline-flex items-center gap-1 rounded-container px-2 py-1 text-xs font-medium transition-colors {image.is_cover
 						? 'preset-tonal-primary text-primary-700'
-						: 'text-surface-600-400 hover:preset-tonal'}"
+						: 'text-surface-700-300 hover:preset-tonal'}"
 				>
 					<Star class="size-3.5 {image.is_cover ? 'fill-current' : ''}" />
 					{image.is_cover ? 'Capa' : 'Definir como capa'}
@@ -120,5 +120,5 @@
 		</div>
 	{/each}
 
-	<p class="text-xs text-surface-600-400">A primeira capa aparece nos cards e na busca. Serviços não usam esta galeria.</p>
+	<p class="text-xs text-surface-700-300">A primeira capa aparece nos cards e na busca. Serviços não usam esta galeria.</p>
 </div>

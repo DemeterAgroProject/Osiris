@@ -12,24 +12,22 @@
 	];
 </script>
 
-<nav class="fixed bottom-0 left-0 right-0 z-50 border-t border-surface-200-800 bg-surface-50-950">
-	<div class="flex items-center justify-around py-2">
+<nav
+	class="fixed inset-x-0 bottom-0 z-50 border-t border-surface-200-800 bg-surface-50-950/95 backdrop-blur-xl"
+	aria-label="Navegação principal"
+>
+	<div class="mx-auto flex max-w-screen-sm items-center justify-around px-2 py-1.5">
 		{#each navItems as item (item.id)}
 				{@const Icon = item.icon}
 				<a
 				href={item.href}
-				class="flex flex-col items-center gap-1 px-2 py-1 transition-colors {active === item.id
-					? 'text-primary-600'
-					: 'text-surface-600-400 hover:text-surface-700-300'}"
+				aria-current={active === item.id ? 'page' : undefined}
+				class="group flex min-h-14 min-w-14 flex-col items-center justify-center gap-1 border-t-2 px-2 py-1 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 {active === item.id
+					? 'border-primary-500 text-primary-600-400'
+					: 'border-transparent text-surface-700-300 hover:bg-surface-100-900 hover:text-surface-900-100'}"
 			>
-					{#if active === item.id}
-						<div class="rounded-full preset-tonal-primary p-2">
-							<Icon class="h-5 w-5" />
-						</div>
-					{:else}
-						<Icon class="h-6 w-6" />
-					{/if}
-				<span class="text-[10px] font-medium">{item.label}</span>
+				<Icon class="h-5 w-5" aria-hidden="true" />
+				<span class="text-[10px] font-semibold tracking-wide">{item.label}</span>
 			</a>
 		{/each}
 	</div>

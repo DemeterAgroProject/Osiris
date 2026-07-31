@@ -38,21 +38,21 @@
 		<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Osiris</p>
 
 		{#if status}
-			<p class="mt-2 text-sm font-medium text-surface-600-400">Erro {status}</p>
+			<p class="mt-2 text-sm font-medium text-surface-700-300">Erro {status}</p>
 		{/if}
 
 		<h1 class="mt-3 text-2xl font-bold tracking-tight">{headline}</h1>
-		<p class="mt-3 text-sm leading-relaxed text-surface-600-400">{description}</p>
+		<p class="mt-3 text-sm leading-relaxed text-surface-700-300">{description}</p>
 
 		{#if errorMessage && !isNotFound}
-			<p class="mt-4 rounded-container bg-surface-50-950 px-4 py-3 text-left text-xs text-surface-600-400 ring-1 ring-surface-200-800">
+			<p class="mt-4 rounded-container bg-surface-50-950 px-4 py-3 text-left text-xs text-surface-700-300 ring-1 ring-surface-200-800">
 				{errorMessage}
 			</p>
 		{/if}
 
 		<a
 			href="/"
-			class="btn preset-filled-primary-500 mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-container px-6 text-sm font-semibold shadow-sm transition-colors sm:w-auto"
+			class="btn preset-filled-primary-500 mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-container px-6 text-sm font-semibold  transition-colors sm:w-auto"
 		>
 			Voltar para o Início
 		</a>

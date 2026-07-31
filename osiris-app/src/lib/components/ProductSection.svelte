@@ -1,4 +1,6 @@
 <script>
+	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import ProductCard from './ProductCard.svelte';
 
 	let {
@@ -14,29 +16,43 @@
 </script>
 
 {#if visibleProducts.length > 0}
-	<section class="py-3">
+	<Carousel
+		slideCount={visibleProducts.length}
+		autoSize
+		allowMouseDrag
+		spacing="12px"
+		padding="16px"
+		class="py-5"
+		aria-label={title}
+	>
 		<div class="flex items-center justify-between gap-3 px-4">
-			<h2 class="text-lg font-bold text-primary-700">{title}</h2>
-			{#if showSeeMore}
+			<h2 class="text-lg font-bold tracking-tight text-surface-950-50">{title}</h2>
+			<div class="flex items-center gap-1">
+				<Carousel.Control>
+					<Carousel.PrevTrigger class="rounded-full p-2 text-surface-700-300 hover:preset-tonal disabled:opacity-40" aria-label="Produtos anteriores">
+						<ChevronLeft class="size-4" />
+					</Carousel.PrevTrigger>
+					<Carousel.NextTrigger class="rounded-full p-2 text-surface-700-300 hover:preset-tonal disabled:opacity-40" aria-label="Próximos produtos">
+						<ChevronRight class="size-4" />
+					</Carousel.NextTrigger>
+				</Carousel.Control>
+				{#if showSeeMore}
 				<a
 					href={seeMoreHref}
-					class="shrink-0 text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700"
+					class="btn btn-sm shrink-0 preset-tonal-primary"
 				>
 					{seeMoreLabel}
 				</a>
-			{/if}
+				{/if}
+			</div>
 		</div>
 
-		<div
-			class="hide-scrollbar mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2"
-			role="list"
-			aria-label={title}
-		>
-			{#each visibleProducts as product (product.id)}
-				<div class="w-40 shrink-0 snap-start sm:w-44" role="listitem">
+		<Carousel.ItemGroup class="mt-4 flex pb-3" aria-label={title}>
+			{#each visibleProducts as product, index (product.id)}
+				<Carousel.Item {index} class="w-40 shrink-0 sm:w-48">
 					<ProductCard {...product} />
-				</div>
+				</Carousel.Item>
 			{/each}
-		</div>
-	</section>
+		</Carousel.ItemGroup>
+	</Carousel>
 {/if}

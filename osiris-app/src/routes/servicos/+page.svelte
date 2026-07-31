@@ -1,4 +1,5 @@
 <script>
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import {
@@ -18,6 +19,8 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
+	import { Menu, Portal, Tabs } from '@skeletonlabs/skeleton-svelte';
 
 	let activeTab = $state('mao_de_obra');
 	let searchQuery = $state('');
@@ -26,8 +29,6 @@
 	let ownerProfile = $state(null);
 	let statusMessage = $state({ text: '', type: '' });
 
-	let openMenu = $state(null);
-	let menuOpensUp = $state(false);
 	let imgErrors = $state({});
 
 	let editOpen = $state(false);
@@ -130,53 +131,14 @@
 		return `${formatted}${model !== 'Fixo' && model !== 'Empreitada/Fixo' && model !== 'A Combinar' ? ` / ${model}` : ''}`;
 	}
 
-	function menuPositionClass() {
-		return menuOpensUp
-			? 'bottom-full mb-0.5 origin-bottom-right'
-			: 'top-full mt-0.5 origin-top-right';
-	}
-
-	function toggleMenu(id, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (openMenu === id) {
-			openMenu = null;
-			return;
-		}
-
-		const trigger = event.currentTarget;
-		if (trigger instanceof HTMLElement) {
-			const rect = trigger.getBoundingClientRect();
-			const menuHeight = 224;
-			const bottomReserve = 112;
-			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
-			menuOpensUp = spaceBelow < menuHeight;
-		} else {
-			menuOpensUp = false;
-		}
-
-		openMenu = id;
-	}
-
-	function handleWindowClick(event) {
-		if (!openMenu) return;
-		if (event.target instanceof Element && event.target.closest('[data-service-menu]')) {
-			return;
-		}
-		openMenu = null;
-	}
-
 	function openEdit(service, event) {
 		event.stopPropagation();
-		openMenu = null;
 		editingService = service;
 		editOpen = true;
 	}
 
 	function requestToggleStatus(service, event) {
 		event.stopPropagation();
-		openMenu = null;
 		statusConfirmItem = service;
 		statusConfirmOpen = true;
 	}
@@ -187,7 +149,6 @@
 
 	function requestDelete(service, event) {
 		event.stopPropagation();
-		openMenu = null;
 		deleteConfirmItem = service;
 		deleteConfirmOpen = true;
 	}
@@ -364,8 +325,6 @@
 	});
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
@@ -374,7 +333,7 @@
 			<h1 class="text-xl font-bold text-surface-950-50">Meus Serviços</h1>
 			<a
 				href="/servicos/novo"
-				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm transition-colors"
+				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium  transition-colors"
 			>
 				<Plus class="h-4 w-4" />
 				Oferecer Serviço
@@ -391,51 +350,38 @@
 			</div>
 		{/if}
 
-		<div class="mb-6 flex rounded-container bg-surface-200-800 p-1">
-			<button
-				type="button"
-				onclick={() => (activeTab = 'mao_de_obra')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
-				'mao_de_obra'
-					? 'bg-surface-50-950 text-primary-700 shadow-sm'
-					: 'text-surface-600-400 hover:text-surface-950-50'}"
-			>
+		<Tabs value={activeTab} onValueChange={(details) => (activeTab = details.value)} class="mb-6">
+			<Tabs.List class="relative flex rounded-container bg-surface-200-800 p-1" aria-label="Tipo de serviço">
+			<Tabs.Trigger value="mao_de_obra" class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium text-surface-700-300 transition-colors data-[selected]:bg-surface-50-950 data-[selected]:text-primary-700">
 				<Users class="h-4 w-4" />
 				Mão de Obra
-			</button>
-			<button
-				type="button"
-				onclick={() => (activeTab = 'pacote_completo')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
-				'pacote_completo'
-					? 'bg-surface-50-950 text-primary-700 shadow-sm'
-					: 'text-surface-600-400 hover:text-surface-950-50'}"
-			>
+			</Tabs.Trigger>
+			<Tabs.Trigger value="pacote_completo" class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium text-surface-700-300 transition-colors data-[selected]:bg-surface-50-950 data-[selected]:text-primary-700">
 				<Briefcase class="h-4 w-4" />
 				Pacote Completo
-			</button>
-		</div>
+			</Tabs.Trigger>
+			<Tabs.Indicator class="absolute bottom-0 h-0.5 bg-primary-500" />
+			</Tabs.List>
 
-		<div class="relative mb-6 shadow-sm rounded-container">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+		<div class="relative mb-6  rounded-container">
+			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
 			<input
 				type="search"
 				placeholder="Buscar nos meus serviços..."
 				bind:value={searchQuery}
-				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				class="input w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 		</div>
 
 		{#if loading}
-			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-			</div>
+			<ListingSkeleton variant="list" count={4} label="Carregando serviços..." />
 		{:else}
+			<Tabs.Content value={activeTab}>
 			<div class="space-y-3">
 				{#each filteredServices as serv (serv.id)}
 					{@const Icon = serviceIcon(serv)}
 					<article
-						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
+						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 transition-opacity {isPausedStatus(
 							serv.status
 						)
 							? 'opacity-80'
@@ -460,7 +406,7 @@
 								<p class="mt-0.5 text-sm font-medium text-primary-700">
 									{formatPrice(serv.price, serv.pricing_model)}
 								</p>
-								<p class="mt-1 line-clamp-2 text-xs text-surface-600-400">{serv.description}</p>
+								<p class="mt-1 line-clamp-2 text-xs text-surface-700-300">{serv.description}</p>
 								<div class="mt-2 flex flex-wrap items-center gap-2">
 									<span
 										class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
@@ -469,7 +415,7 @@
 									>
 										{getStatusLabel(serv.status)}
 									</span>
-									<span class="flex items-center gap-1 text-xs text-surface-600-400">
+									<span class="flex items-center gap-1 text-xs text-surface-700-300">
 										<MapPin class="h-3 w-3" />
 										{serv.location}
 									</span>
@@ -499,75 +445,62 @@
 								{/if}
 							</div>
 
-							<div class="relative z-10 shrink-0 self-start" data-service-menu>
-								<button
+							<div class="relative z-10 shrink-0 self-start">
+								<Menu positioning={{ placement: 'bottom-end', gutter: 4 }}>
+								<Menu.Trigger
 									type="button"
-									onclick={(event) => toggleMenu(serv.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
+									class="flex size-9 shrink-0 items-center justify-center rounded-container text-surface-700-300 hover:bg-surface-100-900 hover:text-surface-700-300"
 									aria-label="Ações do serviço"
-									aria-expanded={openMenu === serv.id}
-									aria-haspopup="menu"
 								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === serv.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={getServiceHref(serv)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
+									<MoreVertical class="size-5 shrink-0" />
+								</Menu.Trigger>
+								<Portal>
+									<Menu.Positioner class="z-[60]">
+									<Menu.Content class="w-48 rounded-container border border-surface-200-800 bg-surface-50-950 p-1 outline-none">
+											<Menu.Item
+												value={`view-${serv.id}`}
+												onclick={() => goto(getServiceHref(serv))}
+												class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal"
 											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
+												<ExternalLink class="size-4 shrink-0" />
+												<Menu.ItemText class="min-w-0">Ver anúncio</Menu.ItemText>
+											</Menu.Item>
+											<Menu.Item
+												value={`edit-${serv.id}`}
 												onclick={(event) => openEdit(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
+												class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal"
 											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
+												<Edit class="size-4 shrink-0" />
+												<Menu.ItemText class="min-w-0">Editar</Menu.ItemText>
+											</Menu.Item>
+											<Menu.Item
+												value={`status-${serv.id}`}
 												disabled={togglingId === serv.id}
 												onclick={(event) => requestToggleStatus(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+												class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
 											>
 												{#if isActiveStatus(serv.status)}
-													<Pause class="h-4 w-4" />
-													Pausar serviço
+													<Pause class="size-4 shrink-0" />
+													<Menu.ItemText class="min-w-0">Pausar serviço</Menu.ItemText>
 												{:else}
-													<Play class="h-4 w-4" />
-													Ativar serviço
+													<Play class="size-4 shrink-0" />
+													<Menu.ItemText class="min-w-0">Ativar serviço</Menu.ItemText>
 												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
+											</Menu.Item>
+											<Menu.Separator class="border-t border-surface-200-800" />
+											<Menu.Item
+												value={`delete-${serv.id}`}
 												disabled={deletingId === serv.id}
 												onclick={(event) => requestDelete(serv, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
+												class="grid w-full grid-cols-[1rem_minmax(0,1fr)] items-center gap-3 rounded-container px-3 py-2.5 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
 											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+												<Trash2 class="size-4 shrink-0" />
+												<Menu.ItemText class="min-w-0">Excluir</Menu.ItemText>
+											</Menu.Item>
+									</Menu.Content>
+									</Menu.Positioner>
+								</Portal>
+								</Menu>
 							</div>
 						</div>
 					</article>
@@ -577,19 +510,21 @@
 							class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-100-900"
 						>
 							{#if activeTab === 'mao_de_obra'}
-								<Users class="h-8 w-8 text-surface-600-400" />
+								<Users class="h-8 w-8 text-surface-700-300" />
 							{:else}
-								<Briefcase class="h-8 w-8 text-surface-600-400" />
+								<Briefcase class="h-8 w-8 text-surface-700-300" />
 							{/if}
 						</div>
 						<h3 class="mb-1 text-lg font-medium text-surface-950-50">Nenhum serviço encontrado</h3>
-						<p class="text-sm text-surface-600-400">
+						<p class="text-sm text-surface-700-300">
 							Você ainda não possui serviços cadastrados nesta categoria.
 						</p>
 					</div>
 				{/each}
 			</div>
+			</Tabs.Content>
 		{/if}
+		</Tabs>
 	</main>
 
 	<ServiceEditSheet bind:open={editOpen} service={editingService} onsaved={handleEditSaved} />

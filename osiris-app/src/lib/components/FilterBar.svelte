@@ -1,5 +1,6 @@
 <script>
 	import { SlidersHorizontal, X, Check, ChevronDown } from 'lucide-svelte';
+	import { Dialog, Portal, ToggleGroup } from '@skeletonlabs/skeleton-svelte';
 
 	function createDefaultMarketplaceFilters() {
 		return {
@@ -114,6 +115,10 @@
 		isOpen = false;
 	}
 
+	function handleOpenChange(details) {
+		if (!details.open) closeFilters();
+	}
+
 	function clearDraft() {
 		draft = createDefaultMarketplaceFilters();
 	}
@@ -123,13 +128,8 @@
 		isOpen = false;
 	}
 
-	function toggleArrayItem(key, id) {
-		const values = draft[key];
-		if (values.includes(id)) {
-			draft = { ...draft, [key]: values.filter((value) => value !== id) };
-		} else {
-			draft = { ...draft, [key]: [...values, id] };
-		}
+	function updateDraftArray(key, values) {
+		draft = { ...draft, [key]: values };
 	}
 
 	function isSelected(key, id) {
@@ -137,18 +137,12 @@
 	}
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (event.key === 'Escape' && isOpen) closeFilters();
-	}}
-/>
-
 <div class="space-y-2 px-4 pb-3 mt-4">
 	<div class="flex items-center gap-2">
 		<button
 			type="button"
 			onclick={openFilters}
-			class="relative flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-700-300 shadow-sm transition-colors hover:border-primary-500 hover:text-primary-600"
+			class="relative flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-600"
 		>
 			<SlidersHorizontal class="h-4 w-4 shrink-0" />
 			<span>Filtros</span>
@@ -162,7 +156,7 @@
 		</button>
 
 		{#if resultCount !== null}
-			<p class="shrink-0 text-xs font-medium text-surface-600-400">
+			<p class="shrink-0 text-xs font-medium text-surface-700-300">
 				{resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
 			</p>
 		{/if}
@@ -181,31 +175,26 @@
 	{/if}
 </div>
 
-{#if isOpen}
-	<button
-		type="button"
-		class="fixed inset-0 z-[70] border-0 bg-surface-950/30 p-0"
-		onclick={closeFilters}
-		aria-label="Fechar filtros"
-	></button>
-	<div
-		class="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl bg-surface-50-950 shadow-2xl"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="filter-bar-title"
-	>
-		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
+<Dialog open={isOpen} onOpenChange={handleOpenChange}>
+	{#if isOpen}
+		<Portal>
+			<Dialog.Backdrop class="fixed inset-0 z-[70] bg-surface-950/40" />
+			<Dialog.Positioner class="fixed inset-0 z-[80] flex items-end justify-center">
+				<Dialog.Content class="w-full rounded-t-3xl bg-surface-50-950 outline-none">
+					<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
-					<h2 id="filter-bar-title" class="text-base font-semibold text-surface-950-50">
+					<Dialog.Title id="filter-bar-title" class="text-base font-semibold text-surface-950-50">
 						Filtros do marketplace
-					</h2>
-					<p class="text-xs text-surface-600-400">Produtos, maquinários e serviços</p>
+					</Dialog.Title>
+					<Dialog.Description class="text-xs text-surface-700-300">
+						Produtos, maquinários e serviços
+					</Dialog.Description>
 				</div>
 				<button
 					type="button"
 					onclick={closeFilters}
-					class="rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400"
+					class="rounded-full p-2 text-surface-700-300 transition-colors hover:preset-tonal hover:text-surface-700-300"
 					aria-label="Fechar filtros"
 				>
 					<X class="h-5 w-5" />
@@ -214,97 +203,101 @@
 
 			<div class="max-h-[70vh] space-y-5 overflow-y-auto pb-3">
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
 						Tipo de anúncio
 					</p>
-					<div class="flex flex-wrap gap-2">
+					<ToggleGroup
+						multiple
+						value={draft.listingTypes}
+						onValueChange={(details) => updateDraftArray('listingTypes', details.value)}
+						class="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+					>
 						{#each listingTypeOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('listingTypes', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'listingTypes',
-									option.id
-								)
-									? 'border-primary-500 preset-tonal-primary text-primary-700'
-									: 'border-surface-200-800 text-surface-600-400'}"
+							<ToggleGroup.Item
+								value={option.id}
+								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
 							>
-								{#if isSelected('listingTypes', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
+								{#if isSelected('listingTypes', option.id)}
+									<Check class="h-3.5 w-3.5 shrink-0" />
+								{/if}
+								<span class="min-w-0">{option.label}</span>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Produtos</p>
-					<div class="flex flex-wrap gap-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Produtos</p>
+					<ToggleGroup
+						multiple
+						value={draft.productKinds}
+						onValueChange={(details) => updateDraftArray('productKinds', details.value)}
+						class="grid w-full grid-cols-2 gap-2"
+					>
 						{#each productKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('productKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'productKinds',
-									option.id
-								)
-									? 'border-primary-500 preset-tonal-primary text-primary-700'
-									: 'border-surface-200-800 text-surface-600-400'}"
+							<ToggleGroup.Item
+								value={option.id}
+								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
-								{#if isSelected('productKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
+								{#if isSelected('productKinds', option.id)}
+									<Check class="h-3.5 w-3.5 shrink-0" />
+								{/if}
+								<span class="min-w-0">{option.label}</span>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Serviços</p>
-					<div class="flex flex-wrap gap-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Serviços</p>
+					<ToggleGroup
+						multiple
+						value={draft.serviceKinds}
+						onValueChange={(details) => updateDraftArray('serviceKinds', details.value)}
+						class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+					>
 						{#each serviceKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('serviceKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'serviceKinds',
-									option.id
-								)
-									? 'border-primary-500 preset-tonal-primary text-primary-700'
-									: 'border-surface-200-800 text-surface-600-400'}"
+							<ToggleGroup.Item
+								value={option.id}
+								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
-								{#if isSelected('serviceKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
+								{#if isSelected('serviceKinds', option.id)}
+									<Check class="h-3.5 w-3.5 shrink-0" />
+								{/if}
+								<span class="min-w-0">{option.label}</span>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Mão de obra</p>
-					<div class="flex flex-wrap gap-2">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Mão de obra</p>
+					<ToggleGroup
+						multiple
+						value={draft.laborKinds}
+						onValueChange={(details) => updateDraftArray('laborKinds', details.value)}
+						class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+					>
 						{#each laborKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('laborKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'laborKinds',
-									option.id
-								)
-									? 'border-primary-500 preset-tonal-primary text-primary-700'
-									: 'border-surface-200-800 text-surface-600-400'}"
+							<ToggleGroup.Item
+								value={option.id}
+								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
-								{#if isSelected('laborKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
+								{#if isSelected('laborKinds', option.id)}
+									<Check class="h-3.5 w-3.5 shrink-0" />
+								{/if}
+								<span class="min-w-0">{option.label}</span>
+							</ToggleGroup.Item>
 						{/each}
-					</div>
+					</ToggleGroup>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Localidade</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Localidade</p>
 					<div class="relative">
 						<select
 							bind:value={draft.location}
-							class="w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						>
 							<option value="">Todas as regiões</option>
 							{#each locationOptions as option (option.id)}
@@ -312,30 +305,30 @@
 							{/each}
 						</select>
 						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-600-400"
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
 						/>
 					</div>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Ordenação</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Ordenação</p>
 					<div class="relative">
 						<select
 							bind:value={draft.sort}
-							class="w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						>
 							{#each sortOptions as option (option.id)}
 								<option value={option.id}>{option.label}</option>
 							{/each}
 						</select>
 						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-600-400"
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
 						/>
 					</div>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
 						Faixa de preço (R$)
 					</p>
 					<div class="grid grid-cols-2 gap-2">
@@ -345,7 +338,7 @@
 							inputmode="numeric"
 							bind:value={draft.minPrice}
 							placeholder="Mínimo"
-							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
 						<input
 							type="number"
@@ -353,7 +346,7 @@
 							inputmode="numeric"
 							bind:value={draft.maxPrice}
 							placeholder="Máximo"
-							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
 					</div>
 				</div>
@@ -375,6 +368,9 @@
 					Aplicar filtros
 				</button>
 			</div>
-		</div>
-	</div>
-{/if}
+					</div>
+				</Dialog.Content>
+			</Dialog.Positioner>
+		</Portal>
+	{/if}
+</Dialog>

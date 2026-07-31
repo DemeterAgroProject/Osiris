@@ -2,9 +2,10 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import { Bell, User } from 'lucide-svelte';
+    import { Avatar, Popover, Portal } from '@skeletonlabs/skeleton-svelte';
     import { supabase } from '$lib/supabase';
     import UserMenu from '$lib/components/UserMenu.svelte';
-    
+
     function resolveDisplayName(profile, authUser) {
         return (
             profile?.display_name ||
@@ -148,18 +149,9 @@
         return `${Math.floor(h / 24)}d`;
     }
 
-    function handleProfileClick() {
-        if (isLoggedIn) {
-            menuOpen = !menuOpen;
-            notifOpen = false;
-        } else {
-            goto('/login');
-        }
-    }
-
-    function toggleNotif() {
-        notifOpen = !notifOpen;
-        menuOpen = false;
+    function handleNotificationOpenChange(details) {
+        notifOpen = details.open;
+        if (details.open) menuOpen = false;
     }
 
     onMount(() => {
@@ -175,7 +167,7 @@
     });
 </script>
 
-<header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 shadow-sm">
+<header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 ">
     <div class="flex items-center justify-between">
         <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
             <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
@@ -183,35 +175,29 @@
 
         <div class="flex items-center gap-3">
             <!-- Sininho -->
-            <div class="relative">
-                <button
-                    type="button"
-                    onclick={toggleNotif}
-                    class="relative rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal"
+            <Popover
+                open={notifOpen}
+                onOpenChange={handleNotificationOpenChange}
+                positioning={{ placement: 'bottom-end', gutter: 8 }}
+            >
+                <Popover.Trigger
+                    class="relative rounded-full p-2 text-surface-700-300 transition-colors hover:preset-tonal"
                     aria-label="Notificações"
                 >
                     <Bell class="h-6 w-6" />
                     {#if unreadCount > 0}
-                        <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full preset-filled-error-500 text-[10px] font-bold">
+                        <span class="badge-icon absolute right-0 top-0 size-4 preset-filled-error-500 text-[10px] font-bold">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     {/if}
-                </button>
+                </Popover.Trigger>
 
-                <!-- Dropdown de notificações -->
-                {#if notifOpen}
-                    <!-- Overlay para fechar ao clicar fora -->
-                    <button
-                        type="button"
-                        class="fixed inset-0 z-40"
-                        aria-label="Fechar notificações"
-                        onclick={() => notifOpen = false}
-                    ></button>
-
-                    <div class="absolute right-0 z-50 mt-2 w-80 rounded-container border border-surface-200-800 bg-surface-50-950 shadow-lg">
+                <Portal>
+                    <Popover.Positioner class="z-[60]">
+                    <Popover.Content class="w-80 rounded-container border border-surface-200-800 bg-surface-50-950 outline-none">
                         <!-- Cabeçalho -->
                         <div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-3">
-                            <h2 class="text-sm font-semibold text-surface-950-50">Notificações</h2>
+                            <Popover.Title class="text-sm font-semibold text-surface-950-50">Notificações</Popover.Title>
                             {#if unreadCount > 0}
                                 <button
                                     type="button"
@@ -226,7 +212,7 @@
                         <!-- Lista -->
                         <div class="max-h-96 overflow-y-auto">
                             {#if notifications.length === 0}
-                                <div class="flex flex-col items-center justify-center py-10 text-surface-600-400">
+                                <div class="flex flex-col items-center justify-center py-10 text-surface-700-300">
                                     <Bell class="mb-2 h-8 w-8 opacity-30" />
                                     <p class="text-sm">Nenhuma notificação</p>
                                 </div>
@@ -243,47 +229,46 @@
                                         <div class="flex-1 overflow-hidden">
                                             <p class="truncate text-sm font-medium text-surface-950-50">{notif.title}</p>
                                             {#if notif.body}
-                                                <p class="mt-0.5 truncate text-xs text-surface-600-400">{notif.body}</p>
+                                                <p class="mt-0.5 truncate text-xs text-surface-700-300">{notif.body}</p>
                                             {/if}
                                         </div>
 
-                                        <span class="shrink-0 text-xs text-surface-600-400">{formatTime(notif.created_at)}</span>
+                                        <span class="shrink-0 text-xs text-surface-700-300">{formatTime(notif.created_at)}</span>
                                     </button>
                                 {/each}
                             {/if}
                         </div>
-                    </div>
-                {/if}
-            </div>
+                    </Popover.Content>
+                    </Popover.Positioner>
+                </Portal>
+            </Popover>
 
             <!-- Avatar -->
-            <button
-                type="button"
-                onclick={handleProfileClick}
-                class="rounded-full p-0.5 transition-colors hover:preset-tonal {isLoggedIn && menuOpen ? 'ring-2 ring-primary-500 ring-offset-1' : ''}"
-                aria-label={isLoggedIn ? 'Abrir menu do usuário' : 'Fazer login'}
-                aria-expanded={isLoggedIn ? menuOpen : undefined}
-                aria-haspopup={isLoggedIn ? 'menu' : undefined}
-            >
-                {#if isLoggedIn && avatarUrl && !imgError}
-                    <img
-                        src={avatarUrl}
-                        alt={displayName}
-                        class="h-9 w-9 rounded-full border border-surface-200-800 object-cover"
-                        onerror={() => imgError = true}
-                    />
-                {:else if isLoggedIn}
-                    <div class="flex h-9 w-9 items-center justify-center rounded-full preset-filled-primary-500 text-xs font-bold">
-                        {initials}
-                    </div>
-                {:else}
-                    <span class="flex h-10 w-10 items-center justify-center rounded-full text-surface-600-400">
+            {#if isLoggedIn}
+                <UserMenu bind:open={menuOpen}>
+                    {#snippet trigger()}
+                    <Avatar class="size-9 border border-surface-200-800">
+                        {#if avatarUrl && !imgError}
+                            <Avatar.Image src={avatarUrl} alt={displayName} onerror={() => imgError = true} />
+                        {/if}
+                        <Avatar.Fallback class="preset-filled-primary-500 text-xs font-bold">
+                            {initials}
+                        </Avatar.Fallback>
+                    </Avatar>
+                    {/snippet}
+                </UserMenu>
+            {:else}
+                <button
+                    type="button"
+                    onclick={() => goto('/login')}
+                    class="rounded-full p-0.5 transition-colors hover:preset-tonal"
+                    aria-label="Fazer login"
+                >
+                    <span class="flex h-10 w-10 items-center justify-center rounded-full text-surface-700-300">
                         <User class="h-6 w-6" />
                     </span>
-                {/if}
-            </button>
+                </button>
+            {/if}
         </div>
     </div>
-
-    <UserMenu bind:open={menuOpen} />
 </header>

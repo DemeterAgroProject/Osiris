@@ -4,6 +4,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProductCard from '$lib/components/ProductCard.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import { supabase } from '$lib/supabase';
 	import { ChevronLeft } from 'lucide-svelte';
 
@@ -166,25 +167,24 @@
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-6">
 
-		
+
 		<div>
 			<h1 class="text-2xl font-bold">Favoritos</h1>
-			<p class="mt-1 text-sm text-surface-600-400">Anúncios que você favoritou no marketplace.</p>
+			<p class="mt-1 text-sm text-surface-700-300">Anúncios que você favoritou no marketplace.</p>
 		</div>
-		
+
 		<a
 			href="/buscar"
-			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
+			class="btn btn-sm mx-4 mt-4 preset-outlined-surface-500 text-surface-800-200"
+			aria-label="Voltar para a busca"
 		>
-			<ChevronLeft class="h-4 w-4" />
+			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
 			Voltar
 		</a>
-		
+
 		{#if loading}
-			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
+			<div class="mt-6">
+				<ListingSkeleton variant="grid" count={4} label="Carregando favoritos..." />
 			</div>
 		{:else if errorMessage}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
@@ -192,9 +192,9 @@
 			<div
 				class="mt-6 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 			>
-				<Heart class="mx-auto h-10 w-10 text-surface-400-600" />
+				<Heart class="mx-auto h-10 w-10 text-surface-700-300" />
 				<p class="mt-3 text-sm font-semibold">Nenhum anúncio favoritado</p>
-				<p class="mt-1 text-xs text-surface-600-400">
+				<p class="mt-1 text-xs text-surface-700-300">
 					Toque no coração em um anúncio para favoritá-lo e guardá-lo aqui.
 				</p>
 				<a

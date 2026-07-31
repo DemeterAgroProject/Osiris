@@ -4,6 +4,7 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Rating from '$lib/components/Rating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import { supabase } from '$lib/supabase';
 	import {
 		ArrowLeft,
@@ -346,10 +347,10 @@
 				<button
 					type="button"
 					onclick={goBack}
-					class="flex h-10 w-10 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-600-400 shadow-sm transition-colors hover:preset-tonal"
+					class="btn-icon preset-outlined-surface-500 text-surface-800-200"
 					aria-label="Voltar"
 				>
-					<ArrowLeft class="h-5 w-5" />
+					<ArrowLeft class="h-5 w-5" aria-hidden="true" />
 				</button>
 			{/if}
 			<h1 class="flex-1 text-center text-xl font-bold text-surface-950-50 {view === 'profile' ? '' : 'pr-10'}">
@@ -359,9 +360,7 @@
 
 		{#if loading}
 			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
+				<LoadingIndicator label="Carregando perfil..." />
 			</div>
 		{:else if errorMessage && !profile}
 			<div class="rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
@@ -383,18 +382,18 @@
 							<img
 								src={form.photoUrl || avatarUrl}
 								alt={displayName}
-								class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover shadow-md ring-2 ring-primary-500/20"
+								class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover  ring-2 ring-primary-500/20"
 								onerror={() => (imgError = true)}
 							/>
 						{:else}
 							<div
-								class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold shadow-md ring-2 ring-primary-500/20"
+								class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold  ring-2 ring-primary-500/20"
 							>
 								{initials}
 							</div>
 						{/if}
 						<span
-							class="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-950-50 text-surface-50-950 shadow-md"
+							class="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-surface-950-50 text-surface-50-950 "
 							aria-hidden="true"
 						>
 							<Camera class="h-4 w-4" />
@@ -411,7 +410,7 @@
 						type="url"
 						bind:value={form.photoUrl}
 						placeholder="https://..."
-						class="w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
@@ -425,9 +424,9 @@
 							type="text"
 							bind:value={form.displayName}
 							required
-							class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
-						<User class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+						<User class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
 					</div>
 				</div>
 
@@ -439,9 +438,9 @@
 							type="tel"
 							bind:value={form.phone}
 							placeholder="(00) 00000-0000"
-							class="w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
-						<Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+						<Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
 					</div>
 				</div>
 
@@ -464,18 +463,18 @@
 				</div>
 			{/if}
 
-			<section class="overflow-hidden rounded-container bg-surface-50-950 shadow-sm">
+			<section class="overflow-hidden rounded-container bg-surface-50-950 ">
 				<div class="flex flex-col items-center px-5 pb-5 pt-6">
 					{#if avatarUrl && !imgError}
 						<img
 							src={avatarUrl}
 							alt={displayName}
-							class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover shadow-md ring-2 ring-primary-500/20"
+							class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover  ring-2 ring-primary-500/20"
 							onerror={() => (imgError = true)}
 						/>
 					{:else}
 						<div
-							class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold shadow-md ring-2 ring-primary-500/20"
+							class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold  ring-2 ring-primary-500/20"
 						>
 							{initials}
 						</div>
@@ -496,11 +495,11 @@
 					{#if isOwner}
 						<div class="mt-5 w-full space-y-3 border-t border-surface-200-800 pt-5">
 							<div class="flex items-start gap-2">
-								<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
+								<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
 								<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
 							</div>
 							<div class="flex items-start gap-2">
-								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
+								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
 								<span class="truncate text-sm text-surface-700-300">{phone || 'Não informado'}</span>
 							</div>
 						</div>
@@ -509,14 +508,14 @@
 			</section>
 
 			{#if isOwner}
-				<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+				<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 					<div class="flex items-start gap-3">
 						<div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-							<SquarePen class="h-5 w-5 text-surface-600-400" />
+							<SquarePen class="h-5 w-5 text-surface-700-300" />
 						</div>
 						<div class="flex-1">
 							<h3 class="font-semibold text-surface-950-50">Editar perfil</h3>
-							<p class="mt-0.5 text-sm text-surface-600-400">
+							<p class="mt-0.5 text-sm text-surface-700-300">
 								Atualize nome, telefone e foto do seu perfil público.
 							</p>
 						</div>
@@ -531,7 +530,7 @@
 				</section>
 			{/if}
 
-			<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 				<div class="mb-4 flex items-center justify-between gap-3">
 					<div class="flex items-start gap-3">
 						<div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-warning">
@@ -539,7 +538,7 @@
 						</div>
 						<div>
 							<h2 class="text-base font-semibold text-surface-950-50">Avaliações recebidas</h2>
-							<p class="mt-0.5 text-xs text-surface-600-400">
+							<p class="mt-0.5 text-xs text-surface-700-300">
 								Feedback de outros usuários sobre {displayName}
 							</p>
 						</div>

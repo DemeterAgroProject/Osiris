@@ -99,7 +99,7 @@
 	type="button"
 	onclick={toggleFavorite}
 	disabled={loading || toggling || (!productId && !serviceId)}
-	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-600-400 shadow-sm transition-colors hover:border-primary-500 hover:text-primary-700 disabled:opacity-50 {className}"
+	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-700 disabled:opacity-50 {className}"
 	aria-label={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
 	aria-pressed={isFavorited}
 >

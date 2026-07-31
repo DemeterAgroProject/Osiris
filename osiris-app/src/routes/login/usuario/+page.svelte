@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 
 	onMount(async () => {
 		const {
@@ -22,8 +23,5 @@
 </svelte:head>
 
 <div class="flex min-h-dvh items-center justify-center bg-surface-50-950">
-	<div
-		class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-		aria-label="Carregando"
-	></div>
+	<LoadingIndicator label="Carregando perfil..." />
 </div>

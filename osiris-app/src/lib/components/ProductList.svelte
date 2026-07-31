@@ -4,16 +4,16 @@
 	let { title, products } = $props();
 </script>
 
-<section class="py-4">
+<section class="py-5" aria-label={title}>
 	<div class="flex items-center justify-between px-4">
-		<h2 class="text-lg font-bold text-primary-700">{title}</h2>
+		<h2 class="text-lg font-bold tracking-tight text-surface-950-50">{title}</h2>
 	</div>
 
-	<div class="mt-3 grid grid-cols-2 gap-3 px-4 pb-2 sm:grid-cols-2 lg:grid-cols-3">
+	<div class="mt-4 grid grid-cols-2 gap-3 px-4 pb-2 sm:gap-4 lg:grid-cols-3">
 		{#each products as product (product.id)}
 			<ProductCard {...product} />
 		{:else}
-			<p class="py-6 text-center text-sm text-surface-600-400 sm:col-span-2 lg:col-span-3">
+			<p class="card col-span-full rounded-container border border-dashed border-surface-300-700 p-8 text-center text-sm font-medium text-surface-700-300">
 				Nenhum anúncio encontrado.
 			</p>
 		{/each}

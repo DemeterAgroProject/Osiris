@@ -5,6 +5,8 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import Rating from '$lib/components/Rating.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function formatCurrency(value) {
@@ -326,22 +328,21 @@
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
 			href="/negociacoes"
-			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
+			class="btn btn-sm preset-outlined-surface-500 text-surface-800-200"
+			aria-label="Voltar para negociações"
 		>
-			<ChevronLeft class="h-4 w-4" />
+			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
 			Negociações
 		</a>
 
 		{#if loading}
 			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
+				<LoadingIndicator label="Carregando operação..." />
 			</div>
 		{:else if errorMessage && !booking}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if booking}
-			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 				{#if booking.coverUrl}
 					<img
 						src={booking.coverUrl}
@@ -366,7 +367,7 @@
 							{:else}
 								<h1 class="text-xl font-bold text-surface-950-50">{listingTitle()}</h1>
 							{/if}
-							<p class="mt-1 text-sm text-surface-600-400">
+							<p class="mt-1 text-sm text-surface-700-300">
 								{isProvider ? 'Cliente' : 'Provedor'}: {counterpartyName()}
 							</p>
 						</div>
@@ -382,11 +383,11 @@
 
 				<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
 					<div>
-						<dt class="text-xs text-surface-600-400">Valor acordado</dt>
+						<dt class="text-xs text-surface-700-300">Valor acordado</dt>
 						<dd class="font-semibold text-primary-700">{formatCurrency(booking.total_price)}</dd>
 					</div>
 					<div class="col-span-2">
-						<dt class="text-xs text-surface-600-400">Período</dt>
+						<dt class="text-xs text-surface-700-300">Período</dt>
 						<dd class="font-medium text-surface-950-50">
 							{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 						</dd>
@@ -447,36 +448,33 @@
 			{/if}
 
 			{#if booking.status === 'em_avaliacao'}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 					<h2 class="flex items-center gap-2 text-sm font-bold text-surface-950-50">
 						<Star class="h-4 w-4 text-warning-500" />
 						Avaliar experiência
 					</h2>
 
 					{#if myReview}
-						<p class="mt-3 text-sm text-surface-600-400">
+						<p class="mt-3 text-sm text-surface-700-300">
 							Você já enviou sua avaliação ({myReview.rating}/5).
 						</p>
 					{:else if canReview}
-						<div class="mt-3 flex gap-1">
-							{#each [1, 2, 3, 4, 5] as star}
-								<button
-									type="button"
-									onclick={() => (rating = star)}
-									class="rounded p-1 {rating >= star
-										? 'text-warning-500'
-										: 'text-surface-400-600'}"
-									aria-label="{star} estrelas"
-								>
-									<Star class="h-7 w-7 {rating >= star ? 'fill-current' : ''}" />
-								</button>
-							{/each}
+						<div class="mt-3">
+							<Rating
+								bind:value={rating}
+								readOnly={false}
+								allowHalf={false}
+								count={0}
+								size="lg"
+								showCount={false}
+								showValue={false}
+							/>
 						</div>
 						<textarea
 							rows="3"
 							bind:value={comment}
 							placeholder="Comentário opcional..."
-							class="mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+							class="textarea mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
 						></textarea>
 						<button
 							type="button"
@@ -488,7 +486,7 @@
 						</button>
 					{/if}
 
-					<p class="mt-3 text-xs text-surface-600-400">
+					<p class="mt-3 text-xs text-surface-700-300">
 						A operação será finalizada automaticamente quando cliente e provedor avaliarem.
 					</p>
 
@@ -517,7 +515,7 @@
 			{/if}
 
 			{#if reviews.length}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
 					<h2 class="text-sm font-bold text-surface-950-50">Avaliações desta operação</h2>
 					<ul class="mt-3 space-y-3">
 						{#each reviews as review (review.id)}
@@ -536,7 +534,7 @@
 									</div>
 								</div>
 								{#if review.comment}
-									<p class="mt-2 text-sm text-surface-600-400">{review.comment}</p>
+									<p class="mt-2 text-sm text-surface-700-300">{review.comment}</p>
 								{/if}
 							</li>
 						{/each}
