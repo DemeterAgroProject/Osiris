@@ -59,10 +59,10 @@
     const totalAds = $derived(stats.maquinarios + stats.produtos + stats.servicos);
 </script>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
     <Header />
 
-    <main class="mx-auto w-full max-w-3xl space-y-7 px-4 py-6">
+    <main class="mx-auto w-full max-w-7xl space-y-7 px-4 py-6 sm:px-6 lg:px-8">
 
         <div>
             <span class="badge preset-tonal-primary">Painel de controle</span>
@@ -75,7 +75,7 @@
                 <LoadingIndicator label="Carregando resumo..." />
             </div>
         {:else}
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <div class="card col-span-2 flex items-center justify-between overflow-hidden rounded-container border border-primary-200-800 p-5  preset-tonal-primary">
                     <div>
                         <p class="text-surface-700-300 text-sm font-medium">Total de Anúncios Ativos</p>
@@ -134,7 +134,7 @@
 
             <div>
                 <h2 class="mb-3 text-base font-bold tracking-tight">Ações Rápidas</h2>
-                <div class="space-y-3">
+                <div class="grid gap-3 md:grid-cols-2">
                     <a href="/painel-de-controle/agenda" class="card group flex items-center justify-between rounded-container border border-surface-200-800 bg-surface-50-950 p-4 transition-all hover:border-primary-300-700 focus-visible:ring-2 focus-visible:ring-primary-500">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">

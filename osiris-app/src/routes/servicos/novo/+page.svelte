@@ -76,10 +76,10 @@
     }
 </script>
 
-<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
+<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20 lg:pb-0">
     <Header />
 
-    <main class="flex flex-1 flex-col px-4 py-4 max-w-2xl mx-auto w-full">
+    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
         <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Oferecer Serviço</h1>
 
         {#if message.text}
@@ -122,31 +122,31 @@
                     value={form.service_type ? [form.service_type] : []}
                     deselectable={false}
                     onValueChange={(details) => (form.service_type = details.value[0] ?? form.service_type)}
-                    class="space-y-3"
+                    class="grid! w-full! grid-cols-1 gap-3 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
                 >
                     <ToggleGroup.Item
                         value="Mão de Obra"
-                        class="flex w-full items-center gap-3 rounded-container border-2 border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary"
+                        class="flex! min-h-28 w-full! min-w-0 aspect-auto! items-center justify-start! gap-4 rounded-container border-2! border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500! data-[state=on]:preset-tonal-primary"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-primary">
-                            <Users class="h-6 w-6" />
+                        <div class="flex size-12 shrink-0 items-center justify-center rounded-container preset-tonal-primary">
+                            <Users class="size-6" />
                         </div>
-                        <div class="flex-1">
-                            <h3 class="font-medium text-surface-950-50">Mão de Obra</h3>
-                            <p class="text-xs text-surface-700-300">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm font-semibold leading-5 text-surface-950-50">Mão de Obra</h3>
+                            <p class="mt-1 text-xs leading-5 text-surface-700-300">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
                         </div>
                     </ToggleGroup.Item>
 
                     <ToggleGroup.Item
                         value="Pacote Completo"
-                        class="flex w-full items-center gap-3 rounded-container border-2 border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary"
+                        class="flex! min-h-28 w-full! min-w-0 aspect-auto! items-center justify-start! gap-4 rounded-container border-2! border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500! data-[state=on]:preset-tonal-primary"
                     >
-                        <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-secondary">
-                            <Briefcase class="h-6 w-6" />
+                        <div class="flex size-12 shrink-0 items-center justify-center rounded-container preset-tonal-secondary">
+                            <Briefcase class="size-6" />
                         </div>
-                        <div class="flex-1">
-                            <h3 class="font-medium text-surface-950-50">Pacote Completo</h3>
-                            <p class="text-xs text-surface-700-300">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm font-semibold leading-5 text-surface-950-50">Pacote Completo</h3>
+                            <p class="mt-1 text-xs leading-5 text-surface-700-300">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
                         </div>
                     </ToggleGroup.Item>
                 </ToggleGroup>

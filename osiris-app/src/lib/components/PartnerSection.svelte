@@ -9,16 +9,16 @@
 	];
 </script>
 
-<section class="py-5" aria-labelledby="partners-title">
-	<div class="flex items-center justify-between px-4">
+<section class="mx-auto w-full max-w-7xl py-5" aria-labelledby="partners-title">
+	<div class="flex items-center justify-between px-4 sm:px-6 lg:px-8">
 		<h2 id="partners-title" class="text-lg font-bold tracking-tight text-surface-950-50">Lojas parceiras</h2>
 		<button type="button" class="btn btn-sm preset-tonal-primary">Ver todos</button>
 	</div>
 
-	<div class="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
+	<div class="mt-3 flex gap-3 overflow-x-auto px-4 pb-2 sm:px-6 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-8">
 		{#each partners as partner (partner.id)}
 			<div
-				class="card flex w-36 shrink-0 snap-start flex-col items-center rounded-container border border-surface-200-800 bg-surface-50-950 p-4 "
+				class="card flex w-36 shrink-0 snap-start flex-col items-center rounded-container border border-surface-200-800 bg-surface-50-950 p-4 lg:w-full"
 			>
 				<div class="flex h-14 w-14 items-center justify-center rounded-container bg-surface-100-900">
 					<Store class="h-7 w-7 text-primary-600-400" aria-hidden="true" />

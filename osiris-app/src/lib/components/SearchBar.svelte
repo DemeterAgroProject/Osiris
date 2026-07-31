@@ -14,8 +14,8 @@
 	}
 </script>
 
-<div class="px-4 py-3">
-	<div class="relative mx-auto max-w-3xl">
+<div class="px-4 py-3 sm:px-6 lg:px-8">
+	<div class="relative mx-auto max-w-7xl">
 		{#if loading}
 			<LoadingIndicator
 				label="Atualizando resultados..."

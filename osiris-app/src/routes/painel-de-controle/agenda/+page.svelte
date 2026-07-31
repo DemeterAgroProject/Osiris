@@ -238,10 +238,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-surface-50-950 pb-20">
+<div class="min-h-screen bg-surface-50-950 pb-20 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
+	<main class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
 		<div>
 			<h1 class="text-xl font-bold text-surface-950-50">Minha Agenda</h1>
 			<p class="mt-0.5 text-sm text-surface-700-300">
@@ -291,8 +291,7 @@
 				<div style="display: grid; grid-template-columns: repeat(7, 1fr);" class="gap-1">
 					{#each calendarDays as { day, cellState }}
 						<div
-							style="aspect-ratio: 1 / 1;"
-							class="relative flex items-center justify-center rounded-container border text-sm transition-all
+							class="relative flex aspect-square items-center justify-center rounded-container border text-sm transition-all lg:aspect-auto lg:min-h-20
 							{day
 								? cellState === 'conflito'
 									? 'preset-filled-error-500 font-bold '
@@ -333,8 +332,8 @@
 				</div>
 			</div>
 
-			<div class="space-y-3">
-				<h2 class="text-base font-bold text-surface-950-50">Propostas em negociação</h2>
+			<div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Propostas em negociação</h2>
 
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
@@ -392,8 +391,8 @@
 				{/each}
 			</div>
 
-			<div class="space-y-3">
-				<h2 class="text-base font-bold text-surface-950-50">Bookings pendentes</h2>
+			<div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Bookings pendentes</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
@@ -453,8 +452,8 @@
 				{/each}
 			</div>
 
-			<div class="space-y-3 p-0.5">
-				<h2 class="text-base font-bold text-surface-950-50">Em operação</h2>
+			<div class="space-y-3 p-0.5 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Em operação</h2>
 
 				{#each operatingBookings as conf (conf.id)}
 					<div

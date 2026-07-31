@@ -80,7 +80,7 @@
 	<meta name="description" content="Faça login no marketplace Osiris com sua conta Google." />
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 
 	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-8">

@@ -12,12 +12,12 @@
 	];
 </script>
 
-<section class="py-5" aria-labelledby="categories-title">
-	<h2 id="categories-title" class="px-4 text-lg font-bold tracking-tight text-surface-950-50">Categorias</h2>
+<section class="mx-auto w-full max-w-7xl py-5" aria-labelledby="categories-title">
+	<h2 id="categories-title" class="px-4 text-lg font-bold tracking-tight text-surface-950-50 sm:px-6 lg:px-8">Categorias</h2>
 
 	<SegmentedControl value={activeTab} onValueChange={(details) => (activeTab = details.value)}>
 		<SegmentedControl.Label class="sr-only">Tipo de categoria</SegmentedControl.Label>
-		<SegmentedControl.Control class="relative mx-4 mt-3 grid grid-cols-2 gap-1 rounded-container bg-surface-100-900 p-1">
+		<SegmentedControl.Control class="relative mx-4 mt-3 grid grid-cols-2 gap-1 rounded-container bg-surface-100-900 p-1 sm:mx-6 lg:mx-8 lg:max-w-md">
 			<SegmentedControl.Indicator class="rounded-container preset-filled-primary-500" />
 			<SegmentedControl.Item value="produtos" class="relative z-10 min-h-10 cursor-pointer rounded-container px-4 py-2 text-center text-sm font-semibold text-surface-700-300 data-[state=checked]:text-white">
 				<SegmentedControl.ItemText>Produtos</SegmentedControl.ItemText>
@@ -31,7 +31,7 @@
 	</SegmentedControl>
 
 	<!-- Category grid -->
-	<div class="mt-4 grid grid-cols-2 gap-3 px-4">
+	<div class="mt-4 grid grid-cols-2 gap-3 px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
 		{#each categories as category (category.id)}
 			<button
 				type="button"

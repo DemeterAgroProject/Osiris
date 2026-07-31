@@ -170,10 +170,10 @@
     <meta name="description" content="Atalhos, conta e descoberta no marketplace agro Osiris." />
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
     <Header />
 
-    <section class="preset-filled-primary-500 px-4 pb-5 pt-2">
+    <section class="mx-auto w-full max-w-7xl preset-filled-primary-500 px-4 pb-5 pt-2 sm:px-6 lg:mt-6 lg:rounded-container lg:px-8 lg:py-6">
         {#if loading}
             <div class="flex items-center gap-3 py-4">
                 <div class="h-14 w-14 animate-pulse rounded-full bg-surface-50-950/20"></div>
@@ -262,7 +262,7 @@
         </div>
     </section>
 
-    <main class="bg-surface-50-950">
+    <main class="mx-auto w-full max-w-7xl bg-surface-50-950 sm:px-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:px-8 lg:py-6">
         <nav aria-label="Atalhos" class="border-b border-surface-200-800">
             {#each shortcuts as item (item.label)}
                 {#if item.href}

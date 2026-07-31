@@ -291,9 +291,9 @@
 	{#if open && product}
 		<Portal>
 			<Dialog.Backdrop class="fixed inset-0 z-[80] bg-surface-950/40" />
-			<Dialog.Positioner class="fixed inset-0 z-[90] flex items-end justify-center">
-				<Dialog.Content class="max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-surface-50-950 outline-none">
-					<div class="mx-auto flex max-h-[92vh] w-full max-w-lg flex-col">
+			<Dialog.Positioner class="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6">
+				<Dialog.Content class="max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-surface-50-950 outline-none sm:max-w-2xl sm:rounded-container sm:border sm:border-surface-200-800">
+					<div class="mx-auto flex max-h-[92vh] w-full max-w-2xl flex-col">
 			<div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-4">
 				<Dialog.Title id="edit-ad-title" class="text-lg font-bold text-surface-950-50">Editar anúncio</Dialog.Title>
 				<button

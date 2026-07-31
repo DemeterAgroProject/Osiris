@@ -338,10 +338,10 @@
 	<title>{pageTitle} — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-lg px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
 		<div class="mb-4 flex items-center gap-3">
 			{#if view !== 'profile'}
 				<button

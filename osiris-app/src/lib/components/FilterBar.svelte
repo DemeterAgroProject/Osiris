@@ -137,7 +137,7 @@
 	}
 </script>
 
-<div class="space-y-2 px-4 pb-3 mt-4">
+<div class="mx-auto mt-4 w-full max-w-7xl space-y-2 px-4 pb-3 sm:px-6 lg:px-8">
 	<div class="flex items-center gap-2">
 		<button
 			type="button"
@@ -179,8 +179,8 @@
 	{#if isOpen}
 		<Portal>
 			<Dialog.Backdrop class="fixed inset-0 z-[70] bg-surface-950/40" />
-			<Dialog.Positioner class="fixed inset-0 z-[80] flex items-end justify-center">
-				<Dialog.Content class="w-full rounded-t-3xl bg-surface-50-950 outline-none">
+			<Dialog.Positioner class="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6">
+				<Dialog.Content class="w-full rounded-t-3xl bg-surface-50-950 outline-none sm:max-w-3xl sm:rounded-container sm:border sm:border-surface-200-800">
 					<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
@@ -210,12 +210,12 @@
 						multiple
 						value={draft.listingTypes}
 						onValueChange={(details) => updateDraftArray('listingTypes', details.value)}
-						class="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+						class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-4"
 					>
 						{#each listingTypeOptions as option (option.id)}
 							<ToggleGroup.Item
 								value={option.id}
-								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
+								class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
 							>
 								{#if isSelected('listingTypes', option.id)}
 									<Check class="h-3.5 w-3.5 shrink-0" />
@@ -232,12 +232,12 @@
 						multiple
 						value={draft.productKinds}
 						onValueChange={(details) => updateDraftArray('productKinds', details.value)}
-						class="grid w-full grid-cols-2 gap-2"
+						class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent!"
 					>
 						{#each productKindOptions as option (option.id)}
 							<ToggleGroup.Item
 								value={option.id}
-								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+								class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
 								{#if isSelected('productKinds', option.id)}
 									<Check class="h-3.5 w-3.5 shrink-0" />
@@ -254,12 +254,12 @@
 						multiple
 						value={draft.serviceKinds}
 						onValueChange={(details) => updateDraftArray('serviceKinds', details.value)}
-						class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+						class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
 					>
 						{#each serviceKindOptions as option (option.id)}
 							<ToggleGroup.Item
 								value={option.id}
-								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+								class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
 								{#if isSelected('serviceKinds', option.id)}
 									<Check class="h-3.5 w-3.5 shrink-0" />
@@ -276,12 +276,12 @@
 						multiple
 						value={draft.laborKinds}
 						onValueChange={(details) => updateDraftArray('laborKinds', details.value)}
-						class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+						class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
 					>
 						{#each laborKindOptions as option (option.id)}
 							<ToggleGroup.Item
 								value={option.id}
-								class="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+								class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 							>
 								{#if isSelected('laborKinds', option.id)}
 									<Check class="h-3.5 w-3.5 shrink-0" />

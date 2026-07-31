@@ -1,8 +1,19 @@
 <script>
     import { goto } from '$app/navigation';
+    import { page } from '$app/state';
     import { onMount } from 'svelte';
-    import { Bell, User } from 'lucide-svelte';
-    import { Avatar, Popover, Portal } from '@skeletonlabs/skeleton-svelte';
+    import {
+        Archive,
+        Bell,
+        Home,
+        Menu as MenuIcon,
+        MoreHorizontal,
+        Search,
+        Toolbox,
+        User,
+        X
+    } from 'lucide-svelte';
+    import { Avatar, Dialog, Popover, Portal } from '@skeletonlabs/skeleton-svelte';
     import { supabase } from '$lib/supabase';
     import UserMenu from '$lib/components/UserMenu.svelte';
 
@@ -40,6 +51,7 @@
     let authUser = $state(null);
     let profile = $state(null);
     let menuOpen = $state(false);
+    let navigationOpen = $state(false);
     let imgError = $state(false);
     /** @type {import('@supabase/supabase-js').RealtimeChannel | null} */
     let notificationsChannel = null;
@@ -54,6 +66,19 @@
     const displayName = $derived(resolveDisplayName(profile, authUser));
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
+
+    const desktopNavigation = [
+        { label: 'Início', href: '/', icon: Home, relatedRoutes: ['/painel-de-controle'] },
+        { label: 'Buscar', href: '/buscar', icon: Search, relatedRoutes: ['/anuncio'] },
+        { label: 'Inventário', href: '/inventario', icon: Archive, relatedRoutes: ['/anunciar'] },
+        { label: 'Serviços', href: '/servicos', icon: Toolbox, relatedRoutes: [] },
+        {
+            label: 'Mais',
+            href: '/mais',
+            icon: MoreHorizontal,
+            relatedRoutes: ['/favoritos', '/negociacoes', '/operacoes', '/perfil', '/login']
+        }
+    ];
 
     async function refreshUser(sessionUser = undefined) {
         imgError = false;
@@ -151,7 +176,35 @@
 
     function handleNotificationOpenChange(details) {
         notifOpen = details.open;
-        if (details.open) menuOpen = false;
+        if (details.open) {
+            menuOpen = false;
+            navigationOpen = false;
+        }
+    }
+
+    function openNavigation() {
+        menuOpen = false;
+        notifOpen = false;
+        navigationOpen = true;
+    }
+
+    function closeNavigation() {
+        navigationOpen = false;
+    }
+
+    function handleNavigationOpenChange(details) {
+        navigationOpen = details.open;
+    }
+
+    function isNavigationItemActive(item) {
+        const pathname = page.url.pathname;
+        const isDirectRoute = item.href === '/'
+            ? pathname === '/'
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        return isDirectRoute || item.relatedRoutes.some(
+            (route) => pathname === route || pathname.startsWith(`${route}/`)
+        );
     }
 
     onMount(() => {
@@ -167,11 +220,24 @@
     });
 </script>
 
-<header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 ">
-    <div class="flex items-center justify-between">
-        <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
-            <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
-        </a>
+<header class="sticky top-0 z-50 border-b border-surface-200-800 bg-surface-50-950/95 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button
+                type="button"
+                class="btn-icon hidden border border-surface-200-800 lg:inline-flex"
+                onclick={openNavigation}
+                aria-label="Abrir menu de navegação"
+                aria-haspopup="dialog"
+                aria-expanded={navigationOpen}
+            >
+                <MenuIcon class="size-5" />
+            </button>
+
+            <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
+                <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
+            </a>
+        </div>
 
         <div class="flex items-center gap-3">
             <!-- Sininho -->
@@ -194,7 +260,7 @@
 
                 <Portal>
                     <Popover.Positioner class="z-[60]">
-                    <Popover.Content class="w-80 rounded-container border border-surface-200-800 bg-surface-50-950 outline-none">
+                    <Popover.Content class="w-[min(22rem,calc(100vw-1.5rem))] rounded-container border border-surface-200-800 bg-surface-50-950 outline-none">
                         <!-- Cabeçalho -->
                         <div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-3">
                             <Popover.Title class="text-sm font-semibold text-surface-950-50">Notificações</Popover.Title>
@@ -272,3 +338,64 @@
         </div>
     </div>
 </header>
+
+<Dialog open={navigationOpen} onOpenChange={handleNavigationOpenChange}>
+    {#if navigationOpen}
+        <Portal>
+            <Dialog.Backdrop class="fixed inset-0 z-[80] bg-surface-950/40 backdrop-blur-sm" />
+            <Dialog.Positioner class="fixed inset-0 z-[90] flex justify-start">
+                <Dialog.Content
+                    class="flex h-full w-80 max-w-[85vw] flex-col border-r border-surface-200-800 bg-surface-50-950 outline-none"
+                >
+                    <div class="flex items-center justify-between border-b border-surface-200-800 px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <img src="/logo_black.png" alt="" class="h-9 w-auto" />
+                            <Dialog.Title class="text-lg font-semibold text-surface-950-50">
+                                Navegação
+                            </Dialog.Title>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn-icon border border-surface-200-800"
+                            onclick={closeNavigation}
+                            aria-label="Fechar menu de navegação"
+                        >
+                            <X class="size-5" />
+                        </button>
+                    </div>
+
+                    <Dialog.Description class="sr-only">
+                        Acesse as principais áreas do aplicativo Osiris.
+                    </Dialog.Description>
+
+                    <nav class="flex-1 p-3" aria-label="Navegação principal do desktop">
+                        <ul class="space-y-1">
+                            {#each desktopNavigation as item}
+                                {@const Icon = item.icon}
+                                {@const active = isNavigationItemActive(item)}
+                                <li>
+                                    <a
+                                        href={item.href}
+                                        onclick={closeNavigation}
+                                        aria-current={active ? 'page' : undefined}
+                                        class="flex min-h-12 items-center gap-3 rounded-container px-4 py-3 font-medium transition-colors {active
+                                            ? 'preset-tonal-primary text-primary-700-300'
+                                            : 'text-surface-700-300 hover:preset-tonal'}"
+                                    >
+                                        <Icon class="size-5 shrink-0" />
+                                        <span>{item.label}</span>
+                                    </a>
+                                </li>
+                            {/each}
+                        </ul>
+                    </nav>
+
+                    <div class="border-t border-surface-200-800 px-5 py-4 text-sm text-surface-600-400">
+                        Marketplace e gestão para o agronegócio.
+                    </div>
+                </Dialog.Content>
+            </Dialog.Positioner>
+        </Portal>
+    {/if}
+</Dialog>

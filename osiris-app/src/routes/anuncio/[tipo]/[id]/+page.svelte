@@ -426,10 +426,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-surface-50 pb-24">
+<div class="min-h-screen bg-surface-50 pb-24 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl">
+	<main class="mx-auto w-full max-w-6xl">
 		<a
 			href="/buscar"
 			class="btn btn-sm mx-4 mt-4 preset-outlined-surface-500 text-surface-800-200"
@@ -444,7 +444,9 @@
 		{:else if errorMessage}
 			<div class="mx-4 mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if item}
-			<section class="mt-4 rounded-container bg-surface-50-950 p-4 ">
+			<section class="mt-4 rounded-container bg-surface-50-950 p-4 sm:p-6">
+				<div class="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
+					<div>
 				{#if galleryImages.length > 0}
 					{#if galleryImages.length === 1}
 						<img
@@ -483,8 +485,10 @@
 				{:else}
 					<div class="aspect-[16/10] rounded-container preset-tonal-primary"></div>
 				{/if}
+					</div>
 
-				<div class="mt-4 flex items-start justify-between gap-3">
+					<div>
+				<div class="flex items-start justify-between gap-3">
 					<div class="min-w-0 flex-1">
 						<p class="text-3xl font-extrabold text-primary-700">{item.priceLabel}</p>
 						<h1 class="mt-2 text-3xl font-bold text-surface-950-50">{item.title}</h1>
@@ -540,6 +544,8 @@
 				>
 					Negociar
 				</button>
+					</div>
+				</div>
 
 				<div class="mt-8 overflow-hidden rounded-container border border-surface-200-800">
 					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">

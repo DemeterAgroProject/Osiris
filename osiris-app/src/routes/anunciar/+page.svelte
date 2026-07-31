@@ -240,10 +240,10 @@
     }
 </script>
 
-<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
+<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20 lg:pb-0">
     <Header />
 
-    <main class="flex flex-1 flex-col px-4 py-4 max-w-2xl mx-auto w-full">
+    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
         <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Novo Anúncio</h1>
 
         {#if message.text}
@@ -346,7 +346,7 @@
                     </div>
 
                     {#if form.category === 'maquinario'}
-                        <div class="grid grid-cols-2 gap-4">
+						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="block text-sm font-medium text-surface-700-300 mb-1" for="type">Tipo</label>
                                 <select id="type" bind:value={form.type_id} class="select w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
@@ -377,7 +377,7 @@
 							<input type="text" id="serial_number" bind:value={form.serial_number} placeholder="Ex: 123456789ABC" class="input w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
 						</div>
 
-                        <div class="grid grid-cols-2 gap-4">
+						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="block text-sm font-medium text-surface-700-300 mb-1" for="year">Ano de Fab.</label>
                                 <input type="number" id="year" bind:value={form.manufacture_year} placeholder="Ex: 2018" min="1950" class="input w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />
@@ -401,7 +401,7 @@
                                     <option value="Outros">Outros</option>
                                 </select>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
+							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="block text-sm font-medium text-surface-700-300 mb-1" for="qty">Quantidade</label>
                                     <input type="number" id="qty" bind:value={form.quantity} min="1" class="input w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none focus:border-primary-500" />

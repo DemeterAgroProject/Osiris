@@ -385,7 +385,7 @@
 	<title>Buscar — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar no marketplace..." />
 	<FilterBar bind:filters locations={locationOptions} resultCount={visibleListings.length} />

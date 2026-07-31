@@ -34,7 +34,7 @@
 			{/each}
 		</div>
 	{:else if variant === 'list'}
-		<div class="space-y-3" aria-hidden="true">
+		<div class="grid gap-3 lg:grid-cols-2" aria-hidden="true">
 			{#each Array(count) as _, index (index)}
 				<article class="card flex items-center gap-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4">
 					<div class="placeholder size-16 shrink-0 animate-pulse rounded-container"></div>
@@ -48,7 +48,7 @@
 			{/each}
 		</div>
 	{:else}
-		<div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3" aria-hidden="true">
+		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5" aria-hidden="true">
 			{#each Array(count) as _, index (index)}
 				<article class="card overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950">
 					<div class="placeholder aspect-[4/3] w-full animate-pulse rounded-none"></div>

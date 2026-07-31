@@ -22,10 +22,10 @@
 		allowMouseDrag
 		spacing="12px"
 		padding="16px"
-		class="py-5"
+		class="mx-auto w-full max-w-7xl py-5"
 		aria-label={title}
 	>
-		<div class="flex items-center justify-between gap-3 px-4">
+		<div class="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
 			<h2 class="text-lg font-bold tracking-tight text-surface-950-50">{title}</h2>
 			<div class="flex items-center gap-1">
 				<Carousel.Control>
@@ -49,7 +49,7 @@
 
 		<Carousel.ItemGroup class="mt-4 flex pb-3" aria-label={title}>
 			{#each visibleProducts as product, index (product.id)}
-				<Carousel.Item {index} class="w-40 shrink-0 sm:w-48">
+				<Carousel.Item {index} class="w-40 shrink-0 sm:w-48 lg:w-56 xl:w-60">
 					<ProductCard {...product} />
 				</Carousel.Item>
 			{/each}

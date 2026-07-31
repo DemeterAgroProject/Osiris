@@ -303,10 +303,10 @@
 	<title>Negociações — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-6">
+	<main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 		<div>
 			<h1 class="text-2xl font-bold text-surface-950-50">Negociações</h1>
 			<p class="mt-1 text-sm text-surface-700-300">Propostas, chat e contratos ativos no campo.</p>
@@ -332,7 +332,7 @@
 			<section class="mt-6 space-y-6">
 				<div>
 					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Em andamento</h2>
-					<div class="mt-3 space-y-2">
+					<div class="mt-3 grid gap-3 lg:grid-cols-2">
 						{#each openNegotiations as row (row.id)}
 							{@const Icon = listingIcon(row)}
 							<a
@@ -386,7 +386,7 @@
 
 				<div>
 					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Encerradas</h2>
-					<div class="mt-3 space-y-2">
+					<div class="mt-3 grid gap-3 lg:grid-cols-2">
 						{#each closedNegotiations as row (row.id)}
 							<a
 								href="/negociacoes/{row.id}"
@@ -419,7 +419,7 @@
 		{:else}
 			<Tabs.Content value="operacoes">
 			<section class="mt-6 space-y-6">
-				<div class="space-y-2">
+				<div class="grid gap-3 lg:grid-cols-2">
 					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Ativas</h2>
 				{#each activeBookings as booking (booking.id)}
 					{@const Icon = listingIcon(booking)}
@@ -471,7 +471,7 @@
 				</div>
 
 				{#if closedBookings.length}
-					<div class="space-y-2">
+					<div class="grid gap-3 lg:grid-cols-2">
 						<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-700-300">Encerradas</h2>
 						{#each closedBookings as booking (booking.id)}
 							<a

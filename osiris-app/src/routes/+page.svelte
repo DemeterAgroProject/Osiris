@@ -418,14 +418,14 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen pb-24">
+<div class="min-h-screen pb-24 lg:pb-0">
 	<Header />
 
-	<div class="px-4 pb-2">
+	<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
 		<div class="rounded-container preset-filled-primary-500 p-4 ">
 			<p class="text-xs font-medium uppercase tracking-wider opacity-90">Marketplace Osiris</p>
-			<h1 class="mt-1 text-xl font-bold">Máquinas, produtos e serviços em um só lugar</h1>
-			<p class="mt-1 text-sm opacity-90">Descubra oportunidades novas todos os dias.</p>
+			<h1 class="mt-1 text-xl font-bold sm:text-2xl lg:text-3xl">Máquinas, produtos e serviços em um só lugar</h1>
+			<p class="mt-1 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
 		</div>
 	</div>
 

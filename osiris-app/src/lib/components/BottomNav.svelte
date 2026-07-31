@@ -13,7 +13,7 @@
 </script>
 
 <nav
-	class="fixed inset-x-0 bottom-0 z-50 border-t border-surface-200-800 bg-surface-50-950/95 backdrop-blur-xl"
+	class="fixed inset-x-0 bottom-0 z-50 border-t border-surface-200-800 bg-surface-50-950/95 backdrop-blur-xl lg:hidden"
 	aria-label="Navegação principal"
 >
 	<div class="mx-auto flex max-w-screen-sm items-center justify-around px-2 py-1.5">

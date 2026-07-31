@@ -488,10 +488,10 @@
 	</Menu>
 {/snippet}
 
-<div class="min-h-screen  pb-20">
+<div class="min-h-screen pb-20 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
+	<main class="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
 		<div class="mb-4 flex items-center justify-between">
 			<h1 class="text-xl font-bold text-surface-950-50">Meu Inventário</h1>
 			<a
@@ -540,7 +540,7 @@
 			<ListingSkeleton variant="list" count={4} label="Carregando inventário..." />
 		{:else if activeTab === 'maquinarios'}
 			<Tabs.Content value="maquinarios">
-			<div class="space-y-3">
+			<div class="grid gap-4 lg:grid-cols-2">
 				{#each filteredMaquinarios as maq (maq.id)}
 					<article
 						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 transition-opacity {isPausedStatus(
@@ -590,7 +590,7 @@
 			</Tabs.Content>
 		{:else}
 			<Tabs.Content value="produtos">
-			<div class="space-y-3">
+			<div class="grid gap-4 lg:grid-cols-2">
 				{#each filteredProdutos as prod (prod.id)}
 					<article
 						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 transition-opacity {isPausedStatus(

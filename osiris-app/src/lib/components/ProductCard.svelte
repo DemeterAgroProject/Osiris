@@ -39,7 +39,7 @@
 </script>
 
 <article
-	class="card group overflow-hidden rounded-container border border-surface-200-800 bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300-700"
+	class="card group h-full overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300-700"
 >
 	{#if resolvedHref}
 		<a

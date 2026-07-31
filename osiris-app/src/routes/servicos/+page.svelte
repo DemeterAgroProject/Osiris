@@ -325,10 +325,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-surface-50-950 pb-20">
+<div class="min-h-screen bg-surface-50-950 pb-20 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
+	<main class="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
 		<div class="mb-6 flex items-center justify-between">
 			<h1 class="text-xl font-bold text-surface-950-50">Meus Serviços</h1>
 			<a
@@ -377,7 +377,7 @@
 			<ListingSkeleton variant="list" count={4} label="Carregando serviços..." />
 		{:else}
 			<Tabs.Content value={activeTab}>
-			<div class="space-y-3">
+			<div class="grid gap-4 lg:grid-cols-2">
 				{#each filteredServices as serv (serv.id)}
 					{@const Icon = serviceIcon(serv)}
 					<article

@@ -164,8 +164,8 @@
 		aria-label="Fechar modal"
 	></button>
 
-	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-surface-50-950 shadow-2xl">
-		<div class="mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col px-4 pb-6 pt-4">
+	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-surface-50-950 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:bg-transparent sm:p-6">
+		<div class="mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col px-4 pb-6 pt-4 sm:rounded-container sm:border sm:border-surface-200-800 sm:bg-surface-50-950 sm:p-6">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
 					<h2 class="text-lg font-bold text-surface-950-50">Fazer proposta</h2>

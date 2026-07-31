@@ -427,10 +427,10 @@
 	<title>{pageTitle} — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-lg px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
 		<AppBar class="mb-4 bg-transparent p-0!">
 			<AppBar.Toolbar class="grid-cols-[auto_1fr_auto]">
 				<AppBar.Lead>

@@ -162,10 +162,10 @@
 	<title>Favoritos — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-6">
+	<main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
 
 		<div>
@@ -205,7 +205,7 @@
 				</a>
 			</div>
 		{:else}
-			<div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2">
+			<div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
 				{#each favorites as favorite (favorite.id)}
 					<ProductCard
 						title={favorite.title}
