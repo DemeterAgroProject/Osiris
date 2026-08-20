@@ -36,7 +36,7 @@ export function loadE2eEnv() {
 
 	const supabaseUrl = process.env.PUBLIC_SUPABASE_URL ?? fileEnv.PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY ?? fileEnv.PUBLIC_SUPABASE_ANON_KEY;
-	const e2ePassword = process.env.OSIRIS_E2E_PASSWORD ?? fileEnv.OSIRIS_E2E_PASSWORD ?? 'OsirisE2E!2026';
+	const e2ePassword = process.env.OSIRIS_E2E_PASSWORD ?? fileEnv.OSIRIS_E2E_PASSWORD ?? 'OSIRIS_E2E_PASSWORD';
 
 	if (!supabaseUrl || !supabaseAnonKey) {
 		throw new Error(
