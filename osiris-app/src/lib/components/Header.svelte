@@ -80,6 +80,14 @@
         }
     ];
 
+    function notificationTimestamp(notification) {
+        return new Date(notification.updated_at || notification.created_at || 0).getTime();
+    }
+
+    function sortNotifications(list) {
+        return [...list].sort((a, b) => notificationTimestamp(b) - notificationTimestamp(a));
+    }
+
     async function refreshUser(sessionUser = undefined) {
         imgError = false;
         const user =
@@ -111,6 +119,7 @@
             .from('notifications')
             .select('*')
             .eq('user_id', userId)
+            .order('updated_at', { ascending: false })
             .order('created_at', { ascending: false })
             .limit(20);
         notifications = data ?? [];
@@ -133,7 +142,19 @@
                 table: 'notifications',
                 filter: `user_id=eq.${userId}`
             }, (payload) => {
-                notifications = [payload.new, ...notifications];
+                notifications = sortNotifications([payload.new, ...notifications]);
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${userId}`
+            }, (payload) => {
+                notifications = sortNotifications(
+                    notifications.map((notification) =>
+                        notification.id === payload.new.id ? payload.new : notification
+                    )
+                );
             })
             .subscribe();
     }
@@ -299,7 +320,7 @@
                                             {/if}
                                         </div>
 
-                                        <span class="shrink-0 text-xs text-surface-700-300">{formatTime(notif.created_at)}</span>
+                                        <span class="shrink-0 text-xs text-surface-700-300">{formatTime(notif.updated_at || notif.created_at)}</span>
                                     </button>
                                 {/each}
                             {/if}

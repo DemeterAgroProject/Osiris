@@ -35,7 +35,8 @@
 			solicitada: 'Solicitada',
 			em_negociacao: 'Em negociação',
 			aceita: 'Aceita',
-			recusada: 'Recusada'
+			recusada: 'Recusada',
+			cancelado: 'Cancelada'
 		};
 		return map[status] ?? status ?? '—';
 	}
@@ -49,6 +50,7 @@
 			case 'aceita':
 				return 'green';
 			case 'recusada':
+			case 'cancelado':
 				return 'red';
 			default:
 				return 'gray';
@@ -125,6 +127,7 @@
 	let actionLoading = $state(false);
 	let showAcceptDialog = $state(false);
 	let showRejectDialog = $state(false);
+	let showCancelDialog = $state(false);
 	const toaster = useToaster();
 	let editPrice = $state('');
 	let editStart = $state('');
@@ -390,6 +393,25 @@
 		}
 	}
 
+	async function confirmCancelNegotiation() {
+		if (!negotiation || !canManage) return;
+
+		actionLoading = true;
+		const { error } = await supabase.rpc('cancel_negotiation', {
+			p_negotiation_id: negotiation.id
+		});
+
+		actionLoading = false;
+		showCancelDialog = false;
+
+		if (error) {
+			errorMessage = error.message;
+			return;
+		}
+
+		await loadNegotiation();
+	}
+
 </script>
 
 <svelte:head>
@@ -540,9 +562,20 @@
 						</div>
 					{/if}
 
+					{#if canManage}
+						<button
+							type="button"
+							onclick={() => (showCancelDialog = true)}
+							disabled={actionLoading}
+							class="w-full rounded-container border border-error-500 bg-surface-50-950 py-3 text-sm font-semibold text-error-500 hover:preset-tonal-error disabled:opacity-60"
+						>
+							Cancelar negociação
+						</button>
+					{/if}
+
 					{#if negotiation.status === 'aceita' && linkedBooking}
 						<a
-							href="/operacoes/{linkedBooking.id}"
+							href={`/operacoes/${linkedBooking.id}`}
 							class="block rounded-container preset-filled-primary-500 px-4 py-3 text-center text-sm font-semibold"
 						>
 							Ver operação
@@ -584,6 +617,17 @@
 		loading={actionLoading}
 		onconfirm={confirmReject}
 		oncancel={() => (showRejectDialog = false)}
+	/>
+
+	<ConfirmDialog
+		bind:open={showCancelDialog}
+		title="Cancelar negociação?"
+		message="A negociação será encerrada antes do aceite. Nenhuma operação ou avaliação será criada."
+		confirmLabel="Cancelar negociação"
+		variant="danger"
+		loading={actionLoading}
+		onconfirm={confirmCancelNegotiation}
+		oncancel={() => (showCancelDialog = false)}
 	/>
 
 	<BottomNav active="mais" />

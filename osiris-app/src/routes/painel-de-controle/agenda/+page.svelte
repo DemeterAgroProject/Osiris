@@ -228,7 +228,17 @@
 
 	async function confirmCancellation() {
 		if (itemToCancel?.kind === 'booking') {
-			await updateBookingStatus(itemToCancel.id, 'cancelado');
+			const { error } = await supabase.rpc('cancel_booking', {
+				p_booking_id: itemToCancel.id,
+				p_cancellation_reason: 'operational_unavailability',
+				p_cancellation_reason_details: null
+			});
+
+			if (error) {
+				alert('Erro ao cancelar: ' + error.message);
+			} else {
+				await loadAgenda();
+			}
 		}
 		closeCancelModal();
 	}
@@ -436,7 +446,7 @@
 							</a>
 							<button
 								type="button"
-								onclick={() => updateBookingStatus(req.id, 'cancelado')}
+								onclick={() => openCancelModal(req)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-2 text-xs font-semibold text-surface-700-300 hover:preset-tonal"
 							>
 								<XCircle class="h-3.5 w-3.5" /> Cancelar
