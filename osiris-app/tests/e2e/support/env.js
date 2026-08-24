@@ -30,13 +30,15 @@ function parseDotEnv(content) {
 	);
 }
 
-export function loadE2eEnv() {
+export function loadE2eEnv({ requireServiceRole = false } = {}) {
 	const envPath = path.resolve('.env');
 	const fileEnv = fs.existsSync(envPath) ? parseDotEnv(fs.readFileSync(envPath, 'utf8')) : {};
 
 	const supabaseUrl = process.env.PUBLIC_SUPABASE_URL ?? fileEnv.PUBLIC_SUPABASE_URL;
 	const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY ?? fileEnv.PUBLIC_SUPABASE_ANON_KEY;
-	const e2ePassword = process.env.OSIRIS_E2E_PASSWORD ?? fileEnv.OSIRIS_E2E_PASSWORD ?? 'OSIRIS_E2E_PASSWORD';
+	const e2ePassword = process.env.OSIRIS_E2E_PASSWORD ?? fileEnv.OSIRIS_E2E_PASSWORD;
+	const serviceRoleKey =
+		process.env.SUPABASE_SERVICE_ROLE_KEY ?? fileEnv.SUPABASE_SERVICE_ROLE_KEY;
 
 	if (!supabaseUrl || !supabaseAnonKey) {
 		throw new Error(
@@ -44,7 +46,19 @@ export function loadE2eEnv() {
 		);
 	}
 
-	return { supabaseUrl, supabaseAnonKey, e2ePassword };
+	if (!e2ePassword) {
+		throw new Error(
+			'Defina OSIRIS_E2E_PASSWORD no .env ou nas variaveis de ambiente. A senha de teste nao deve ficar no codigo.'
+		);
+	}
+
+	if (requireServiceRole && !serviceRoleKey) {
+		throw new Error(
+			'Defina SUPABASE_SERVICE_ROLE_KEY apenas no .env local ou no secret do CI para executar o teardown E2E.'
+		);
+	}
+
+	return { supabaseUrl, supabaseAnonKey, e2ePassword, serviceRoleKey };
 }
 
 export function supabaseAuthStorageKey(supabaseUrl) {
