@@ -161,20 +161,20 @@
 	<title>Favoritos — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-6">
 
 		
 		<div>
-			<h1 class="text-2xl font-bold text-gray-900">Favoritos</h1>
-			<p class="mt-1 text-sm text-gray-500">Anúncios que você favoritou no marketplace.</p>
+			<h1 class="text-2xl font-bold">Favoritos</h1>
+			<p class="mt-1 text-sm text-surface-600-400">Anúncios que você favoritou no marketplace.</p>
 		</div>
 		
 		<a
 			href="/buscar"
-			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600"
+			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
 			<ChevronLeft class="h-4 w-4" />
 			Voltar
@@ -183,23 +183,23 @@
 		{#if loading}
 			<div class="flex justify-center py-16">
 				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
 			</div>
 		{:else if errorMessage}
-			<div class="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if favorites.length === 0}
 			<div
-				class="mt-6 rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center"
+				class="mt-6 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 			>
-				<Heart class="mx-auto h-10 w-10 text-gray-300" />
-				<p class="mt-3 text-sm font-semibold text-gray-800">Nenhum anúncio favoritado</p>
-				<p class="mt-1 text-xs text-gray-500">
+				<Heart class="mx-auto h-10 w-10 text-surface-400-600" />
+				<p class="mt-3 text-sm font-semibold">Nenhum anúncio favoritado</p>
+				<p class="mt-1 text-xs text-surface-600-400">
 					Toque no coração em um anúncio para favoritá-lo e guardá-lo aqui.
 				</p>
 				<a
 					href="/buscar"
-					class="mt-5 inline-flex rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700"
+					class="btn preset-filled-primary-500 mt-5 inline-flex rounded-container px-4 py-3 text-sm font-semibold"
 				>
 					Explorar marketplace
 				</a>

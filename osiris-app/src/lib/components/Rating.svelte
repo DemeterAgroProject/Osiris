@@ -30,18 +30,18 @@
 			{@const half = !filled && hasHalfStar && index === totalFull}
 			<Star
 				class="{iconClass} {filled || half
-					? 'fill-amber-400 text-amber-400'
-					: 'text-gray-300'} {half ? 'opacity-80' : ''}"
+					? 'fill-warning-400 text-warning-400'
+					: 'text-surface-400-600'} {half ? 'opacity-80' : ''}"
 			/>
 		{/each}
 	</div>
 
 	{#if showValue && count > 0}
-		<span class="{textClass} font-semibold text-gray-800">{clampedValue.toFixed(1)}</span>
+		<span class="{textClass} font-semibold text-surface-950-50">{clampedValue.toFixed(1)}</span>
 	{/if}
 
 	{#if showCount}
-		<span class="{textClass} text-gray-500">
+		<span class="{textClass} text-surface-600-400">
 			{#if count > 0}
 				({count} {count === 1 ? 'avaliação' : 'avaliações'})
 			{:else}

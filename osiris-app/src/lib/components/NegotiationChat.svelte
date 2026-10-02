@@ -140,19 +140,19 @@
     });
 </script>
 
-<div class="flex min-h-[280px] flex-col rounded-2xl border border-gray-200 bg-white">
+<div class="flex min-h-[280px] flex-col rounded-container border border-surface-200-800 bg-surface-50-950">
     <div bind:this={chatContainer} class="flex-1 space-y-3 overflow-y-auto p-4 max-h-[50vh] scroll-smooth">
         {#if loading}
-            <p class="text-center text-sm text-gray-400">Carregando mensagens...</p>
+            <p class="text-center text-sm text-surface-600-400">Carregando mensagens...</p>
         {:else if messages.length === 0}
-            <p class="text-center text-sm text-gray-400">Nenhuma mensagem ainda. Inicie o alinhamento.</p>
+            <p class="text-center text-sm text-surface-600-400">Nenhuma mensagem ainda. Inicie o alinhamento.</p>
         {:else}
             {#each messages as msg (msg.id)}
                 <div class="flex {isOwnMessage(msg) ? 'justify-end' : 'justify-start'}">
                     <div
-                        class="max-w-[85%] rounded-2xl px-3 py-2 text-sm {isOwnMessage(msg)
-                            ? 'rounded-br-md bg-green-600 text-white'
-                            : 'rounded-bl-md bg-gray-100 text-gray-800'}"
+                        class="max-w-[85%] rounded-container px-3 py-2 text-sm {isOwnMessage(msg)
+                            ? 'rounded-br-md preset-filled-primary-500'
+                            : 'rounded-bl-md bg-surface-100-900 text-surface-950-50'}"
                     >
                         {#if !isOwnMessage(msg)}
                             <p class="mb-0.5 text-[10px] font-semibold uppercase opacity-70">
@@ -167,24 +167,24 @@
     </div>
 
     {#if !disabled}
-        <form class="flex gap-2 border-t border-gray-100 p-3" onsubmit={sendMessage}>
+        <form class="flex gap-2 border-t border-surface-200-800 p-3" onsubmit={sendMessage}>
             <input
                 type="text"
                 bind:value={draft}
                 placeholder="Digite sua mensagem..."
-                class="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                class="min-w-0 flex-1 rounded-container border border-surface-200-800 px-3 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             />
             <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-container preset-filled-primary-500 disabled:opacity-50"
                 aria-label="Enviar mensagem"
             >
                 <Send class="h-4 w-4" />
             </button>
         </form>
     {:else}
-        <p class="border-t border-gray-100 p-3 text-center text-xs text-gray-400">
+        <p class="border-t border-surface-200-800 p-3 text-center text-xs text-surface-600-400">
             Chat encerrado para esta negociação.
         </p>
     {/if}

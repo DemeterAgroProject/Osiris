@@ -237,46 +237,46 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gray-50 pb-20">
+<div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
 		<div>
-			<h1 class="text-xl font-bold text-gray-900">Minha Agenda</h1>
-			<p class="mt-0.5 text-sm text-gray-500">
+			<h1 class="text-xl font-bold text-surface-950-50">Minha Agenda</h1>
+			<p class="mt-0.5 text-sm text-surface-600-400">
 				Propostas em negociação e operações confirmadas no calendário.
 			</p>
 		</div>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-b-2 border-green-600"></div>
+				<div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-500"></div>
 			</div>
 		{:else}
-			<div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				<div class="mb-4 flex items-center justify-between">
-					<h2 class="text-base font-bold text-gray-800">{monthNames[currentMonth]} {currentYear}</h2>
+					<h2 class="text-base font-bold text-surface-950-50">{monthNames[currentMonth]} {currentYear}</h2>
 					<div class="flex gap-1">
 						<button
 							type="button"
 							onclick={() => changeMonth(-1)}
-							class="rounded-lg border border-gray-200 p-2 hover:bg-gray-100"
+							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronLeft class="h-4 w-4 text-gray-600" />
+							<ChevronLeft class="h-4 w-4 text-surface-600-400" />
 						</button>
 						<button
 							type="button"
 							onclick={() => changeMonth(1)}
-							class="rounded-lg border border-gray-200 p-2 hover:bg-gray-100"
+							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronRight class="h-4 w-4 text-gray-600" />
+							<ChevronRight class="h-4 w-4 text-surface-600-400" />
 						</button>
 					</div>
 				</div>
 
 				<div
 					style="display: grid; grid-template-columns: repeat(7, 1fr);"
-					class="mb-2 gap-1 text-center text-xs font-semibold text-gray-400"
+					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-600-400"
 				>
 					<div>Dom</div>
 					<div>Seg</div>
@@ -291,19 +291,19 @@
 					{#each calendarDays as { day, cellState }}
 						<div
 							style="aspect-ratio: 1 / 1;"
-							class="relative flex items-center justify-center rounded-lg border text-sm transition-all
+							class="relative flex items-center justify-center rounded-container border text-sm transition-all
 							{day
 								? cellState === 'conflito'
-									? 'border-red-600 bg-red-500 font-bold text-white shadow-sm'
+									? 'preset-filled-error-500 font-bold shadow-sm'
 									: cellState === 'em_operacao'
-										? 'border-green-600 bg-green-500 font-bold text-white shadow-sm'
+										? 'preset-filled-primary-500 font-bold shadow-sm'
 										: cellState === 'pendente'
-											? 'animate-pulse border-amber-400 bg-amber-300 font-bold text-amber-900 shadow-sm'
+											? 'animate-pulse preset-tonal-warning font-bold shadow-sm'
 											: cellState === 'em_negociacao'
-												? 'border-blue-500 bg-blue-400 font-bold text-white shadow-sm'
+												? 'preset-filled-secondary-500 font-bold shadow-sm'
 												: cellState === 'solicitada'
-													? 'border-sky-400 bg-sky-300 font-bold text-sky-900 shadow-sm'
-													: 'border-gray-100 bg-white text-gray-900'
+													? 'preset-tonal-secondary font-bold shadow-sm'
+													: 'border-surface-200-800 bg-surface-50-950 text-surface-950-50'
 								: 'border-none bg-transparent text-transparent'}"
 						>
 							{day || ''}
@@ -312,57 +312,54 @@
 				</div>
 
 				<div
-					class="mt-4 flex flex-wrap justify-center gap-3 border-t border-gray-100 pt-3 text-xs font-medium"
+					class="mt-4 flex flex-wrap justify-center gap-3 border-t border-surface-200-800 pt-3 text-xs font-medium"
 				>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-sky-400 bg-sky-300"></span> Proposta nova
+						<span class="h-3 w-3 rounded border border-secondary-500 preset-tonal-secondary"></span> Proposta nova
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-blue-500 bg-blue-400"></span> Em negociação
+						<span class="h-3 w-3 rounded preset-filled-secondary-500"></span> Em negociação
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-amber-400 bg-amber-300"></span> Booking pendente
+						<span class="h-3 w-3 rounded preset-tonal-warning"></span> Booking pendente
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-green-600 bg-green-500"></span> Em operação
+						<span class="h-3 w-3 rounded preset-filled-primary-500"></span> Em operação
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-red-600 bg-red-500"></span> Conflito
+						<span class="h-3 w-3 rounded preset-filled-error-500"></span> Conflito
 					</div>
 				</div>
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="text-base font-bold text-gray-900">Propostas em negociação</h2>
+				<h2 class="text-base font-bold text-surface-950-50">Propostas em negociação</h2>
 
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm {conflict
-							? 'border-red-300 ring-1 ring-red-100'
-							: 'border-gray-100'}"
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
+							? 'border-error-500 ring-1 ring-error-500/20'
+							: 'border-surface-200-800'}"
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {conflict
-									? 'bg-red-50'
-									: 'bg-sky-50'}"
+								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container {conflict
+									? 'preset-tonal-error'
+									: 'preset-tonal-secondary'}"
 							>
 								<MessageSquare
-									class="h-5 w-5 {conflict ? 'text-red-600' : 'text-sky-600'}"
+									class="h-5 w-5 {conflict ? 'text-error-500' : 'text-secondary-600'}"
 								/>
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-gray-900">{neg.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+								<h3 class="truncate text-sm font-bold text-surface-950-50">{neg.title}</h3>
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(neg.start_date)} até {formatDbDate(neg.end_date)}
 								</p>
 								<span
-									class="mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {neg.status ===
-									'solicitada'
-										? 'bg-sky-100 text-sky-800'
-										: 'bg-blue-100 text-blue-800'}"
+									class="mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase preset-tonal-secondary"
 								>
 									{neg.status === 'solicitada' ? 'Solicitada' : 'Em negociação'}
 								</span>
@@ -371,7 +368,7 @@
 
 						{#if conflict}
 							<div
-								class="flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-2 text-xs font-medium text-red-700"
+								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-2.5 py-2 text-xs font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
 								Atenção: período sobreposto a outra atividade na agenda.
@@ -380,14 +377,14 @@
 
 						<a
 							href={neg.href}
-							class="flex w-full items-center justify-center gap-1 rounded-lg bg-sky-600 py-2 text-xs font-semibold text-white hover:bg-sky-700"
+							class="flex w-full items-center justify-center gap-1 rounded-container preset-filled-secondary-500 py-2 text-xs font-semibold"
 						>
 							Abrir negociação
 						</a>
 					</div>
 				{:else}
 					<div
-						class="rounded-xl border border-gray-100 bg-white py-6 text-center text-sm text-gray-500"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhuma proposta com datas no momento.
 					</div>
@@ -395,26 +392,26 @@
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="text-base font-bold text-gray-900">Bookings pendentes</h2>
+				<h2 class="text-base font-bold text-surface-950-50">Bookings pendentes</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm {conflict
-							? 'border-red-300 ring-1 ring-red-100'
-							: 'border-gray-100'}"
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
+							? 'border-error-500 ring-1 ring-error-500/20'
+							: 'border-surface-200-800'}"
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {conflict
-									? 'bg-red-50'
-									: 'bg-amber-50'}"
+								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container {conflict
+									? 'preset-tonal-error'
+									: 'preset-tonal-warning'}"
 							>
-								<Calendar class="h-5 w-5 {conflict ? 'text-red-600' : 'text-amber-600'}" />
+								<Calendar class="h-5 w-5 {conflict ? 'text-error-500' : 'text-warning-600'}" />
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-gray-900">{req.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+								<h3 class="truncate text-sm font-bold text-surface-950-50">{req.title}</h3>
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(req.start_date)} até {formatDbDate(req.end_date)}
 								</p>
@@ -423,7 +420,7 @@
 
 						{#if conflict}
 							<div
-								class="flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-2 text-xs font-medium text-red-700"
+								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-2.5 py-2 text-xs font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
 								Atenção: você já possui atividades marcadas nestes dias.
@@ -433,14 +430,14 @@
 						<div class="flex gap-2">
 							<a
 								href={req.href}
-								class="flex flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 py-2 text-xs font-semibold text-white hover:bg-green-700"
+								class="flex flex-1 items-center justify-center gap-1 rounded-container preset-filled-primary-500 py-2 text-xs font-semibold"
 							>
 								<CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
 							</a>
 							<button
 								type="button"
 								onclick={() => updateBookingStatus(req.id, 'cancelado')}
-								class="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-2 text-xs font-semibold text-surface-700-300 hover:preset-tonal"
 							>
 								<XCircle class="h-3.5 w-3.5" /> Cancelar
 							</button>
@@ -448,7 +445,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-xl border border-gray-100 bg-white py-6 text-center text-sm text-gray-500"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhum booking pendente no momento.
 					</div>
@@ -456,38 +453,38 @@
 			</div>
 
 			<div class="space-y-3 p-0.5">
-				<h2 class="text-base font-bold text-gray-900">Em operação</h2>
+				<h2 class="text-base font-bold text-surface-950-50">Em operação</h2>
 
 				{#each operatingBookings as conf (conf.id)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+						class="flex flex-col justify-between gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm"
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50"
+								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container preset-tonal-primary"
 							>
-								<Calendar class="h-5 w-5 text-green-600" />
+								<Calendar class="h-5 w-5 text-primary-600" />
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-gray-900">{conf.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+								<h3 class="truncate text-sm font-bold text-surface-950-50">{conf.title}</h3>
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(conf.start_date)} até {formatDbDate(conf.end_date)}
 								</p>
 							</div>
 						</div>
 
-						<div class="flex gap-2 border-t border-gray-50 pt-2">
+						<div class="flex gap-2 border-t border-surface-200-800 pt-2">
 							<a
 								href={conf.href}
-								class="flex flex-1 items-center justify-center gap-1 rounded-lg border border-green-200 bg-green-50 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
+								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-primary-500 preset-tonal-primary py-2 text-xs font-semibold"
 							>
 								Ver operação
 							</a>
 							<button
 								type="button"
 								onclick={() => openCancelModal(conf)}
-								class="flex flex-1 items-center justify-center gap-1 rounded-lg border border-red-200 bg-white py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-error-500 bg-surface-50-950 py-2 text-xs font-semibold text-error-500 transition-colors hover:preset-tonal-error"
 							>
 								<XCircle class="h-3.5 w-3.5" /> Cancelar
 							</button>
@@ -495,7 +492,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-xl border border-gray-100 bg-white py-6 text-center text-sm text-gray-500"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhuma operação em campo no momento.
 					</div>
@@ -508,13 +505,13 @@
 </div>
 
 {#if showCancelModal}
-	<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-		<div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
-			<div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-				<AlertCircle class="h-7 w-7 text-red-600" />
+	<div class="fixed inset-0 z-[100] flex items-center justify-center bg-surface-950/40 px-4 backdrop-blur-sm">
+		<div class="w-full max-w-sm rounded-container bg-surface-50-950 p-6 text-center shadow-xl">
+			<div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full preset-tonal-error">
+				<AlertCircle class="h-7 w-7 text-error-500" />
 			</div>
-			<h3 class="text-lg font-bold text-gray-900">Cancelar atividade?</h3>
-			<p class="mt-2 text-sm text-gray-500">
+			<h3 class="text-lg font-bold text-surface-950-50">Cancelar atividade?</h3>
+			<p class="mt-2 text-sm text-surface-600-400">
 				As datas serão liberadas no calendário para novos agendamentos.
 			</p>
 
@@ -522,14 +519,14 @@
 				<button
 					type="button"
 					onclick={closeCancelModal}
-					class="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+					class="flex-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-3 text-sm font-semibold text-surface-700-300 hover:preset-tonal"
 				>
 					Voltar
 				</button>
 				<button
 					type="button"
 					onclick={confirmCancellation}
-					class="flex-1 rounded-xl bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700"
+					class="flex-1 rounded-container preset-filled-error-500 py-3 text-sm font-semibold"
 				>
 					Sim, cancelar
 				</button>

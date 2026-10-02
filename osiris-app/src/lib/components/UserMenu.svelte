@@ -123,20 +123,20 @@
 {#if open}
     <button
         type="button"
-        class="fixed inset-0 z-[60] border-0 bg-black/40 p-0"
+        class="fixed inset-0 z-[60] border-0 bg-surface-950/40 p-0"
         onclick={closeMenu}
         aria-label="Fechar menu"
     ></button>
 
     <div
-        class="fixed right-3 top-[3.75rem] z-[70] w-[min(100vw-1.5rem,20rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
+        class="fixed right-3 top-[3.75rem] z-[70] w-[min(100vw-1.5rem,20rem)] overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-xl"
         role="menu"
         aria-label="Menu do usuário"
     >
         {#if !authUser && !loading}
-            <div class="px-4 py-6 text-center text-sm text-gray-500">Sessão encerrada.</div>
+            <div class="px-4 py-6 text-center text-sm text-surface-600-400">Sessão encerrada.</div>
         {:else}
-        <div class="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
+        <div class="flex items-center gap-3 border-b border-surface-200-800 px-4 py-4">
             
             {#if avatarUrl && !imgError}
                 <img 
@@ -147,7 +147,7 @@
                 />
             {:else}
                 <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-emerald-500 text-sm font-bold text-white"
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-sm font-bold"
                 >
                     {initials}
                 </div>
@@ -155,18 +155,18 @@
 
             <div class="min-w-0 flex-1">
                 {#if loading}
-                    <div class="h-4 w-32 animate-pulse rounded bg-gray-100"></div>
-                    <div class="mt-2 h-3 w-40 animate-pulse rounded bg-gray-100"></div>
+                    <div class="h-4 w-32 animate-pulse rounded bg-surface-200-800"></div>
+                    <div class="mt-2 h-3 w-40 animate-pulse rounded bg-surface-200-800"></div>
                 {:else}
-                    <p class="truncate text-sm font-bold text-gray-900">{displayName}</p>
-                    <p class="truncate text-xs text-gray-500">{email}</p>
+                    <p class="truncate text-sm font-bold text-surface-950-50">{displayName}</p>
+                    <p class="truncate text-xs text-surface-600-400">{email}</p>
                 {/if}
             </div>
 
             <button
                 type="button"
                 onclick={() => navigate(profileHref)}
-                class="shrink-0 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                class="shrink-0 rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-700-300"
                 aria-label="Configurações do perfil"
             >
                 <Settings class="h-5 w-5" />
@@ -180,26 +180,26 @@
                         type="button"
                         role="menuitem"
                         onclick={() => navigate(item.href)}
-                        class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50"
+                        class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-surface-950-50 transition-colors hover:preset-tonal"
                     >
-                        <item.icon class="h-5 w-5 shrink-0 text-gray-600" />
+                        <item.icon class="h-5 w-5 shrink-0 text-surface-600-400" />
                         <span class="flex-1 font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 text-gray-300" />
+                        <ChevronRight class="h-4 w-4 text-surface-400-600" />
                     </button>
                 {/each}
             </div>
             {#if sectionIndex < menuSections.length - 1}
-                <div class="border-t border-gray-100" role="separator"></div>
+                <div class="border-t border-surface-200-800" role="separator"></div>
             {/if}
         {/each}
 
-        <div class="border-t border-gray-100 py-1" role="none">
+        <div class="border-t border-surface-200-800 py-1" role="none">
             <button
                 type="button"
                 role="menuitem"
                 onclick={handleSignOut}
                 disabled={signingOut}
-                class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60"
+                class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-error-500 transition-colors hover:preset-tonal-error disabled:opacity-60"
             >
                 <LogOut class="h-5 w-5 shrink-0" />
                 <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>

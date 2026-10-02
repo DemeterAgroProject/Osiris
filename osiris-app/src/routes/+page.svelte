@@ -419,24 +419,28 @@
 
 <div class="min-h-screen pb-24">
 	<Header />
-	
+
 	<div class="px-4 pb-2">
-		<div class="rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 p-4 text-white shadow-sm">
-			<p class="text-xs font-medium uppercase tracking-wider text-green-100">Marketplace Osiris</p>
+		<div class="rounded-container preset-filled-primary-500 p-4 shadow-sm">
+			<p class="text-xs font-medium uppercase tracking-wider opacity-90">Marketplace Osiris</p>
 			<h1 class="mt-1 text-xl font-bold">Máquinas, produtos e serviços em um só lugar</h1>
-			<p class="mt-1 text-sm text-green-100">Descubra oportunidades novas todos os dias.</p>
+			<p class="mt-1 text-sm opacity-90">Descubra oportunidades novas todos os dias.</p>
 		</div>
 	</div>
 
 	{#if loading}
-		<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando destaques...</div>
+		<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando destaques...</div>
 	{:else if errorMessage}
-		<div class="mx-4 my-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 	{:else if hasDiscoveryMode}
 		{#if visibleListings.length === 0}
-			<div class="mx-4 my-8 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
-				<p class="text-sm font-semibold text-gray-800">Nenhum anúncio encontrado</p>
-				<p class="mt-1 text-xs text-gray-500">Ajuste a busca ou os filtros para ver mais resultados.</p>
+			<div
+				class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
+			>
+				<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
+				<p class="mt-1 text-xs text-surface-600-400">
+					Ajuste a busca ou os filtros para ver mais resultados.
+				</p>
 			</div>
 		{:else}
 			<ProductSection

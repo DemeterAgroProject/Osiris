@@ -14,7 +14,7 @@
 	</div>
 
 	<div class="shrink-0 px-6 pb-2 text-center">
-		<h1 class="text-2xl font-bold tracking-tight text-gray-900">{title}</h1>
-		<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-gray-500">{description}</p>
+		<h1 class="text-2xl font-bold tracking-tight text-surface-950-50">{title}</h1>
+		<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-surface-600-400">{description}</p>
 	</div>
 </div>

@@ -148,13 +148,13 @@
 		<button
 			type="button"
 			onclick={openFilters}
-			class="relative flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-green-500 hover:text-green-600"
+			class="relative flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-700-300 shadow-sm transition-colors hover:border-primary-500 hover:text-primary-600"
 		>
 			<SlidersHorizontal class="h-4 w-4 shrink-0" />
 			<span>Filtros</span>
 			{#if activeCount > 0}
 				<span
-					class="rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+					class="rounded-full preset-filled-primary-500 px-2 py-0.5 text-[10px] font-semibold"
 				>
 					{activeCount}
 				</span>
@@ -162,7 +162,7 @@
 		</button>
 
 		{#if resultCount !== null}
-			<p class="shrink-0 text-xs font-medium text-gray-500">
+			<p class="shrink-0 text-xs font-medium text-surface-600-400">
 				{resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
 			</p>
 		{/if}
@@ -172,7 +172,7 @@
 		<div class="flex flex-wrap gap-1.5">
 			{#each activeLabels as label (label)}
 				<span
-					class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-800"
+					class="rounded-full border border-primary-500 preset-tonal-primary px-2.5 py-1 text-[10px] font-semibold text-primary-700"
 				>
 					{label}
 				</span>
@@ -184,12 +184,12 @@
 {#if isOpen}
 	<button
 		type="button"
-		class="fixed inset-0 z-[70] border-0 bg-black/30 p-0"
+		class="fixed inset-0 z-[70] border-0 bg-surface-950/30 p-0"
 		onclick={closeFilters}
 		aria-label="Fechar filtros"
 	></button>
 	<div
-		class="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl bg-white shadow-2xl"
+		class="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl bg-surface-50-950 shadow-2xl"
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="filter-bar-title"
@@ -197,15 +197,15 @@
 		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
 			<div class="mb-4 flex items-center justify-between">
 				<div>
-					<h2 id="filter-bar-title" class="text-base font-semibold text-gray-900">
+					<h2 id="filter-bar-title" class="text-base font-semibold text-surface-950-50">
 						Filtros do marketplace
 					</h2>
-					<p class="text-xs text-gray-500">Produtos, maquinários e serviços</p>
+					<p class="text-xs text-surface-600-400">Produtos, maquinários e serviços</p>
 				</div>
 				<button
 					type="button"
 					onclick={closeFilters}
-					class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+					class="rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400"
 					aria-label="Fechar filtros"
 				>
 					<X class="h-5 w-5" />
@@ -214,7 +214,7 @@
 
 			<div class="max-h-[70vh] space-y-5 overflow-y-auto pb-3">
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">
 						Tipo de anúncio
 					</p>
 					<div class="flex flex-wrap gap-2">
@@ -226,8 +226,8 @@
 									'listingTypes',
 									option.id
 								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
+									? 'border-primary-500 preset-tonal-primary text-primary-700'
+									: 'border-surface-200-800 text-surface-600-400'}"
 							>
 								{#if isSelected('listingTypes', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -237,7 +237,7 @@
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produtos</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Produtos</p>
 					<div class="flex flex-wrap gap-2">
 						{#each productKindOptions as option (option.id)}
 							<button
@@ -247,8 +247,8 @@
 									'productKinds',
 									option.id
 								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
+									? 'border-primary-500 preset-tonal-primary text-primary-700'
+									: 'border-surface-200-800 text-surface-600-400'}"
 							>
 								{#if isSelected('productKinds', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -258,7 +258,7 @@
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Serviços</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Serviços</p>
 					<div class="flex flex-wrap gap-2">
 						{#each serviceKindOptions as option (option.id)}
 							<button
@@ -268,8 +268,8 @@
 									'serviceKinds',
 									option.id
 								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
+									? 'border-primary-500 preset-tonal-primary text-primary-700'
+									: 'border-surface-200-800 text-surface-600-400'}"
 							>
 								{#if isSelected('serviceKinds', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -279,7 +279,7 @@
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Mão de obra</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Mão de obra</p>
 					<div class="flex flex-wrap gap-2">
 						{#each laborKindOptions as option (option.id)}
 							<button
@@ -289,8 +289,8 @@
 									'laborKinds',
 									option.id
 								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
+									? 'border-primary-500 preset-tonal-primary text-primary-700'
+									: 'border-surface-200-800 text-surface-600-400'}"
 							>
 								{#if isSelected('laborKinds', option.id)}<Check class="h-3 w-3" />{/if}
 								{option.label}
@@ -300,11 +300,11 @@
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Localidade</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Localidade</p>
 					<div class="relative">
 						<select
 							bind:value={draft.location}
-							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+							class="w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						>
 							<option value="">Todas as regiões</option>
 							{#each locationOptions as option (option.id)}
@@ -312,30 +312,30 @@
 							{/each}
 						</select>
 						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-600-400"
 						/>
 					</div>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ordenação</p>
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">Ordenação</p>
 					<div class="relative">
 						<select
 							bind:value={draft.sort}
-							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+							class="w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						>
 							{#each sortOptions as option (option.id)}
 								<option value={option.id}>{option.label}</option>
 							{/each}
 						</select>
 						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-600-400"
 						/>
 					</div>
 				</div>
 
 				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+					<p class="text-xs font-semibold uppercase tracking-wider text-surface-600-400">
 						Faixa de preço (R$)
 					</p>
 					<div class="grid grid-cols-2 gap-2">
@@ -345,7 +345,7 @@
 							inputmode="numeric"
 							bind:value={draft.minPrice}
 							placeholder="Mínimo"
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
 						<input
 							type="number"
@@ -353,7 +353,7 @@
 							inputmode="numeric"
 							bind:value={draft.maxPrice}
 							placeholder="Máximo"
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+							class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
 					</div>
 				</div>
@@ -363,14 +363,14 @@
 				<button
 					type="button"
 					onclick={clearDraft}
-					class="rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+					class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal"
 				>
 					Limpar
 				</button>
 				<button
 					type="button"
 					onclick={applyFilters}
-					class="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+					class="rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold transition-colors"
 				>
 					Aplicar filtros
 				</button>

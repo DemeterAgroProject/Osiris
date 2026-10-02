@@ -74,12 +74,12 @@
 
 	function statusBadgeClass(tone) {
 		const map = {
-			amber: 'bg-amber-100 text-amber-800',
-			blue: 'bg-blue-100 text-blue-800',
-			green: 'bg-green-100 text-green-800',
-			emerald: 'bg-emerald-100 text-emerald-800',
-			red: 'bg-red-100 text-red-800',
-			gray: 'bg-gray-100 text-gray-700'
+			amber: 'preset-tonal-warning',
+			blue: 'preset-tonal-secondary',
+			green: 'preset-tonal-primary',
+			emerald: 'preset-tonal-primary',
+			red: 'preset-tonal-error',
+			gray: 'preset-tonal-surface'
 		};
 		return map[tone] ?? map.gray;
 	}
@@ -320,13 +320,13 @@
 	<title>Operação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
 			href="/negociacoes"
-			class="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-green-700"
+			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
 		>
 			<ChevronLeft class="h-4 w-4" />
 			Negociações
@@ -335,18 +335,18 @@
 		{#if loading}
 			<div class="flex justify-center py-16">
 				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
 			</div>
 		{:else if errorMessage && !booking}
-			<div class="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if booking}
-			<div class="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				{#if booking.coverUrl}
 					<img
 						src={booking.coverUrl}
 						alt={listingTitle()}
-						class="mb-4 aspect-[16/10] w-full rounded-xl object-cover"
+						class="mb-4 aspect-[16/10] w-full rounded-container object-cover"
 					/>
 				{/if}
 				<div class="flex items-start justify-between gap-3">
@@ -360,13 +360,13 @@
 						{/if}
 						<div class="min-w-0">
 							{#if listingHref()}
-								<a href={listingHref()} class="text-xl font-bold text-gray-900 hover:text-green-700">
+								<a href={listingHref()} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
 									{listingTitle()}
 								</a>
 							{:else}
-								<h1 class="text-xl font-bold text-gray-900">{listingTitle()}</h1>
+								<h1 class="text-xl font-bold text-surface-950-50">{listingTitle()}</h1>
 							{/if}
-							<p class="mt-1 text-sm text-gray-500">
+							<p class="mt-1 text-sm text-surface-600-400">
 								{isProvider ? 'Cliente' : 'Provedor'}: {counterpartyName()}
 							</p>
 						</div>
@@ -382,12 +382,12 @@
 
 				<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
 					<div>
-						<dt class="text-xs text-gray-400">Valor acordado</dt>
-						<dd class="font-semibold text-green-700">{formatCurrency(booking.total_price)}</dd>
+						<dt class="text-xs text-surface-600-400">Valor acordado</dt>
+						<dd class="font-semibold text-primary-700">{formatCurrency(booking.total_price)}</dd>
 					</div>
 					<div class="col-span-2">
-						<dt class="text-xs text-gray-400">Período</dt>
-						<dd class="font-medium text-gray-800">
+						<dt class="text-xs text-surface-600-400">Período</dt>
+						<dd class="font-medium text-surface-950-50">
 							{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 						</dd>
 					</div>
@@ -395,7 +395,7 @@
 			</div>
 
 			{#if errorMessage}
-				<p class="mt-3 text-sm text-red-600">{errorMessage}</p>
+				<p class="mt-3 text-sm text-error-500">{errorMessage}</p>
 			{/if}
 
 			{#if isProvider}
@@ -405,7 +405,7 @@
 							type="button"
 							onclick={() => updateBookingStatus('em_operacao')}
 							disabled={actionLoading}
-							class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+							class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 text-sm font-semibold disabled:opacity-60"
 						>
 							<Play class="h-4 w-4" />
 							Iniciar operação em campo
@@ -417,7 +417,7 @@
 							type="button"
 							onclick={() => updateBookingStatus('em_avaliacao')}
 							disabled={actionLoading}
-							class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+							class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-secondary-500 py-3.5 text-sm font-semibold disabled:opacity-60"
 						>
 							<Flag class="h-4 w-4" />
 							Encerrar operação
@@ -430,31 +430,31 @@
 						<button
 							type="button"
 							onclick={() => (showCancelDialog = true)}
-							class="w-full rounded-xl border border-red-200 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+							class="w-full rounded-container border border-error-500 py-2.5 text-sm font-semibold text-error-500 hover:preset-tonal-error"
 						>
 							Cancelar operação
 						</button>
 					{/if}
 				</div>
 			{:else if booking.status === 'pendente'}
-				<p class="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+				<p class="mt-4 rounded-container preset-tonal-warning p-3 text-sm">
 					Aguardando o provedor iniciar a operação em campo.
 				</p>
 			{:else if booking.status === 'em_operacao'}
-				<p class="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-800">
+				<p class="mt-4 rounded-container preset-tonal-primary p-3 text-sm">
 					Operação em andamento no campo.
 				</p>
 			{/if}
 
 			{#if booking.status === 'em_avaliacao'}
-				<section class="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-					<h2 class="flex items-center gap-2 text-sm font-bold text-gray-900">
-						<Star class="h-4 w-4 text-amber-500" />
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+					<h2 class="flex items-center gap-2 text-sm font-bold text-surface-950-50">
+						<Star class="h-4 w-4 text-warning-500" />
 						Avaliar experiência
 					</h2>
 
 					{#if myReview}
-						<p class="mt-3 text-sm text-gray-600">
+						<p class="mt-3 text-sm text-surface-600-400">
 							Você já enviou sua avaliação ({myReview.rating}/5).
 						</p>
 					{:else if canReview}
@@ -464,8 +464,8 @@
 									type="button"
 									onclick={() => (rating = star)}
 									class="rounded p-1 {rating >= star
-										? 'text-amber-500'
-										: 'text-gray-300'}"
+										? 'text-warning-500'
+										: 'text-surface-400-600'}"
 									aria-label="{star} estrelas"
 								>
 									<Star class="h-7 w-7 {rating >= star ? 'fill-current' : ''}" />
@@ -476,19 +476,19 @@
 							rows="3"
 							bind:value={comment}
 							placeholder="Comentário opcional..."
-							class="mt-3 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+							class="mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
 						></textarea>
 						<button
 							type="button"
 							onclick={submitReview}
 							disabled={reviewSubmitting}
-							class="mt-3 w-full rounded-xl bg-green-600 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+							class="mt-3 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold disabled:opacity-60"
 						>
 							{reviewSubmitting ? 'Enviando...' : 'Enviar avaliação'}
 						</button>
 					{/if}
 
-					<p class="mt-3 text-xs text-gray-400">
+					<p class="mt-3 text-xs text-surface-600-400">
 						A operação será finalizada automaticamente quando cliente e provedor avaliarem.
 					</p>
 
@@ -497,7 +497,7 @@
 							type="button"
 							onclick={() => updateBookingStatus('finalizada')}
 							disabled={actionLoading}
-							class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+							class="mt-4 flex w-full items-center justify-center gap-2 rounded-container border border-surface-200-800 py-2.5 text-sm font-semibold text-surface-700-300 hover:preset-tonal disabled:opacity-60"
 						>
 							<CheckCircle2 class="h-4 w-4" />
 							Encerrar operação manualmente
@@ -507,7 +507,7 @@
 			{/if}
 
 			{#if booking.status === 'finalizada'}
-				<div class="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+				<div class="mt-4 rounded-container preset-tonal-primary p-4 text-sm">
 					{#if bothReviewed}
 						Operação finalizada. Obrigado por usar o Osiris.
 					{:else}
@@ -517,11 +517,11 @@
 			{/if}
 
 			{#if reviews.length}
-				<section class="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-					<h2 class="text-sm font-bold text-gray-900">Avaliações desta operação</h2>
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+					<h2 class="text-sm font-bold text-surface-950-50">Avaliações desta operação</h2>
 					<ul class="mt-3 space-y-3">
 						{#each reviews as review (review.id)}
-							<li class="rounded-xl bg-gray-50 p-3">
+							<li class="rounded-container bg-surface-50-950 p-3">
 								<div class="flex items-center gap-2">
 									{#if review.reviewerPhoto}
 										<img
@@ -531,12 +531,12 @@
 										/>
 									{/if}
 									<div>
-										<p class="text-sm font-medium text-gray-900">{review.reviewerName}</p>
-										<p class="text-xs text-amber-600">{review.rating}/5</p>
+										<p class="text-sm font-medium text-surface-950-50">{review.reviewerName}</p>
+										<p class="text-xs text-warning-600">{review.rating}/5</p>
 									</div>
 								</div>
 								{#if review.comment}
-									<p class="mt-2 text-sm text-gray-600">{review.comment}</p>
+									<p class="mt-2 text-sm text-surface-600-400">{review.comment}</p>
 								{/if}
 							</li>
 						{/each}

@@ -212,12 +212,12 @@
 
 	function statusBadgeClass(tone) {
 		const map = {
-			amber: 'bg-amber-100 text-amber-800',
-			blue: 'bg-blue-100 text-blue-800',
-			green: 'bg-green-100 text-green-800',
-			red: 'bg-red-100 text-red-800',
-			emerald: 'bg-emerald-100 text-emerald-800',
-			gray: 'bg-gray-100 text-gray-700'
+			amber: 'preset-tonal-warning',
+			blue: 'preset-tonal-secondary',
+			green: 'preset-tonal-primary',
+			red: 'preset-tonal-error',
+			emerald: 'preset-tonal-primary',
+			gray: 'preset-tonal-surface'
 		};
 		return map[tone] ?? map.gray;
 	}
@@ -301,33 +301,33 @@
 	<title>Negociações — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-6">
 		<div>
-			<h1 class="text-2xl font-bold text-gray-900">Negociações</h1>
-			<p class="mt-1 text-sm text-gray-500">Propostas, chat e contratos ativos no campo.</p>
+			<h1 class="text-2xl font-bold text-surface-950-50">Negociações</h1>
+			<p class="mt-1 text-sm text-surface-600-400">Propostas, chat e contratos ativos no campo.</p>
 		</div>
 
-		<div class="mt-4 flex gap-2 rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-100">
+		<div class="mt-4 flex gap-2 rounded-container bg-surface-50-950 p-1 shadow-sm ring-1 ring-surface-200-800">
 			<button
 				type="button"
 				onclick={() => (activeTab = 'propostas')}
-				class="flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors {activeTab ===
+				class="flex-1 rounded-container py-2.5 text-sm font-semibold transition-colors {activeTab ===
 				'propostas'
-					? 'bg-green-600 text-white'
-					: 'text-gray-600 hover:bg-gray-50'}"
+					? 'preset-filled-primary-500'
+					: 'text-surface-600-400 hover:preset-tonal'}"
 			>
 				Propostas
 			</button>
 			<button
 				type="button"
 				onclick={() => (activeTab = 'operacoes')}
-				class="flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors {activeTab ===
+				class="flex-1 rounded-container py-2.5 text-sm font-semibold transition-colors {activeTab ===
 				'operacoes'
-					? 'bg-green-600 text-white'
-					: 'text-gray-600 hover:bg-gray-50'}"
+					? 'preset-filled-primary-500'
+					: 'text-surface-600-400 hover:preset-tonal'}"
 			>
 				Operações
 			</button>
@@ -336,42 +336,42 @@
 		{#if loading}
 			<div class="flex justify-center py-16">
 				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
 			</div>
 		{:else if errorMessage}
-			<div class="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if activeTab === 'propostas'}
 			<section class="mt-6 space-y-6">
 				<div>
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Em andamento</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Em andamento</h2>
 					<div class="mt-3 space-y-2">
 						{#each openNegotiations as row (row.id)}
 							{@const Icon = listingIcon(row)}
 							<a
 								href="/negociacoes/{row.id}"
-								class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-green-200"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500"
 							>
 								<div
-									class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-green-50"
+									class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
 								>
 									{#if row.coverUrl}
 										<img src={row.coverUrl} alt="" class="h-full w-full object-cover" />
 									{:else}
-										<Icon class="h-5 w-5 text-green-700" />
+										<Icon class="h-5 w-5 text-primary-700" />
 									{/if}
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-semibold text-gray-900">{resolveListingTitle(row)}</p>
-									<p class="text-xs text-gray-500">
+									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
+									<p class="text-xs text-surface-600-400">
 										{authUserId === row.provider_id ? 'Cliente' : 'Anunciante'}:
 										{resolveCounterpartyName(row)}
 									</p>
-									<p class="mt-0.5 text-sm font-medium text-green-700">
+									<p class="mt-0.5 text-sm font-medium text-primary-700">
 										{formatCurrency(row.proposed_price)}
 									</p>
 									{#if row.proposed_start_date}
-										<p class="mt-0.5 text-xs text-gray-400">
+										<p class="mt-0.5 text-xs text-surface-600-400">
 											{formatDbDate(row.proposed_start_date)} — {formatDbDate(row.proposed_end_date)}
 										</p>
 									{/if}
@@ -384,12 +384,12 @@
 									>
 										{negotiationStatusLabel(row.status)}
 									</span>
-									<ChevronRight class="h-4 w-4 text-gray-300" />
+									<ChevronRight class="h-4 w-4 text-surface-400-600" />
 								</div>
 							</a>
 						{:else}
 							<div
-								class="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500"
+								class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center text-sm text-surface-600-400"
 							>
 								Nenhuma proposta em andamento.
 							</div>
@@ -398,21 +398,21 @@
 				</div>
 
 				<div>
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Encerradas</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
 					<div class="mt-3 space-y-2">
 						{#each closedNegotiations as row (row.id)}
 							<a
 								href="/negociacoes/{row.id}"
-								class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 opacity-90 shadow-sm"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
 							>
 								<div
-									class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-50"
+									class="flex h-11 w-11 shrink-0 items-center justify-center rounded-container bg-surface-50-950"
 								>
-									<MessageSquare class="h-5 w-5 text-gray-500" />
+									<MessageSquare class="h-5 w-5 text-surface-600-400" />
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-semibold text-gray-900">{resolveListingTitle(row)}</p>
-									<p class="text-xs text-gray-500">{resolveCounterpartyName(row)}</p>
+									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
+									<p class="text-xs text-surface-600-400">{resolveCounterpartyName(row)}</p>
 								</div>
 								<span
 									class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
@@ -423,7 +423,7 @@
 								</span>
 							</a>
 						{:else}
-							<p class="text-center text-sm text-gray-400 py-4">Nenhuma negociação encerrada.</p>
+							<p class="text-center text-sm text-surface-600-400 py-4">Nenhuma negociação encerrada.</p>
 						{/each}
 					</div>
 				</div>
@@ -431,33 +431,33 @@
 		{:else}
 			<section class="mt-6 space-y-6">
 				<div class="space-y-2">
-					<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Ativas</h2>
+					<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Ativas</h2>
 				{#each activeBookings as booking (booking.id)}
 					{@const Icon = listingIcon(booking)}
 					<a
 						href="/operacoes/{booking.id}"
-						class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:border-green-200"
+						class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm hover:border-primary-500"
 					>
 						<div
-							class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-green-50"
+							class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
 						>
 							{#if booking.coverUrl}
 								<img src={booking.coverUrl} alt="" class="h-full w-full object-cover" />
 							{:else}
-								<Icon class="h-5 w-5 text-green-700" />
+								<Icon class="h-5 w-5 text-primary-700" />
 							{/if}
 						</div>
 						<div class="min-w-0 flex-1">
-							<p class="truncate font-semibold text-gray-900">
+							<p class="truncate font-semibold text-surface-950-50">
 								{resolveListingTitle(booking)}
 							</p>
-							<p class="text-xs text-gray-500">
+							<p class="text-xs text-surface-600-400">
 								{resolveBookingCounterparty(booking)}
 							</p>
-							<p class="text-xs text-gray-500">
+							<p class="text-xs text-surface-600-400">
 								{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 							</p>
-							<p class="mt-0.5 text-sm font-medium text-green-700">
+							<p class="mt-0.5 text-sm font-medium text-primary-700">
 								{formatCurrency(booking.total_price)}
 							</p>
 						</div>
@@ -471,10 +471,10 @@
 					</a>
 				{:else}
 					<div
-						class="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center"
+						class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 					>
-						<p class="text-sm font-semibold text-gray-800">Nenhuma operação ativa</p>
-						<p class="mt-1 text-xs text-gray-500">
+						<p class="text-sm font-semibold text-surface-950-50">Nenhuma operação ativa</p>
+						<p class="mt-1 text-xs text-surface-600-400">
 							Quando uma proposta for aceita, o contrato aparecerá aqui.
 						</p>
 					</div>
@@ -483,16 +483,16 @@
 
 				{#if closedBookings.length}
 					<div class="space-y-2">
-						<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Encerradas</h2>
+						<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
 						{#each closedBookings as booking (booking.id)}
 							<a
 								href="/operacoes/{booking.id}"
-								class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 opacity-90 shadow-sm"
+								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
 							>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-semibold text-gray-900">{resolveListingTitle(booking)}</p>
-									<p class="text-xs text-gray-500">{resolveBookingCounterparty(booking)}</p>
-									<p class="text-xs text-gray-500">
+									<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(booking)}</p>
+									<p class="text-xs text-surface-600-400">{resolveBookingCounterparty(booking)}</p>
+									<p class="text-xs text-surface-600-400">
 										{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 									</p>
 								</div>
