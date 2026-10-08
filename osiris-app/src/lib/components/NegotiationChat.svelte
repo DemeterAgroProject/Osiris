@@ -18,6 +18,7 @@
     let chatContainer = $state(null);
 
     // cache de perfis para não buscar o mesmo perfil várias vezes
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- cache interno, não é lido pela UI
     const profileCache = new Map();
 
     function resolveSenderName(msg) {

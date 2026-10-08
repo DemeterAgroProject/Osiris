@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import {
@@ -373,7 +374,7 @@
 		<div class="mb-6 flex items-center justify-between">
 			<h1 class="text-xl font-bold text-surface-950-50">Meus Serviços</h1>
 			<a
-				href="/servicos/novo"
+				href={resolve('/servicos/novo')}
 				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm transition-colors"
 			>
 				<Plus class="h-4 w-4" />
@@ -519,7 +520,7 @@
 										<li role="none">
 											<a
 												role="menuitem"
-												href={getServiceHref(serv)}
+												href={resolve(getServiceHref(serv))}
 												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />

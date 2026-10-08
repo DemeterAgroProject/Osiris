@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import {
@@ -288,7 +289,7 @@
 				</div>
 
 				<div style="display: grid; grid-template-columns: repeat(7, 1fr);" class="gap-1">
-					{#each calendarDays as { day, cellState }}
+					{#each calendarDays as { day, dateString, cellState }, index (dateString ?? `empty-${index}`)}
 						<div
 							style="aspect-ratio: 1 / 1;"
 							class="relative flex items-center justify-center rounded-container border text-sm transition-all
@@ -376,7 +377,7 @@
 						{/if}
 
 						<a
-							href={neg.href}
+							href={resolve(neg.href)}
 							class="flex w-full items-center justify-center gap-1 rounded-container preset-filled-secondary-500 py-2 text-xs font-semibold"
 						>
 							Abrir negociação
@@ -429,7 +430,7 @@
 
 						<div class="flex gap-2">
 							<a
-								href={req.href}
+								href={resolve(req.href)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container preset-filled-primary-500 py-2 text-xs font-semibold"
 							>
 								<CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
@@ -476,7 +477,7 @@
 
 						<div class="flex gap-2 border-t border-surface-200-800 pt-2">
 							<a
-								href={conf.href}
+								href={resolve(conf.href)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-primary-500 preset-tonal-primary py-2 text-xs font-semibold"
 							>
 								Ver operação

@@ -1,8 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import Header from '$lib/components/Header.svelte';
-	import SearchBar from '$lib/components/SearchBar.svelte';
-	import FilterBar from '$lib/components/FilterBar.svelte';
 	import ProductSection from '$lib/components/ProductSection.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import PartnerSection from '$lib/components/PartnerSection.svelte';
@@ -35,6 +33,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		if (!productIds?.length) return map;
 
@@ -78,7 +77,6 @@
 	let filters = $state(createDefaultFilters());
 
 	let loading = $state(true);
-	let fetching = $state(false);
 	let errorMessage = $state('');
 	let products = $state([]);
 	let machinery = $state([]);
@@ -257,6 +255,7 @@
 	}
 
 	function buildBuscarHref({ tipo = null } = {}) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- usado só para montar a URL
 		const params = new URLSearchParams();
 		const q = searchQuery.trim();
 		if (q) params.set('q', q);
@@ -277,7 +276,6 @@
 		const useServerSearch = term.length >= 2;
 		const fetchLimit = resolveFetchLimit(searchTerm);
 
-		if (!loading) fetching = true;
 		errorMessage = '';
 
 		let productQuery = supabase
@@ -348,7 +346,6 @@
 		}
 
 		loading = false;
-		fetching = false;
 	}
 
 	const catalog = $derived(mergeListingGroups({ products, machinery, services }));
@@ -358,8 +355,6 @@
 	const hasDiscoveryMode = $derived(
 		normalizeText(searchQuery).length > 0 || activeFilterCount(filters) > 0
 	);
-
-	const locationOptions = $derived([...new Set(catalog.map((item) => item.location).filter(Boolean))]);
 
 	const homePreviewListings = $derived(visibleListings.slice(0, HOME_CAROUSEL_LIMIT));
 

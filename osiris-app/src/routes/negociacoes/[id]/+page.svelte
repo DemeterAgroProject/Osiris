@@ -1,5 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ChevronLeft, CheckCircle2, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
@@ -202,7 +203,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=/negociacoes/${negotiationId}`);
+			await goto(resolve(`/login?redirect=/negociacoes/${negotiationId}`));
 			return;
 		}
 
@@ -362,7 +363,7 @@
 		showAcceptDialog = false;
 		actionLoading = false;
 		showToast('Proposta aceita. Contrato criado com sucesso.');
-		await goto(`/operacoes/${newBookingId}`);
+		await goto(resolve(`/operacoes/${newBookingId}`));
 	}
 
 	async function confirmReject() {
@@ -398,7 +399,7 @@
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
-			href="/negociacoes"
+			href={resolve('/negociacoes')}
 			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
 		>
 			<ChevronLeft class="h-4 w-4" />
@@ -440,7 +441,7 @@
 								<div class="min-w-0">
 									{#if listingHref(negotiation)}
 										<a
-											href={listingHref(negotiation)}
+											href={resolve(listingHref(negotiation))}
 											class="text-xl font-bold text-surface-950-50 hover:text-primary-700"
 										>
 											{resolveListingTitle(negotiation)}
@@ -546,7 +547,7 @@
 
 					{#if negotiation.status === 'aceita' && linkedBooking}
 						<a
-							href="/operacoes/{linkedBooking.id}"
+							href={resolve(`/operacoes/${linkedBooking.id}`)}
 							class="block rounded-container preset-filled-primary-500 px-4 py-3 text-center text-sm font-semibold"
 						>
 							Ver operação

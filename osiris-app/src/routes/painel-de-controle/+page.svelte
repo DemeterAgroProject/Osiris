@@ -1,4 +1,5 @@
 <script>
+    import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
     import Header from '$lib/components/Header.svelte';
@@ -133,7 +134,7 @@
             <div>
                 <h2 class="text-base font-bold mb-3">Ações Rápidas</h2>
                 <div class="space-y-3">
-                    <a href="/painel-de-controle/agenda" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
+                    <a href={resolve('/painel-de-controle/agenda')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
                                 <Calendar class="h-5 w-5" />
@@ -146,7 +147,7 @@
                         <ArrowRight class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/negociacoes" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
+                    <a href={resolve('/negociacoes')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-container preset-tonal-warning flex items-center justify-center">
                                 <MessageSquare class="h-5 w-5" />
@@ -159,7 +160,7 @@
                         <ArrowRight class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/anunciar" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:border-primary-500 transition-colors">
+                    <a href={resolve('/anunciar')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:border-primary-500 transition-colors">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-container preset-tonal-primary flex items-center justify-center">
                                 <Package class="h-5 w-5" />
@@ -172,7 +173,7 @@
                         <PlusCircle class="h-5 w-5 text-surface-600-400" />
                     </a>
 
-                    <a href="/servicos/novo" class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
+                    <a href={resolve('/servicos/novo')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
                         <div class="flex items-center gap-3">
                             <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
                                 <Briefcase class="h-5 w-5" />

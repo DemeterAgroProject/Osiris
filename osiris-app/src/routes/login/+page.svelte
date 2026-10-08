@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -29,7 +30,7 @@
 		if (session?.user) {
 			await subscribeToPush(session.user.id);
 			const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
-			await goto(target, { replaceState: true });
+			await goto(resolve(target), { replaceState: true });
 			return;
 		}
 
@@ -66,7 +67,7 @@
 			if (session?.user) {
 				subscribeToPush(session.user.id); 
 				const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
-				goto(target, { replaceState: true });
+				goto(resolve(target), { replaceState: true });
 			}
 		});
 
@@ -143,7 +144,7 @@
 			</div>
 
 			<p class="mt-6 text-center text-sm text-surface-600-400">
-				<a href="/" class="font-medium text-primary-600 hover:text-primary-700">Continuar sem login</a>
+				<a href={resolve('/')} class="font-medium text-primary-600 hover:text-primary-700">Continuar sem login</a>
 			</p>
 		{/if}
 	</main>

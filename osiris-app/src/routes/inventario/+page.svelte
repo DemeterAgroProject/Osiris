@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import {
 		Plus,
 		Search,
@@ -37,6 +38,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		if (!productIds?.length) return map;
 
@@ -478,7 +480,7 @@
 		<div class="mb-4 flex items-center justify-between">
 			<h1 class="text-xl font-bold text-surface-950-50">Meu Inventário</h1>
 			<a
-				href="/anunciar"
+				href={resolve('/anunciar')}
 				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm"
 			>
 				<Plus class="h-4 w-4" />
@@ -594,7 +596,7 @@
 										<li role="none">
 											<a
 												role="menuitem"
-												href={getAdHref(maq)}
+												href={resolve(getAdHref(maq))}
 												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />
@@ -706,7 +708,7 @@
 										<li role="none">
 											<a
 												role="menuitem"
-												href={getAdHref(prod)}
+												href={resolve(getAdHref(prod))}
 												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
 											>
 												<ExternalLink class="h-4 w-4" />

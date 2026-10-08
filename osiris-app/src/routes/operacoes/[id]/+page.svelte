@@ -1,5 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ChevronLeft, Play, Flag, Star, CheckCircle2 } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
@@ -211,7 +212,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=/operacoes/${id}`);
+			await goto(resolve(`/login?redirect=/operacoes/${id}`));
 			return;
 		}
 
@@ -325,7 +326,7 @@
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
-			href="/negociacoes"
+			href={resolve('/negociacoes')}
 			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
 		>
 			<ChevronLeft class="h-4 w-4" />
@@ -360,7 +361,7 @@
 						{/if}
 						<div class="min-w-0">
 							{#if listingHref()}
-								<a href={listingHref()} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
+								<a href={resolve(listingHref())} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
 									{listingTitle()}
 								</a>
 							{:else}
@@ -459,7 +460,7 @@
 						</p>
 					{:else if canReview}
 						<div class="mt-3 flex gap-1">
-							{#each [1, 2, 3, 4, 5] as star}
+							{#each [1, 2, 3, 4, 5] as star (star)}
 								<button
 									type="button"
 									onclick={() => (rating = star)}

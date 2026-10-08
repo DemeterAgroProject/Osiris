@@ -1,6 +1,7 @@
 <script>
     import { page } from '$app/state';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import Rating from '$lib/components/Rating.svelte';
@@ -11,7 +12,6 @@
         Mail,
         Phone,
         Check,
-        AlertCircle,
         SquarePen,
         ArrowLeft,
         Camera,
@@ -661,7 +661,7 @@
                     <button
                         type="button"
                         disabled={!canBecomeAdvertiser}
-                        onclick={() => goto('/anunciar')}
+                        onclick={() => goto(resolve('/anunciar'))}
                         class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {canBecomeAdvertiser
                             ? 'preset-filled-primary-500'
                             : 'bg-surface-100-900 text-surface-600-400'}"

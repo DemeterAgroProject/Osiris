@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
     import { Bell, User } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
@@ -122,9 +123,10 @@
                 n.id === notification.id ? { ...n, is_read: true } : n
             );
         }
-        if (notification.link) {
+        // link vem do banco: só navega para rotas internas do app
+        if (notification.link?.startsWith('/') && !notification.link.startsWith('//')) {
             notifOpen = false;
-            goto(notification.link);
+            goto(resolve(notification.link));
         }
     }
 
@@ -153,7 +155,7 @@
             menuOpen = !menuOpen;
             notifOpen = false;
         } else {
-            goto('/login');
+            goto(resolve('/login'));
         }
     }
 
@@ -177,7 +179,7 @@
 
 <header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 shadow-sm">
     <div class="flex items-center justify-between">
-        <a href="/" class="flex h-10 w-10 items-center justify-center" aria-label="Início">
+        <a href={resolve('/')} class="flex h-10 w-10 items-center justify-center" aria-label="Início">
             <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
         </a>
 
@@ -231,7 +233,7 @@
                                     <p class="text-sm">Nenhuma notificação</p>
                                 </div>
                             {:else}
-                                {#each notifications as notif}
+                                {#each notifications as notif (notif.id)}
                                     <button
                                         type="button"
                                         onclick={() => markAsRead(notif)}

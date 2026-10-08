@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import { supabase } from '$lib/supabase';
     import { ChevronRight, Users, Briefcase, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
@@ -35,7 +36,7 @@
 
     function prevStep() {
         if (currentStep > 0) currentStep--;
-        else goto('/servicos');
+        else goto(resolve('/servicos'));
     }
 
     async function handleSubmit() {
@@ -70,7 +71,7 @@
             loading = false;
         } else {
             message = { text: 'Serviço publicado com sucesso no Osíris!', type: 'success' };
-            setTimeout(() => goto('/servicos'), 2000);
+            setTimeout(() => goto(resolve('/servicos')), 2000);
         }
     }
 </script>

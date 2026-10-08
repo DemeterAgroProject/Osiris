@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import {
 		Settings,
 		User,
@@ -96,7 +97,7 @@
 
     function navigate(href) {
         closeMenu();
-        goto(href);
+        goto(resolve(href));
     }
 
     async function handleSignOut() {
@@ -106,7 +107,7 @@
         profile = null;
         signingOut = false;
         closeMenu();
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     $effect(() => {

@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { MessageSquare, ChevronRight, Tractor, Briefcase, Package } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -77,16 +78,6 @@
 		return row?.products?.name || row?.services?.title || 'Anúncio';
 	}
 
-	function listingHref(row) {
-		if (row?.service_id) return `/anuncio/servico/${row.service_id}`;
-		if (row?.product_id) {
-			return row.products?.category === 'Maquinário'
-				? `/anuncio/maquinario/${row.product_id}`
-				: `/anuncio/produto/${row.product_id}`;
-		}
-		return null;
-	}
-
 	function pickCoverImage(images = []) {
 		if (!images?.length) return null;
 		const cover = images.find((img) => img.is_cover && img.url?.trim());
@@ -99,6 +90,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		const uniqueIds = [...new Set((productIds ?? []).filter(Boolean))];
 		if (!uniqueIds.length) return map;
@@ -243,7 +235,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto('/login?redirect=/negociacoes');
+			await goto(resolve('/login?redirect=/negociacoes'));
 			return;
 		}
 
@@ -349,7 +341,7 @@
 						{#each openNegotiations as row (row.id)}
 							{@const Icon = listingIcon(row)}
 							<a
-								href="/negociacoes/{row.id}"
+								href={resolve(`/negociacoes/${row.id}`)}
 								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500"
 							>
 								<div
@@ -402,7 +394,7 @@
 					<div class="mt-3 space-y-2">
 						{#each closedNegotiations as row (row.id)}
 							<a
-								href="/negociacoes/{row.id}"
+								href={resolve(`/negociacoes/${row.id}`)}
 								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
 							>
 								<div
@@ -435,7 +427,7 @@
 				{#each activeBookings as booking (booking.id)}
 					{@const Icon = listingIcon(booking)}
 					<a
-						href="/operacoes/{booking.id}"
+						href={resolve(`/operacoes/${booking.id}`)}
 						class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm hover:border-primary-500"
 					>
 						<div
@@ -486,7 +478,7 @@
 						<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
 						{#each closedBookings as booking (booking.id)}
 							<a
-								href="/operacoes/{booking.id}"
+								href={resolve(`/operacoes/${booking.id}`)}
 								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
 							>
 								<div class="min-w-0 flex-1">
