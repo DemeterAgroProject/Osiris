@@ -14,6 +14,7 @@
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
 
 	const monthNames = [
 		'Janeiro',
@@ -206,31 +207,9 @@
 		currentDate = new Date(currentYear, currentMonth + direction, 1);
 	}
 
-	async function updateBookingStatus(bookingId, newStatus) {
-		const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId);
-
-		if (!error) {
-			await loadAgenda();
-		} else {
-			alert('Erro ao atualizar status: ' + error.message);
-		}
-	}
-
 	function openCancelModal(item) {
 		itemToCancel = item;
 		showCancelModal = true;
-	}
-
-	function closeCancelModal() {
-		showCancelModal = false;
-		itemToCancel = null;
-	}
-
-	async function confirmCancellation() {
-		if (itemToCancel?.kind === 'booking') {
-			await updateBookingStatus(itemToCancel.id, 'cancelado');
-		}
-		closeCancelModal();
 	}
 
 	onMount(() => {
@@ -437,7 +416,7 @@
 							</a>
 							<button
 								type="button"
-								onclick={() => updateBookingStatus(req.id, 'cancelado')}
+								onclick={() => openCancelModal(req)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-2 text-xs font-semibold text-surface-700-300 hover:preset-tonal"
 							>
 								<XCircle class="h-3.5 w-3.5" /> Cancelar
@@ -505,33 +484,10 @@
 	<BottomNav active="inicio" />
 </div>
 
-{#if showCancelModal}
-	<div class="fixed inset-0 z-[100] flex items-center justify-center bg-surface-950/40 px-4 backdrop-blur-sm">
-		<div class="w-full max-w-sm rounded-container bg-surface-50-950 p-6 text-center shadow-xl">
-			<div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full preset-tonal-error">
-				<AlertCircle class="h-7 w-7 text-error-500" />
-			</div>
-			<h3 class="text-lg font-bold text-surface-950-50">Cancelar atividade?</h3>
-			<p class="mt-2 text-sm text-surface-600-400">
-				As datas serão liberadas no calendário para novos agendamentos.
-			</p>
-
-			<div class="mt-6 flex gap-3">
-				<button
-					type="button"
-					onclick={closeCancelModal}
-					class="flex-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-3 text-sm font-semibold text-surface-700-300 hover:preset-tonal"
-				>
-					Voltar
-				</button>
-				<button
-					type="button"
-					onclick={confirmCancellation}
-					class="flex-1 rounded-container preset-filled-error-500 py-3 text-sm font-semibold"
-				>
-					Sim, cancelar
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
+<CancelBookingDialog
+	bind:open={showCancelModal}
+	bookingId={itemToCancel?.id}
+	title="Cancelar atividade?"
+	message="As datas serão liberadas no calendário para novos agendamentos."
+	oncancelled={loadAgenda}
+/>

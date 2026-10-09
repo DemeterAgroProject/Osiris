@@ -24,7 +24,8 @@
 			solicitada: 'Solicitada',
 			em_negociacao: 'Em negociação',
 			aceita: 'Aceita',
-			recusada: 'Recusada'
+			recusada: 'Recusada',
+			cancelado: 'Cancelada'
 		};
 		return map[status] ?? status ?? '—';
 	}
@@ -38,6 +39,7 @@
 			case 'aceita':
 				return 'green';
 			case 'recusada':
+			case 'cancelado':
 				return 'red';
 			default:
 				return 'gray';
@@ -187,7 +189,7 @@
 		negotiations.filter((n) => isNegotiationOpen(n.status))
 	);
 	const closedNegotiations = $derived(
-		negotiations.filter((n) => n.status === 'aceita' || n.status === 'recusada')
+		negotiations.filter((n) => ['aceita', 'recusada', 'cancelado'].includes(n.status))
 	);
 	const activeBookings = $derived(
 		bookings.filter((b) => !['finalizada', 'cancelado', 'bloqueado_prestador'].includes(b.status))

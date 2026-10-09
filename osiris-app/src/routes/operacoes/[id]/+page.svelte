@@ -5,7 +5,7 @@
 	import { ChevronLeft, Play, Flag, Star, CheckCircle2 } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function formatCurrency(value) {
@@ -310,11 +310,6 @@
 		await loadBooking(id);
 		await tryFinalizeAfterReviews();
 	}
-
-	async function confirmCancel() {
-		showCancelDialog = false;
-		await updateBookingStatus('cancelado');
-	}
 </script>
 
 <svelte:head>
@@ -547,15 +542,10 @@
 		{/if}
 	</main>
 
-	<ConfirmDialog
+	<CancelBookingDialog
 		bind:open={showCancelDialog}
-		title="Cancelar operação?"
-		message="As datas serão liberadas e a operação não poderá ser retomada."
-		confirmLabel="Cancelar operação"
-		variant="danger"
-		loading={actionLoading}
-		onconfirm={confirmCancel}
-		oncancel={() => (showCancelDialog = false)}
+		{bookingId}
+		oncancelled={() => loadBooking(bookingId)}
 	/>
 
 	<BottomNav active="mais" />

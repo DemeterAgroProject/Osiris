@@ -198,7 +198,6 @@
 	function resolveSellerName(profile) {
 		return (
 			profile?.display_name ||
-			profile?.email ||
 			'Anunciante'
 		);
 	}
@@ -219,7 +218,7 @@
 
 		const { data, error } = await supabase
 			.from('profiles')
-			.select('*')
+			.select('id, display_name, photo_url')
 			.eq('id', ownerId)
 			.maybeSingle();
 

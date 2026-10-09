@@ -82,7 +82,7 @@
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
