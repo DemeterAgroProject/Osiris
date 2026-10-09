@@ -6,6 +6,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
+	import { showToast } from '$lib/components/ui/toast.js';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
 
@@ -123,7 +124,6 @@
 	let actionLoading = $state(false);
 	let showAcceptDialog = $state(false);
 	let showRejectDialog = $state(false);
-	let toastMessage = $state('');
 	let editPrice = $state('');
 	let editStart = $state('');
 	let editEnd = $state('');
@@ -267,13 +267,6 @@
 
 	async function handleProviderMessage() {
 		await markInNegotiation();
-	}
-
-	function showToast(message) {
-		toastMessage = message;
-		setTimeout(() => {
-			toastMessage = '';
-		}, 4000);
 	}
 
 	function resolveBookingIdFromRpc(data) {
@@ -590,15 +583,6 @@
 		onconfirm={confirmReject}
 		oncancel={() => (showRejectDialog = false)}
 	/>
-
-	{#if toastMessage}
-		<div
-			class="fixed bottom-24 left-1/2 z-[110] max-w-sm -translate-x-1/2 rounded-container preset-filled-surface-900-100 px-4 py-3 text-center text-sm font-medium shadow-lg"
-			role="status"
-		>
-			{toastMessage}
-		</div>
-	{/if}
 
 	<BottomNav active="mais" />
 </div>
