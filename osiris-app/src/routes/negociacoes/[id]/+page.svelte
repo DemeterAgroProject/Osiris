@@ -5,7 +5,7 @@
 	import { ChevronLeft, CheckCircle2, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
 
@@ -569,7 +569,7 @@
 		{/if}
 	</main>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={showAcceptDialog}
 		title="Aceitar proposta?"
 		message="Será criado um contrato ativo (agendamento) com os valores e datas acordados. Esta ação encerra a fase de proposta."
@@ -580,7 +580,7 @@
 		oncancel={() => (showAcceptDialog = false)}
 	/>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={showRejectDialog}
 		title="Recusar proposta?"
 		message="O cliente será informado e o chat será encerrado."

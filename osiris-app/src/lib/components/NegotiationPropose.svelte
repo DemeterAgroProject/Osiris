@@ -1,7 +1,8 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { X, Send } from 'lucide-svelte';
+	import { Send } from 'lucide-svelte';
+	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function parseCurrencyToNumber(value) {
@@ -157,150 +158,134 @@
 	}
 </script>
 
-{#if open}
-	<button
-		type="button"
-		class="fixed inset-0 z-[90] border-0 bg-surface-950/50 p-0"
-		onclick={closeModal}
-		aria-label="Fechar modal"
-	></button>
-
-	<div class="fixed inset-x-0 bottom-0 z-[100] rounded-t-3xl bg-surface-50-950 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:bg-transparent sm:p-6">
-		<div class="mx-auto flex max-h-[88vh] w-full max-w-3xl flex-col px-4 pb-6 pt-4 sm:rounded-container sm:border sm:border-surface-200-800 sm:bg-surface-50-950 sm:p-6">
-			<div class="mb-4 flex items-center justify-between">
-				<div>
-					<h2 class="text-lg font-bold text-surface-950-50">Fazer proposta</h2>
-					<p class="text-xs text-surface-600-400">Envie para {sellerName}</p>
-				</div>
-				<button
-					type="button"
-					onclick={closeModal}
-					aria-label="Fechar modal"
-					class="rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400"
-				>
-					<X class="h-5 w-5" />
-				</button>
-			</div>
-
-			<div class="overflow-y-auto pb-2">
-					<div class="rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3">
-						<p class="line-clamp-1 text-sm font-semibold text-surface-950-50">{title}</p>
-						<p class="text-sm font-bold text-primary-700">{priceLabel}</p>
-					</div>
-
-					<form class="mt-4 space-y-3" onsubmit={handleSubmit}>
-						{#if requiresDates}
-							<div class="grid grid-cols-2 gap-3">
-								<div>
-									<label
-										for="startDate"
-										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
-									>
-										Início
-									</label>
-									<input
-										id="startDate"
-										type="date"
-										bind:value={startDate}
-										class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-									/>
-								</div>
-								<div>
-									<label
-										for="endDate"
-										class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
-									>
-										Fim
-									</label>
-									<input
-										id="endDate"
-										type="date"
-										bind:value={endDate}
-										class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-									/>
-								</div>
-							</div>
-						{/if}
-
-						<div>
-							<label
-								for="proposalValue"
-								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
-							>
-								Valor proposto
-							</label>
-							<input
-								id="proposalValue"
-								type="text"
-								bind:value={proposalValue}
-								placeholder="R$ 0,00"
-								class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-								onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
-							/>
-						</div>
-
-						{#if showQuantity}
-							<div>
-								<label
-									for="quantity"
-									class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
-								>
-									Quantidade
-								</label>
-								<input
-									id="quantity"
-									type="number"
-									min="1"
-									step="1"
-									bind:value={quantity}
-									class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-								/>
-							</div>
-						{/if}
-
-						<div>
-							<label
-								for="message"
-								class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
-							>
-								Mensagem
-							</label>
-							<textarea
-								id="message"
-								rows="4"
-								bind:value={message}
-								placeholder="Detalhes da proposta, logística, frete..."
-								class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-							></textarea>
-						</div>
-
-						{#if error}
-							<p class="text-xs font-medium text-error-500">{error}</p>
-						{/if}
-
-						<div class="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-surface-200-800 bg-surface-50-950 pt-3">
-							<button
-								type="button"
-								onclick={closeModal}
-								class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal"
-							>
-								Cancelar
-							</button>
-							<button
-								type="submit"
-								disabled={sending}
-								class="inline-flex items-center justify-center gap-2 rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold disabled:opacity-60"
-							>
-								{#if sending}
-									Enviando...
-								{:else}
-									<Send class="h-4 w-4" />
-									Enviar proposta
-								{/if}
-							</button>
-						</div>
-					</form>
-			</div>
-		</div>
+<AppDialog
+	bind:open
+	title="Fazer proposta"
+	description="Envie para {sellerName}"
+	variant="sheet"
+	size="lg"
+	dismissible={!sending}
+	onclose={resetForm}
+>
+	<div class="rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3">
+		<p class="line-clamp-1 text-sm font-semibold text-surface-950-50">{title}</p>
+		<p class="text-sm font-bold text-primary-700">{priceLabel}</p>
 	</div>
-{/if}
+
+	<form id="negotiation-propose-form" class="mt-4 space-y-3" onsubmit={handleSubmit}>
+		{#if requiresDates}
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<label
+						for="startDate"
+						class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+					>
+						Início
+					</label>
+					<input
+						id="startDate"
+						type="date"
+						bind:value={startDate}
+						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					/>
+				</div>
+				<div>
+					<label
+						for="endDate"
+						class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+					>
+						Fim
+					</label>
+					<input
+						id="endDate"
+						type="date"
+						bind:value={endDate}
+						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					/>
+				</div>
+			</div>
+		{/if}
+
+		<div>
+			<label
+				for="proposalValue"
+				class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+			>
+				Valor proposto
+			</label>
+			<input
+				id="proposalValue"
+				type="text"
+				bind:value={proposalValue}
+				placeholder="R$ 0,00"
+				class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
+			/>
+		</div>
+
+		{#if showQuantity}
+			<div>
+				<label
+					for="quantity"
+					class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+				>
+					Quantidade
+				</label>
+				<input
+					id="quantity"
+					type="number"
+					min="1"
+					step="1"
+					bind:value={quantity}
+					class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				/>
+			</div>
+		{/if}
+
+		<div>
+			<label
+				for="message"
+				class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+			>
+				Mensagem
+			</label>
+			<textarea
+				id="message"
+				rows="4"
+				bind:value={message}
+				placeholder="Detalhes da proposta, logística, frete..."
+				class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+			></textarea>
+		</div>
+
+		{#if error}
+			<p class="text-xs font-medium text-error-500">{error}</p>
+		{/if}
+	</form>
+
+	{#snippet footer()}
+		<div class="grid grid-cols-2 gap-2">
+			<button
+				type="button"
+				onclick={closeModal}
+				disabled={sending}
+				class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+			>
+				Cancelar
+			</button>
+			<button
+				type="submit"
+				form="negotiation-propose-form"
+				disabled={sending}
+				class="inline-flex items-center justify-center gap-2 rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold disabled:opacity-60"
+			>
+				{#if sending}
+					Enviando...
+				{:else}
+					<Send class="h-4 w-4" />
+					Enviar proposta
+				{/if}
+			</button>
+		</div>
+	{/snippet}
+</AppDialog>

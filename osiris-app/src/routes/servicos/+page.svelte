@@ -17,7 +17,7 @@
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
 
 	let activeTab = $state('mao_de_obra');
@@ -595,7 +595,7 @@
 
 	<ServiceEditSheet bind:open={editOpen} service={editingService} onsaved={handleEditSaved} />
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={statusConfirmOpen}
 		title={statusConfirmContent?.title ?? ''}
 		message={statusConfirmContent?.message ?? ''}
@@ -606,7 +606,7 @@
 		oncancel={cancelToggleStatus}
 	/>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={deleteConfirmOpen}
 		title={deleteConfirmContent?.title ?? ''}
 		message={deleteConfirmContent?.message ?? ''}

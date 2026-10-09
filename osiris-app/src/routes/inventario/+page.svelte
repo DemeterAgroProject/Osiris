@@ -15,7 +15,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import InventoryEditSheet from '$lib/components/InventoryEditSheet.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 
@@ -775,7 +775,7 @@
 		onsaved={handleEditSaved}
 	/>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={statusConfirmOpen}
 		title={statusConfirmContent?.title ?? 'Confirmar'}
 		message={statusConfirmContent?.message ?? ''}
@@ -787,7 +787,7 @@
 		oncancel={cancelToggleStatus}
 	/>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={deleteConfirmOpen}
 		title={deleteConfirmContent?.title ?? 'Excluir anúncio?'}
 		message={deleteConfirmContent?.message ?? ''}
