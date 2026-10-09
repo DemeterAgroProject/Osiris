@@ -64,9 +64,9 @@
 							<Dialog.Title class="text-lg font-bold text-surface-950-50">{title}</Dialog.Title>
 							{#if description}
 								<Dialog.Description
-									class="{variant === 'sheet'
-										? 'text-xs'
-										: 'mt-2 text-sm leading-relaxed'} text-surface-600-400"
+									class={variant === 'sheet'
+										? 'text-xs text-surface-600-400'
+										: 'mt-2 text-sm leading-relaxed text-surface-700-300'}
 								>
 									{description}
 								</Dialog.Description>

@@ -5,6 +5,7 @@
     import { Bell, User } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
     import UserMenu from '$lib/components/UserMenu.svelte';
+    import AppPopover from '$lib/components/ui/AppPopover.svelte';
     
     function resolveDisplayName(profile, authUser) {
         return (
@@ -150,20 +151,6 @@
         return `${Math.floor(h / 24)}d`;
     }
 
-    function handleProfileClick() {
-        if (isLoggedIn) {
-            menuOpen = !menuOpen;
-            notifOpen = false;
-        } else {
-            goto(resolve('/login'));
-        }
-    }
-
-    function toggleNotif() {
-        notifOpen = !notifOpen;
-        menuOpen = false;
-    }
-
     onMount(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             refreshUser(session?.user ?? null);
@@ -184,108 +171,95 @@
         </a>
 
         <div class="flex items-center gap-3">
-            <!-- Sininho -->
-            <div class="relative">
-                <button
-                    type="button"
-                    onclick={toggleNotif}
-                    class="relative rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal"
-                    aria-label="Notificações"
-                >
+            <AppPopover
+                bind:open={notifOpen}
+                title="Notificações"
+                triggerClass="relative rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal"
+            >
+                {#snippet trigger()}
                     <Bell class="h-6 w-6" />
                     {#if unreadCount > 0}
                         <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full preset-filled-error-500 text-[10px] font-bold">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     {/if}
-                </button>
+                {/snippet}
 
-                <!-- Dropdown de notificações -->
-                {#if notifOpen}
-                    <!-- Overlay para fechar ao clicar fora -->
-                    <button
-                        type="button"
-                        class="fixed inset-0 z-40"
-                        aria-label="Fechar notificações"
-                        onclick={() => notifOpen = false}
-                    ></button>
+                {#snippet actions()}
+                    {#if unreadCount > 0}
+                        <button
+                            type="button"
+                            onclick={markAllAsRead}
+                            class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                        >
+                            Marcar todas como lidas
+                        </button>
+                    {/if}
+                {/snippet}
 
-                    <div class="absolute right-0 z-50 mt-2 w-80 rounded-container border border-surface-200-800 bg-surface-50-950 shadow-lg">
-                        <!-- Cabeçalho -->
-                        <div class="flex items-center justify-between border-b border-surface-200-800 px-4 py-3">
-                            <h2 class="text-sm font-semibold text-surface-950-50">Notificações</h2>
-                            {#if unreadCount > 0}
-                                <button
-                                    type="button"
-                                    onclick={markAllAsRead}
-                                    class="text-xs font-medium text-primary-600 hover:text-primary-700"
-                                >
-                                    Marcar todas como lidas
-                                </button>
-                            {/if}
+                <div class="max-h-96 overflow-y-auto overscroll-contain">
+                    {#if notifications.length === 0}
+                        <div class="flex flex-col items-center justify-center py-10 text-surface-600-400">
+                            <Bell class="mb-2 h-8 w-8 opacity-30" />
+                            <p class="text-sm">Nenhuma notificação</p>
                         </div>
+                    {:else}
+                        {#each notifications as notif (notif.id)}
+                            <button
+                                type="button"
+                                onclick={() => markAsRead(notif)}
+                                class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:preset-tonal {!notif.is_read ? 'preset-tonal-primary' : ''}"
+                            >
+                                <!-- Indicador de não lida -->
+                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {!notif.is_read ? 'bg-primary-500' : 'bg-transparent'}"></span>
 
-                        <!-- Lista -->
-                        <div class="max-h-96 overflow-y-auto">
-                            {#if notifications.length === 0}
-                                <div class="flex flex-col items-center justify-center py-10 text-surface-600-400">
-                                    <Bell class="mb-2 h-8 w-8 opacity-30" />
-                                    <p class="text-sm">Nenhuma notificação</p>
+                                <div class="flex-1 overflow-hidden">
+                                    <p class="truncate text-sm font-medium text-surface-950-50">{notif.title}</p>
+                                    {#if notif.body}
+                                        <p class="mt-0.5 truncate text-xs text-surface-600-400">{notif.body}</p>
+                                    {/if}
                                 </div>
-                            {:else}
-                                {#each notifications as notif (notif.id)}
-                                    <button
-                                        type="button"
-                                        onclick={() => markAsRead(notif)}
-                                        class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:preset-tonal {!notif.is_read ? 'preset-tonal-primary' : ''}"
-                                    >
-                                        <!-- Indicador de não lida -->
-                                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {!notif.is_read ? 'bg-primary-500' : 'bg-transparent'}"></span>
 
-                                        <div class="flex-1 overflow-hidden">
-                                            <p class="truncate text-sm font-medium text-surface-950-50">{notif.title}</p>
-                                            {#if notif.body}
-                                                <p class="mt-0.5 truncate text-xs text-surface-600-400">{notif.body}</p>
-                                            {/if}
-                                        </div>
-
-                                        <span class="shrink-0 text-xs text-surface-600-400">{formatTime(notif.created_at)}</span>
-                                    </button>
-                                {/each}
-                            {/if}
-                        </div>
-                    </div>
-                {/if}
-            </div>
+                                <span class="shrink-0 text-xs text-surface-600-400">{formatTime(notif.created_at)}</span>
+                            </button>
+                        {/each}
+                    {/if}
+                </div>
+            </AppPopover>
 
             <!-- Avatar -->
-            <button
-                type="button"
-                onclick={handleProfileClick}
-                class="rounded-full p-0.5 transition-colors hover:preset-tonal {isLoggedIn && menuOpen ? 'ring-2 ring-primary-500 ring-offset-1' : ''}"
-                aria-label={isLoggedIn ? 'Abrir menu do usuário' : 'Fazer login'}
-                aria-expanded={isLoggedIn ? menuOpen : undefined}
-                aria-haspopup={isLoggedIn ? 'menu' : undefined}
-            >
-                {#if isLoggedIn && avatarUrl && !imgError}
-                    <img
-                        src={avatarUrl}
-                        alt={displayName}
-                        class="h-9 w-9 rounded-full border border-surface-200-800 object-cover"
-                        onerror={() => imgError = true}
-                    />
-                {:else if isLoggedIn}
-                    <div class="flex h-9 w-9 items-center justify-center rounded-full preset-filled-primary-500 text-xs font-bold">
-                        {initials}
-                    </div>
-                {:else}
+            {#if isLoggedIn}
+                <UserMenu
+                    bind:open={menuOpen}
+                    triggerClass="rounded-full p-0.5 transition-colors hover:preset-tonal data-[state=open]:ring-2 data-[state=open]:ring-primary-500 data-[state=open]:ring-offset-1"
+                >
+                    {#snippet trigger()}
+                        {#if avatarUrl && !imgError}
+                            <img
+                                src={avatarUrl}
+                                alt={displayName}
+                                class="h-9 w-9 rounded-full border border-surface-200-800 object-cover"
+                                onerror={() => imgError = true}
+                            />
+                        {:else}
+                            <div class="flex h-9 w-9 items-center justify-center rounded-full preset-filled-primary-500 text-xs font-bold">
+                                {initials}
+                            </div>
+                        {/if}
+                    {/snippet}
+                </UserMenu>
+            {:else}
+                <button
+                    type="button"
+                    onclick={() => goto(resolve('/login'))}
+                    class="rounded-full p-0.5 transition-colors hover:preset-tonal"
+                    aria-label="Fazer login"
+                >
                     <span class="flex h-10 w-10 items-center justify-center rounded-full text-surface-600-400">
                         <User class="h-6 w-6" />
                     </span>
-                {/if}
-            </button>
+                </button>
+            {/if}
         </div>
     </div>
-
-    <UserMenu bind:open={menuOpen} />
 </header>

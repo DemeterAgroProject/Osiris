@@ -18,6 +18,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
+	import AppMenu from '$lib/components/ui/AppMenu.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
 
 	let activeTab = $state('mao_de_obra');
@@ -27,8 +28,6 @@
 	let ownerProfile = $state(null);
 	let statusMessage = $state({ text: '', type: '' });
 
-	let openMenu = $state(null);
-	let menuOpensUp = $state(false);
 	let imgErrors = $state({});
 
 	let editOpen = $state(false);
@@ -131,53 +130,12 @@
 		return `${formatted}${model !== 'Fixo' && model !== 'Empreitada/Fixo' && model !== 'A Combinar' ? ` / ${model}` : ''}`;
 	}
 
-	function menuPositionClass() {
-		return menuOpensUp
-			? 'bottom-full mb-0.5 origin-bottom-right'
-			: 'top-full mt-0.5 origin-top-right';
-	}
-
-	function toggleMenu(id, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (openMenu === id) {
-			openMenu = null;
-			return;
-		}
-
-		const trigger = event.currentTarget;
-		if (trigger instanceof HTMLElement) {
-			const rect = trigger.getBoundingClientRect();
-			const menuHeight = 224;
-			const bottomReserve = 112;
-			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
-			menuOpensUp = spaceBelow < menuHeight;
-		} else {
-			menuOpensUp = false;
-		}
-
-		openMenu = id;
-	}
-
-	function handleWindowClick(event) {
-		if (!openMenu) return;
-		if (event.target instanceof Element && event.target.closest('[data-service-menu]')) {
-			return;
-		}
-		openMenu = null;
-	}
-
-	function openEdit(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function openEdit(service) {
 		editingService = service;
 		editOpen = true;
 	}
 
-	function requestToggleStatus(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestToggleStatus(service) {
 		statusConfirmItem = service;
 		statusConfirmOpen = true;
 	}
@@ -186,15 +144,37 @@
 		statusConfirmItem = null;
 	}
 
-	function requestDelete(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestDelete(service) {
 		deleteConfirmItem = service;
 		deleteConfirmOpen = true;
 	}
 
 	function cancelDelete() {
 		deleteConfirmItem = null;
+	}
+
+	function serviceMenuItems(service) {
+		const active = isActiveStatus(service.status);
+		return [
+			{ value: 'ver', label: 'Ver anúncio', icon: ExternalLink, href: getServiceHref(service) },
+			{ value: 'editar', label: 'Editar', icon: Edit, onselect: () => openEdit(service) },
+			{
+				value: 'status',
+				label: active ? 'Pausar serviço' : 'Ativar serviço',
+				icon: active ? Pause : Play,
+				disabled: togglingId === service.id,
+				onselect: () => requestToggleStatus(service)
+			},
+			{
+				value: 'excluir',
+				label: 'Excluir',
+				icon: Trash2,
+				danger: true,
+				separator: true,
+				disabled: deletingId === service.id,
+				onselect: () => requestDelete(service)
+			}
+		];
 	}
 
 	async function fetchServices() {
@@ -365,8 +345,6 @@
 	});
 </script>
 
-<svelte:window onclick={handleWindowClick} />
-
 <div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
@@ -500,75 +478,16 @@
 								{/if}
 							</div>
 
-							<div class="relative z-10 shrink-0 self-start" data-service-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(serv.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do serviço"
-									aria-expanded={openMenu === serv.id}
-									aria-haspopup="menu"
+							<div class="shrink-0 self-start">
+								<AppMenu
+									items={serviceMenuItems(serv)}
+									label="Ações do serviço"
+									triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === serv.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={resolve(getServiceHref(serv))}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === serv.id}
-												onclick={(event) => requestToggleStatus(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(serv.status)}
-													<Pause class="h-4 w-4" />
-													Pausar serviço
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar serviço
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === serv.id}
-												onclick={(event) => requestDelete(serv, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+									{#snippet trigger()}
+										<MoreVertical class="h-5 w-5" />
+									{/snippet}
+								</AppMenu>
 							</div>
 						</div>
 					</article>

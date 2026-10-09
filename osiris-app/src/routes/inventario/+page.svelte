@@ -16,6 +16,7 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import InventoryEditSheet from '$lib/components/InventoryEditSheet.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
+	import AppMenu from '$lib/components/ui/AppMenu.svelte';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 
@@ -130,8 +131,6 @@
 
 	let activeTab = $state('maquinarios');
 	let searchQuery = $state('');
-	let openMenu = $state(null);
-	let menuOpensUp = $state(false);
 
 	let loading = $state(true);
 	let statusMessage = $state({ text: '', type: '' });
@@ -287,16 +286,12 @@
 		}
 	}
 
-	function openEdit(item, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function openEdit(item) {
 		editingProduct = item;
 		editOpen = true;
 	}
 
-	function requestToggleStatus(item, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestToggleStatus(item) {
 		statusConfirmItem = item;
 		statusConfirmOpen = true;
 	}
@@ -333,9 +328,7 @@
 		togglingId = null;
 	}
 
-	function requestDelete(item, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestDelete(item) {
 		deleteConfirmItem = item;
 		deleteConfirmOpen = true;
 	}
@@ -428,41 +421,28 @@
 		deletingId = null;
 	}
 
-	function menuPositionClass() {
-		return menuOpensUp
-			? 'bottom-full mb-0.5 origin-bottom-right'
-			: 'top-full mt-0.5 origin-top-right';
-	}
-
-	function toggleMenu(id, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (openMenu === id) {
-			openMenu = null;
-			return;
-		}
-
-		const trigger = event.currentTarget;
-		if (trigger instanceof HTMLElement) {
-			const rect = trigger.getBoundingClientRect();
-			const menuHeight = 224;
-			const bottomReserve = 112;
-			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
-			menuOpensUp = spaceBelow < menuHeight;
-		} else {
-			menuOpensUp = false;
-		}
-
-		openMenu = id;
-	}
-
-	function handleWindowClick(event) {
-		if (!openMenu) return;
-		if (event.target instanceof Element && event.target.closest('[data-inventory-menu]')) {
-			return;
-		}
-		openMenu = null;
+	function adMenuItems(item) {
+		const active = isActiveStatus(item.status);
+		return [
+			{ value: 'ver', label: 'Ver anúncio', icon: ExternalLink, href: getAdHref(item) },
+			{ value: 'editar', label: 'Editar', icon: Edit, onselect: () => openEdit(item) },
+			{
+				value: 'status',
+				label: active ? 'Pausar anúncio' : 'Ativar anúncio',
+				icon: active ? Pause : Play,
+				disabled: togglingId === item.id,
+				onselect: () => requestToggleStatus(item)
+			},
+			{
+				value: 'excluir',
+				label: 'Excluir',
+				icon: Trash2,
+				danger: true,
+				separator: true,
+				disabled: deletingId === item.id,
+				onselect: () => requestDelete(item)
+			}
+		];
 	}
 
 	async function handleEditSaved() {
@@ -470,8 +450,6 @@
 		statusMessage = { text: 'Anúncio atualizado com sucesso.', type: 'success' };
 	}
 </script>
-
-<svelte:window onclick={handleWindowClick} />
 
 <div class="min-h-screen  pb-20">
 	<Header />
@@ -576,75 +554,16 @@
 									</span>
 								</div>
 							</div>
-							<div class="relative z-10 shrink-0 self-start" data-inventory-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(maq.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do anúncio"
-									aria-expanded={openMenu === maq.id}
-									aria-haspopup="menu"
+							<div class="shrink-0 self-start">
+								<AppMenu
+									items={adMenuItems(maq)}
+									label="Ações do anúncio"
+									triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === maq.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={resolve(getAdHref(maq))}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === maq.id}
-												onclick={(event) => requestToggleStatus(maq, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(maq.status)}
-													<Pause class="h-4 w-4" />
-													Pausar anúncio
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar anúncio
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === maq.id}
-												onclick={(event) => requestDelete(maq, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+									{#snippet trigger()}
+										<MoreVertical class="h-5 w-5" />
+									{/snippet}
+								</AppMenu>
 							</div>
 						</div>
 					</article>
@@ -688,75 +607,16 @@
 									</span>
 								</div>
 							</div>
-							<div class="relative z-10 shrink-0 self-start" data-inventory-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(prod.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do anúncio"
-									aria-expanded={openMenu === prod.id}
-									aria-haspopup="menu"
+							<div class="shrink-0 self-start">
+								<AppMenu
+									items={adMenuItems(prod)}
+									label="Ações do anúncio"
+									triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
 								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === prod.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={resolve(getAdHref(prod))}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === prod.id}
-												onclick={(event) => requestToggleStatus(prod, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(prod.status)}
-													<Pause class="h-4 w-4" />
-													Pausar anúncio
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar anúncio
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === prod.id}
-												onclick={(event) => requestDelete(prod, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
+									{#snippet trigger()}
+										<MoreVertical class="h-5 w-5" />
+									{/snippet}
+								</AppMenu>
 							</div>
 						</div>
 					</article>
