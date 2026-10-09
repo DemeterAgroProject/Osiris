@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import {
@@ -8,12 +9,12 @@
 		Clock,
 		CheckCircle2,
 		XCircle,
+		AlertCircle,
 		MessageSquare
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
 
 	const monthNames = [
 		'Janeiro',
@@ -206,41 +207,9 @@
 		currentDate = new Date(currentYear, currentMonth + direction, 1);
 	}
 
-	async function updateBookingStatus(bookingId, newStatus) {
-		const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId);
-
-		if (!error) {
-			await loadAgenda();
-		} else {
-			alert('Erro ao atualizar status: ' + error.message);
-		}
-	}
-
 	function openCancelModal(item) {
 		itemToCancel = item;
 		showCancelModal = true;
-	}
-
-	function closeCancelModal() {
-		showCancelModal = false;
-		itemToCancel = null;
-	}
-
-	async function confirmCancellation() {
-		if (itemToCancel?.kind === 'booking') {
-			const { error } = await supabase.rpc('cancel_booking', {
-				p_booking_id: itemToCancel.id,
-				p_cancellation_reason: 'operational_unavailability',
-				p_cancellation_reason_details: null
-			});
-
-			if (error) {
-				alert('Erro ao cancelar: ' + error.message);
-			} else {
-				await loadAgenda();
-			}
-		}
-		closeCancelModal();
 	}
 
 	onMount(() => {
@@ -248,23 +217,23 @@
 	});
 </script>
 
-<div class="min-h-screen bg-surface-50-950 pb-20 lg:pb-0">
+<div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
-	<main class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
 		<div>
 			<h1 class="text-xl font-bold text-surface-950-50">Minha Agenda</h1>
-			<p class="mt-0.5 text-sm text-surface-700-300">
+			<p class="mt-0.5 text-sm text-surface-600-400">
 				Propostas em negociação e operações confirmadas no calendário.
 			</p>
 		</div>
 
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<LoadingIndicator label="Carregando agenda..." />
+				<div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-500"></div>
 			</div>
 		{:else}
-			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="text-base font-bold text-surface-950-50">{monthNames[currentMonth]} {currentYear}</h2>
 					<div class="flex gap-1">
@@ -273,21 +242,21 @@
 							onclick={() => changeMonth(-1)}
 							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronLeft class="h-4 w-4 text-surface-700-300" />
+							<ChevronLeft class="h-4 w-4 text-surface-600-400" />
 						</button>
 						<button
 							type="button"
 							onclick={() => changeMonth(1)}
 							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
 						>
-							<ChevronRight class="h-4 w-4 text-surface-700-300" />
+							<ChevronRight class="h-4 w-4 text-surface-600-400" />
 						</button>
 					</div>
 				</div>
 
 				<div
 					style="display: grid; grid-template-columns: repeat(7, 1fr);"
-					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-700-300"
+					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-600-400"
 				>
 					<div>Dom</div>
 					<div>Seg</div>
@@ -299,20 +268,21 @@
 				</div>
 
 				<div style="display: grid; grid-template-columns: repeat(7, 1fr);" class="gap-1">
-					{#each calendarDays as { day, cellState }}
+					{#each calendarDays as { day, dateString, cellState }, index (dateString ?? `empty-${index}`)}
 						<div
-							class="relative flex aspect-square items-center justify-center rounded-container border text-sm transition-all lg:aspect-auto lg:min-h-20
+							style="aspect-ratio: 1 / 1;"
+							class="relative flex items-center justify-center rounded-container border text-sm transition-all
 							{day
 								? cellState === 'conflito'
-									? 'preset-filled-error-500 font-bold '
+									? 'preset-filled-error-500 font-bold shadow-sm'
 									: cellState === 'em_operacao'
-										? 'preset-filled-primary-500 font-bold '
+										? 'preset-filled-primary-500 font-bold shadow-sm'
 										: cellState === 'pendente'
-											? 'animate-pulse preset-tonal-warning font-bold '
+											? 'animate-pulse preset-tonal-warning font-bold shadow-sm'
 											: cellState === 'em_negociacao'
-												? 'preset-filled-secondary-500 font-bold '
+												? 'preset-filled-secondary-500 font-bold shadow-sm'
 												: cellState === 'solicitada'
-													? 'preset-tonal-secondary font-bold '
+													? 'preset-tonal-secondary font-bold shadow-sm'
 													: 'border-surface-200-800 bg-surface-50-950 text-surface-950-50'
 								: 'border-none bg-transparent text-transparent'}"
 						>
@@ -342,13 +312,13 @@
 				</div>
 			</div>
 
-			<div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Propostas em negociação</h2>
+			<div class="space-y-3">
+				<h2 class="text-base font-bold text-surface-950-50">Propostas em negociação</h2>
 
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4  {conflict
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
 							? 'border-error-500 ring-1 ring-error-500/20'
 							: 'border-surface-200-800'}"
 					>
@@ -364,7 +334,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{neg.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(neg.start_date)} até {formatDbDate(neg.end_date)}
 								</p>
@@ -386,7 +356,7 @@
 						{/if}
 
 						<a
-							href={neg.href}
+							href={resolve(neg.href)}
 							class="flex w-full items-center justify-center gap-1 rounded-container preset-filled-secondary-500 py-2 text-xs font-semibold"
 						>
 							Abrir negociação
@@ -394,20 +364,20 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhuma proposta com datas no momento.
 					</div>
 				{/each}
 			</div>
 
-			<div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Bookings pendentes</h2>
+			<div class="space-y-3">
+				<h2 class="text-base font-bold text-surface-950-50">Bookings pendentes</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4  {conflict
+						class="flex flex-col justify-between gap-3 rounded-container border bg-surface-50-950 p-4 shadow-sm {conflict
 							? 'border-error-500 ring-1 ring-error-500/20'
 							: 'border-surface-200-800'}"
 					>
@@ -421,7 +391,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{req.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(req.start_date)} até {formatDbDate(req.end_date)}
 								</p>
@@ -439,7 +409,7 @@
 
 						<div class="flex gap-2">
 							<a
-								href={req.href}
+								href={resolve(req.href)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container preset-filled-primary-500 py-2 text-xs font-semibold"
 							>
 								<CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
@@ -455,19 +425,19 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhum booking pendente no momento.
 					</div>
 				{/each}
 			</div>
 
-			<div class="space-y-3 p-0.5 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-				<h2 class="text-base font-bold text-surface-950-50 lg:col-span-2">Em operação</h2>
+			<div class="space-y-3 p-0.5">
+				<h2 class="text-base font-bold text-surface-950-50">Em operação</h2>
 
 				{#each operatingBookings as conf (conf.id)}
 					<div
-						class="flex flex-col justify-between gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 "
+						class="flex flex-col justify-between gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm"
 					>
 						<div class="flex items-start gap-3">
 							<div
@@ -477,7 +447,7 @@
 							</div>
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-bold text-surface-950-50">{conf.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-700-300">
+								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
 									<Clock class="h-3 w-3" />
 									De {formatDbDate(conf.start_date)} até {formatDbDate(conf.end_date)}
 								</p>
@@ -486,7 +456,7 @@
 
 						<div class="flex gap-2 border-t border-surface-200-800 pt-2">
 							<a
-								href={conf.href}
+								href={resolve(conf.href)}
 								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-primary-500 preset-tonal-primary py-2 text-xs font-semibold"
 							>
 								Ver operação
@@ -502,7 +472,7 @@
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-700-300"
+						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
 						Nenhuma operação em campo no momento.
 					</div>
@@ -514,13 +484,10 @@
 	<BottomNav active="inicio" />
 </div>
 
-<ConfirmDialog
+<CancelBookingDialog
 	bind:open={showCancelModal}
+	bookingId={itemToCancel?.id}
 	title="Cancelar atividade?"
 	message="As datas serão liberadas no calendário para novos agendamentos."
-	confirmLabel="Sim, cancelar"
-	cancelLabel="Voltar"
-	variant="danger"
-	onconfirm={confirmCancellation}
-	oncancel={closeCancelModal}
+	oncancelled={loadAgenda}
 />

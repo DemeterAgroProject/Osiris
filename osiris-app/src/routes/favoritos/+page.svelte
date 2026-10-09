@@ -1,10 +1,10 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Heart } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProductCard from '$lib/components/ProductCard.svelte';
-	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import { supabase } from '$lib/supabase';
 	import { ChevronLeft } from 'lucide-svelte';
 
@@ -27,6 +27,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		if (!productIds?.length) return map;
 
@@ -124,7 +125,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto('/login?redirect=/favoritos');
+			await goto(resolve('/login?redirect=/favoritos'));
 			return;
 		}
 
@@ -162,29 +163,30 @@
 	<title>Favoritos — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
-	<main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+	<main class="mx-auto w-full max-w-3xl px-4 py-6">
 
-
+		
 		<div>
 			<h1 class="text-2xl font-bold">Favoritos</h1>
-			<p class="mt-1 text-sm text-surface-700-300">Anúncios que você favoritou no marketplace.</p>
+			<p class="mt-1 text-sm text-surface-600-400">Anúncios que você favoritou no marketplace.</p>
 		</div>
-
+		
 		<a
-			href="/buscar"
-			class="btn btn-sm mx-4 mt-4 preset-outlined-surface-500 text-surface-800-200"
-			aria-label="Voltar para a busca"
+			href={resolve('/buscar')}
+			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
-			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
+			<ChevronLeft class="h-4 w-4" />
 			Voltar
 		</a>
-
+		
 		{#if loading}
-			<div class="mt-6">
-				<ListingSkeleton variant="grid" count={4} label="Carregando favoritos..." />
+			<div class="flex justify-center py-16">
+				<div
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
+				></div>
 			</div>
 		{:else if errorMessage}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
@@ -192,20 +194,20 @@
 			<div
 				class="mt-6 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 			>
-				<Heart class="mx-auto h-10 w-10 text-surface-700-300" />
+				<Heart class="mx-auto h-10 w-10 text-surface-400-600" />
 				<p class="mt-3 text-sm font-semibold">Nenhum anúncio favoritado</p>
-				<p class="mt-1 text-xs text-surface-700-300">
+				<p class="mt-1 text-xs text-surface-600-400">
 					Toque no coração em um anúncio para favoritá-lo e guardá-lo aqui.
 				</p>
 				<a
-					href="/buscar"
+					href={resolve('/buscar')}
 					class="btn preset-filled-primary-500 mt-5 inline-flex rounded-container px-4 py-3 text-sm font-semibold"
 				>
 					Explorar marketplace
 				</a>
 			</div>
 		{:else}
-			<div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+			<div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2">
 				{#each favorites as favorite (favorite.id)}
 					<ProductCard
 						title={favorite.title}

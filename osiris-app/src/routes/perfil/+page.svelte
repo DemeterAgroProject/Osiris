@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 
@@ -12,11 +13,11 @@
 		} = await supabase.auth.getUser();
 
 		if (user?.id) {
-			await goto(`/perfil/${user.id}`, { replaceState: true });
+			await goto(resolve(`/perfil/${user.id}`), { replaceState: true });
 			return;
 		}
 
-		await goto('/login?redirect=/perfil', { replaceState: true });
+		await goto(resolve('/login?redirect=/perfil'), { replaceState: true });
 	});
 </script>
 

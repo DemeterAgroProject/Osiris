@@ -1,12 +1,11 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ChevronLeft, Play, Flag, Star, CheckCircle2, X } from 'lucide-svelte';
+	import { ChevronLeft, Play, Flag, Star, CheckCircle2 } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
-	import Rating from '$lib/components/Rating.svelte';
-	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function formatCurrency(value) {
@@ -58,33 +57,15 @@
 	let errorMessage = $state('');
 	let actionLoading = $state(false);
 	let showCancelDialog = $state(false);
-	let cancellationReason = $state('');
-	let cancellationReasonDetails = $state('');
 	let rating = $state(5);
 	let comment = $state('');
 	let reviewSubmitting = $state(false);
-
-	const cancellationReasons = [
-		{ value: 'mechanical_issue', label: 'Problema mecanico' },
-		{ value: 'weather_conditions', label: 'Condicoes climaticas' },
-		{ value: 'logistical_issue', label: 'Falha logistica / Transporte' },
-		{ value: 'operational_unavailability', label: 'Indisponibilidade operacional' },
-		{ value: 'commercial_disagreement', label: 'Desacordo comercial' },
-		{ value: 'withdrawal', label: 'Desistencia' },
-		{ value: 'other', label: 'Outro' }
-	];
 
 	const bookingId = $derived(page.params.id);
 	const isProvider = $derived(authUserId && booking?.provider_id === authUserId);
 	const myReview = $derived(reviews.find((r) => r.reviewer_id === authUserId));
 	const revieweeId = $derived(isProvider ? booking?.client_id : booking?.provider_id);
-	const canReview = $derived(['em_avaliacao', 'cancelado'].includes(booking?.status) && !myReview);
-	const canCancelBooking = $derived(
-		booking &&
-			authUserId &&
-			[booking.client_id, booking.provider_id].includes(authUserId) &&
-			['pendente', 'em_operacao'].includes(booking.status)
-	);
+	const canReview = $derived(booking?.status === 'em_avaliacao' && !myReview);
 	const bothReviewed = $derived(
 		booking &&
 			reviews.some((r) => r.reviewer_id === booking.client_id) &&
@@ -117,10 +98,6 @@
 				: `/anuncio/produto/${booking.product_id}`;
 		}
 		return null;
-	}
-
-	function cancellationReasonLabel(reason) {
-		return cancellationReasons.find((item) => item.value === reason)?.label ?? reason ?? 'Nao informado';
 	}
 
 	function pickCoverImage(images = []) {
@@ -235,7 +212,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=/operacoes/${id}`);
+			await goto(resolve(`/login?redirect=/operacoes/${id}`));
 			return;
 		}
 
@@ -297,17 +274,6 @@
 		}
 	}
 
-	function openCancelDialog() {
-		cancellationReason = '';
-		cancellationReasonDetails = '';
-		showCancelDialog = true;
-	}
-
-	function closeCancelDialog() {
-		if (actionLoading) return;
-		showCancelDialog = false;
-	}
-
 	async function tryFinalizeAfterReviews() {
 		if (!booking || booking.status !== 'em_avaliacao') return;
 
@@ -344,71 +310,34 @@
 		await loadBooking(id);
 		await tryFinalizeAfterReviews();
 	}
-
-	async function confirmCancel() {
-		const id = bookingId;
-		if (!id) return;
-
-		errorMessage = '';
-
-		if (!cancellationReason) {
-			errorMessage = 'Selecione o motivo do cancelamento.';
-			return;
-		}
-
-		if (
-			cancellationReason === 'other' &&
-			cancellationReasonDetails.trim().length < 15
-		) {
-			errorMessage = 'Descreva o motivo com pelo menos 15 caracteres.';
-			return;
-		}
-
-		actionLoading = true;
-		const { error } = await supabase.rpc('cancel_booking', {
-			p_booking_id: id,
-			p_cancellation_reason: cancellationReason,
-			p_cancellation_reason_details:
-				cancellationReason === 'other' ? cancellationReasonDetails.trim() : null
-		});
-
-		actionLoading = false;
-
-		if (error) {
-			errorMessage = error.message;
-			return;
-		}
-
-		showCancelDialog = false;
-		await loadBooking(id);
-	}
 </script>
 
 <svelte:head>
 	<title>Operação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
-	<main class="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
-			href="/negociacoes"
-			class="btn btn-sm preset-outlined-surface-500 text-surface-800-200"
-			aria-label="Voltar para negociações"
+			href={resolve('/negociacoes')}
+			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
 		>
-			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
+			<ChevronLeft class="h-4 w-4" />
 			Negociações
 		</a>
 
 		{#if loading}
 			<div class="flex justify-center py-16">
-				<LoadingIndicator label="Carregando operação..." />
+				<div
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
+				></div>
 			</div>
 		{:else if errorMessage && !booking}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if booking}
-			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				{#if booking.coverUrl}
 					<img
 						src={booking.coverUrl}
@@ -427,13 +356,13 @@
 						{/if}
 						<div class="min-w-0">
 							{#if listingHref()}
-								<a href={listingHref()} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
+								<a href={resolve(listingHref())} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
 									{listingTitle()}
 								</a>
 							{:else}
 								<h1 class="text-xl font-bold text-surface-950-50">{listingTitle()}</h1>
 							{/if}
-							<p class="mt-1 text-sm text-surface-700-300">
+							<p class="mt-1 text-sm text-surface-600-400">
 								{isProvider ? 'Cliente' : 'Provedor'}: {counterpartyName()}
 							</p>
 						</div>
@@ -449,32 +378,16 @@
 
 				<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
 					<div>
-						<dt class="text-xs text-surface-700-300">Valor acordado</dt>
+						<dt class="text-xs text-surface-600-400">Valor acordado</dt>
 						<dd class="font-semibold text-primary-700">{formatCurrency(booking.total_price)}</dd>
 					</div>
 					<div class="col-span-2">
-						<dt class="text-xs text-surface-700-300">Período</dt>
+						<dt class="text-xs text-surface-600-400">Período</dt>
 						<dd class="font-medium text-surface-950-50">
 							{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
 						</dd>
 					</div>
 				</dl>
-
-				{#if booking.status === 'cancelado'}
-					<div class="mt-4 rounded-container preset-tonal-error p-3 text-sm">
-						<p class="font-semibold text-surface-950-50">
-							Motivo: {cancellationReasonLabel(booking.cancellation_reason)}
-						</p>
-						{#if booking.cancellation_reason_details}
-							<p class="mt-1 text-surface-700-300">{booking.cancellation_reason_details}</p>
-						{/if}
-						{#if booking.cancelled_at}
-							<p class="mt-2 text-xs text-surface-700-300">
-								Cancelado em {formatDbDate(booking.cancelled_at)}
-							</p>
-						{/if}
-					</div>
-				{/if}
 			</div>
 
 			{#if errorMessage}
@@ -512,7 +425,7 @@
 					)}
 						<button
 							type="button"
-							onclick={openCancelDialog}
+							onclick={() => (showCancelDialog = true)}
 							class="w-full rounded-container border border-error-500 py-2.5 text-sm font-semibold text-error-500 hover:preset-tonal-error"
 						>
 							Cancelar operação
@@ -529,45 +442,37 @@
 				</p>
 			{/if}
 
-			{#if canCancelBooking && !isProvider}
-				<button
-					type="button"
-					onclick={openCancelDialog}
-					disabled={actionLoading}
-					class="mt-4 w-full rounded-container border border-error-500 py-2.5 text-sm font-semibold text-error-500 hover:preset-tonal-error disabled:opacity-60"
-				>
-					Cancelar operaÃ§Ã£o
-				</button>
-			{/if}
-
-			{#if booking.status === 'em_avaliacao' || booking.status === 'cancelado'}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+			{#if booking.status === 'em_avaliacao'}
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 					<h2 class="flex items-center gap-2 text-sm font-bold text-surface-950-50">
 						<Star class="h-4 w-4 text-warning-500" />
 						Avaliar experiência
 					</h2>
 
 					{#if myReview}
-						<p class="mt-3 text-sm text-surface-700-300">
+						<p class="mt-3 text-sm text-surface-600-400">
 							Você já enviou sua avaliação ({myReview.rating}/5).
 						</p>
 					{:else if canReview}
-						<div class="mt-3">
-							<Rating
-								bind:value={rating}
-								readOnly={false}
-								allowHalf={false}
-								count={0}
-								size="lg"
-								showCount={false}
-								showValue={false}
-							/>
+						<div class="mt-3 flex gap-1">
+							{#each [1, 2, 3, 4, 5] as star (star)}
+								<button
+									type="button"
+									onclick={() => (rating = star)}
+									class="rounded p-1 {rating >= star
+										? 'text-warning-500'
+										: 'text-surface-400-600'}"
+									aria-label="{star} estrelas"
+								>
+									<Star class="h-7 w-7 {rating >= star ? 'fill-current' : ''}" />
+								</button>
+							{/each}
 						</div>
 						<textarea
 							rows="3"
 							bind:value={comment}
 							placeholder="Comentário opcional..."
-							class="textarea mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+							class="mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
 						></textarea>
 						<button
 							type="button"
@@ -579,10 +484,8 @@
 						</button>
 					{/if}
 
-					<p class="mt-3 text-xs text-surface-700-300">
-						{booking.status === 'cancelado'
-							? 'A avaliação ficará vinculada à operação cancelada para registrar a experiência.'
-							: 'A operação será finalizada automaticamente quando cliente e provedor avaliarem.'}
+					<p class="mt-3 text-xs text-surface-600-400">
+						A operação será finalizada automaticamente quando cliente e provedor avaliarem.
 					</p>
 
 					{#if canManualFinalize}
@@ -610,7 +513,7 @@
 			{/if}
 
 			{#if reviews.length}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 					<h2 class="text-sm font-bold text-surface-950-50">Avaliações desta operação</h2>
 					<ul class="mt-3 space-y-3">
 						{#each reviews as review (review.id)}
@@ -629,7 +532,7 @@
 									</div>
 								</div>
 								{#if review.comment}
-									<p class="mt-2 text-sm text-surface-700-300">{review.comment}</p>
+									<p class="mt-2 text-sm text-surface-600-400">{review.comment}</p>
 								{/if}
 							</li>
 						{/each}
@@ -639,95 +542,11 @@
 		{/if}
 	</main>
 
-	<Dialog
-		open={showCancelDialog}
-		onOpenChange={(details) => {
-			if (!details.open) closeCancelDialog();
-			showCancelDialog = details.open;
-		}}
-		closeOnEscape={!actionLoading}
-		closeOnInteractOutside={!actionLoading}
-		role="alertdialog"
-	>
-		{#if showCancelDialog}
-			<Portal>
-				<Dialog.Backdrop class="fixed inset-0 z-[100] bg-surface-950/60 backdrop-blur-sm" />
-				<Dialog.Positioner class="fixed inset-0 z-[101] flex items-end justify-center p-4 sm:items-center">
-					<Dialog.Content
-						class="card w-full max-w-md rounded-container border border-surface-200-800 bg-surface-50-950 p-5"
-					>
-						<div class="mb-4 flex items-start justify-between gap-3">
-							<div class="min-w-0">
-								<Dialog.Title class="text-lg font-bold text-surface-950-50">
-									Cancelar operação
-								</Dialog.Title>
-								<Dialog.Description class="mt-2 text-sm leading-relaxed text-surface-700-300">
-									Informe o motivo. A outra parte poderá ver o cancelamento e avaliar a experiência.
-								</Dialog.Description>
-							</div>
-							<button
-								type="button"
-								class="btn-icon shrink-0 rounded-full preset-tonal-surface disabled:opacity-50"
-								disabled={actionLoading}
-								onclick={closeCancelDialog}
-								aria-label="Fechar"
-							>
-								<X class="h-5 w-5" />
-							</button>
-						</div>
-
-						<div class="space-y-3">
-							<label class="block text-sm font-medium text-surface-700-300" for="cancellation-reason">
-								Motivo do cancelamento
-							</label>
-							<select
-								id="cancellation-reason"
-								bind:value={cancellationReason}
-								class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-sm"
-							>
-								<option value="">Selecione um motivo</option>
-								{#each cancellationReasons as reason (reason.value)}
-									<option value={reason.value}>{reason.label}</option>
-								{/each}
-							</select>
-
-							{#if cancellationReason === 'other'}
-								<label class="block text-sm font-medium text-surface-700-300" for="cancellation-details">
-									Detalhes do motivo
-								</label>
-								<textarea
-									id="cancellation-details"
-									rows="4"
-									bind:value={cancellationReasonDetails}
-									class="textarea w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-sm"
-									placeholder="Descreva o motivo com pelo menos 15 caracteres"
-								></textarea>
-							{/if}
-						</div>
-
-						<div class="mt-5 grid grid-cols-2 gap-2">
-							<button
-								type="button"
-								class="btn min-h-11 w-full preset-outlined-surface-500 disabled:opacity-50"
-								disabled={actionLoading}
-								onclick={closeCancelDialog}
-							>
-								Voltar
-							</button>
-							<button
-								type="button"
-								class="btn min-h-11 w-full preset-filled-error-500 font-semibold disabled:opacity-60"
-								disabled={actionLoading}
-								onclick={confirmCancel}
-							>
-								{actionLoading ? 'Cancelando...' : 'Confirmar'}
-							</button>
-						</div>
-					</Dialog.Content>
-				</Dialog.Positioner>
-			</Portal>
-		{/if}
-	</Dialog>
+	<CancelBookingDialog
+		bind:open={showCancelDialog}
+		{bookingId}
+		oncancelled={() => loadBooking(bookingId)}
+	/>
 
 	<BottomNav active="mais" />
 </div>

@@ -6,6 +6,7 @@
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import { supabase } from '$lib/supabase';
+	import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
 	import {
 		ArrowLeft,
 		Mail,
@@ -231,11 +232,7 @@
 		} = await supabase.auth.getUser();
 		authUser = user;
 
-		const { data, error } = await supabase
-			.from('profiles')
-			.select('id, display_name, email, phone_number, photo_url, role, cpf')
-			.eq('id', profileId)
-			.maybeSingle();
+		const { data, error } = await fetchProfile(profileId, user?.id);
 
 		if (error) {
 			errorMessage = error.message || 'Não foi possível carregar o perfil.';
@@ -306,7 +303,7 @@
 				photo_url: form.photoUrl.trim() || null
 			})
 			.eq('id', authUser.id)
-			.select('id, display_name, email, phone_number, photo_url, role, cpf')
+			.select(PUBLIC_PROFILE_COLUMNS)
 			.maybeSingle();
 
 		if (error) {
@@ -315,7 +312,13 @@
 			return;
 		}
 
-		profile = data ?? { ...profile, display_name, phone_number: form.phone.trim() || null, photo_url: form.photoUrl.trim() || null };
+		profile = {
+			...profile,
+			display_name,
+			phone_number: form.phone.trim() || null,
+			photo_url: form.photoUrl.trim() || null,
+			...data
+		};
 		syncFormFromProfile();
 		imgError = false;
 		saveMessage = { text: 'Perfil atualizado com sucesso!', type: 'success' };

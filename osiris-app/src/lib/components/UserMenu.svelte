@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import {
 		Settings,
 		User,
@@ -12,7 +13,6 @@
 		Leaf
 	} from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
-    import { Avatar, Menu, Portal } from '@skeletonlabs/skeleton-svelte';
 
     function resolveDisplayName(profile, authUser) {
         return (
@@ -45,7 +45,7 @@
         );
     }
 
-    let { open = $bindable(false), trigger } = $props();
+    let { open = $bindable(false) } = $props();
 
     let authUser = $state(null);
     let profile = $state(null);
@@ -66,8 +66,8 @@
 			{ icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
 			{ icon: Archive, label: 'Meu inventário', href: '/inventario' },
 			{ icon: Megaphone, label: 'Anunciar', href: '/anunciar' }
-		]
-        
+		],
+        [{ icon: Leaf, label: 'Explorar marketplace', href: '/' }]
     ]);
 
     async function loadUserData() {
@@ -75,14 +75,14 @@
 
         loading = true;
         imgError = false; // <-- NOVO: Reseta o erro sempre que o menu abrir
-
+        
         const {
             data: { user }
         } = await supabase.auth.getUser();
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
@@ -95,13 +95,9 @@
         open = false;
     }
 
-    function handleOpenChange(details) {
-        open = details.open;
-    }
-
     function navigate(href) {
         closeMenu();
-        goto(href);
+        goto(resolve(href));
     }
 
     async function handleSignOut() {
@@ -111,7 +107,7 @@
         profile = null;
         signingOut = false;
         closeMenu();
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     $effect(() => {
@@ -119,32 +115,44 @@
     });
 </script>
 
-<Menu {open} onOpenChange={handleOpenChange} positioning={{ placement: 'bottom-end', gutter: 8 }}>
-    <Menu.Trigger
-        class="rounded-full p-0.5 transition-colors hover:preset-tonal {open ? 'ring-2 ring-primary-500 ring-offset-1' : ''}"
-        aria-label="Abrir menu do usuário"
+<svelte:window
+    onkeydown={(event) => {
+        if (open && event.key === 'Escape') closeMenu();
+    }}
+/>
+
+{#if open}
+    <button
+        type="button"
+        class="fixed inset-0 z-[60] border-0 bg-surface-950/40 p-0"
+        onclick={closeMenu}
+        aria-label="Fechar menu"
+    ></button>
+
+    <div
+        class="fixed right-3 top-[3.75rem] z-[70] w-[min(100vw-1.5rem,20rem)] overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-xl"
+        role="menu"
+        aria-label="Menu do usuário"
     >
-        {@render trigger()}
-    </Menu.Trigger>
-    <Portal>
-        <Menu.Positioner class="z-[70]">
-        <Menu.Content
-            class="w-[min(100vw-1.5rem,20rem)] overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 outline-none"
-            aria-label="Menu do usuário"
-        >
         {#if !authUser && !loading}
-            <div class="px-4 py-6 text-center text-sm text-surface-700-300">Sessão encerrada.</div>
+            <div class="px-4 py-6 text-center text-sm text-surface-600-400">Sessão encerrada.</div>
         {:else}
         <div class="flex items-center gap-3 border-b border-surface-200-800 px-4 py-4">
-
-            <Avatar class="size-12 shrink-0 border border-surface-200-800">
-                {#if avatarUrl && !imgError}
-                    <Avatar.Image src={avatarUrl} alt={displayName} onerror={() => imgError = true} />
-                {/if}
-                <Avatar.Fallback class="preset-filled-primary-500 text-sm font-bold">
+            
+            {#if avatarUrl && !imgError}
+                <img 
+                    src={avatarUrl} 
+                    alt={displayName} 
+                    class="h-12 w-12 shrink-0 rounded-full object-cover" 
+                    onerror={() => imgError = true}
+                />
+            {:else}
+                <div
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-sm font-bold"
+                >
                     {initials}
-                </Avatar.Fallback>
-            </Avatar>
+                </div>
+            {/if}
 
             <div class="min-w-0 flex-1">
                 {#if loading}
@@ -152,54 +160,52 @@
                     <div class="mt-2 h-3 w-40 animate-pulse rounded bg-surface-200-800"></div>
                 {:else}
                     <p class="truncate text-sm font-bold text-surface-950-50">{displayName}</p>
-                    <p class="truncate text-xs text-surface-700-300">{email}</p>
+                    <p class="truncate text-xs text-surface-600-400">{email}</p>
                 {/if}
             </div>
 
-            <Menu.Item
-                value="profile-settings"
+            <button
+                type="button"
                 onclick={() => navigate(profileHref)}
-                class="shrink-0 rounded-full p-2 text-surface-700-300 transition-colors hover:preset-tonal hover:text-surface-700-300"
+                class="shrink-0 rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-700-300"
                 aria-label="Configurações do perfil"
             >
                 <Settings class="h-5 w-5" />
-            </Menu.Item>
+            </button>
         </div>
 
         {#each menuSections as section, sectionIndex (sectionIndex)}
-            <Menu.ItemGroup class="py-1">
+            <div class="py-1" role="none">
                 {#each section as item (item.label)}
-                    <Menu.Item
-                        value={item.href}
+                    <button
+                        type="button"
+                        role="menuitem"
                         onclick={() => navigate(item.href)}
-                        class="grid w-full grid-cols-[1.25rem_minmax(0,1fr)_1rem] items-center gap-3 px-4 py-3 text-left text-sm text-surface-950-50 transition-colors hover:preset-tonal"
+                        class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-surface-950-50 transition-colors hover:preset-tonal"
                     >
-                        <item.icon class="size-5 shrink-0 self-center text-surface-700-300" />
-                        <Menu.ItemText class="min-w-0 font-medium leading-5">{item.label}</Menu.ItemText>
-                        <ChevronRight class="size-4 shrink-0 self-center text-surface-700-300" />
-                    </Menu.Item>
+                        <item.icon class="h-5 w-5 shrink-0 text-surface-600-400" />
+                        <span class="flex-1 font-medium">{item.label}</span>
+                        <ChevronRight class="h-4 w-4 text-surface-400-600" />
+                    </button>
                 {/each}
-            </Menu.ItemGroup>
+            </div>
             {#if sectionIndex < menuSections.length - 1}
-                <Menu.Separator class="border-t border-surface-200-800" />
+                <div class="border-t border-surface-200-800" role="separator"></div>
             {/if}
         {/each}
 
-        <div class="border-t border-surface-200-800 py-1">
-            <Menu.Item
-                value="sign-out"
+        <div class="border-t border-surface-200-800 py-1" role="none">
+            <button
+                type="button"
+                role="menuitem"
                 onclick={handleSignOut}
                 disabled={signingOut}
-                class="grid w-full grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 px-4 py-3 text-left text-sm font-medium text-error-500 transition-colors hover:preset-tonal-error disabled:opacity-60"
+                class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-error-500 transition-colors hover:preset-tonal-error disabled:opacity-60"
             >
-                <LogOut class="size-5 shrink-0 self-center" />
-                <Menu.ItemText class="min-w-0 leading-5">
-                    {signingOut ? 'Saindo...' : 'Sair da conta'}
-                </Menu.ItemText>
-            </Menu.Item>
+                <LogOut class="h-5 w-5 shrink-0" />
+                <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
+            </button>
         </div>
         {/if}
-        </Menu.Content>
-        </Menu.Positioner>
-    </Portal>
-</Menu>
+    </div>
+{/if}

@@ -1,14 +1,12 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ChevronLeft, CheckCircle2, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
-	import DateRangePicker from '$lib/components/DateRangePicker.svelte';
-	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
-	import { useToaster } from '$lib/toast';
 	import { supabase } from '$lib/supabase';
 
 	function parseCurrencyToNumber(value) {
@@ -35,8 +33,7 @@
 			solicitada: 'Solicitada',
 			em_negociacao: 'Em negociação',
 			aceita: 'Aceita',
-			recusada: 'Recusada',
-			cancelado: 'Cancelada'
+			recusada: 'Recusada'
 		};
 		return map[status] ?? status ?? '—';
 	}
@@ -50,7 +47,6 @@
 			case 'aceita':
 				return 'green';
 			case 'recusada':
-			case 'cancelado':
 				return 'red';
 			default:
 				return 'gray';
@@ -127,8 +123,7 @@
 	let actionLoading = $state(false);
 	let showAcceptDialog = $state(false);
 	let showRejectDialog = $state(false);
-	let showCancelDialog = $state(false);
-	const toaster = useToaster();
+	let toastMessage = $state('');
 	let editPrice = $state('');
 	let editStart = $state('');
 	let editEnd = $state('');
@@ -208,7 +203,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=/negociacoes/${negotiationId}`);
+			await goto(resolve(`/login?redirect=/negociacoes/${negotiationId}`));
 			return;
 		}
 
@@ -275,10 +270,10 @@
 	}
 
 	function showToast(message) {
-		toaster.success({
-			title: 'Sucesso',
-			description: message
-		});
+		toastMessage = message;
+		setTimeout(() => {
+			toastMessage = '';
+		}, 4000);
 	}
 
 	function resolveBookingIdFromRpc(data) {
@@ -368,7 +363,7 @@
 		showAcceptDialog = false;
 		actionLoading = false;
 		showToast('Proposta aceita. Contrato criado com sucesso.');
-		await goto(`/operacoes/${newBookingId}`);
+		await goto(resolve(`/operacoes/${newBookingId}`));
 	}
 
 	async function confirmReject() {
@@ -393,47 +388,29 @@
 		}
 	}
 
-	async function confirmCancelNegotiation() {
-		if (!negotiation || !canManage) return;
-
-		actionLoading = true;
-		const { error } = await supabase.rpc('cancel_negotiation', {
-			p_negotiation_id: negotiation.id
-		});
-
-		actionLoading = false;
-		showCancelDialog = false;
-
-		if (error) {
-			errorMessage = error.message;
-			return;
-		}
-
-		await loadNegotiation();
-	}
-
 </script>
 
 <svelte:head>
 	<title>Negociação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
+<div class="min-h-screen bg-surface-50-950 pb-24">
 	<Header />
 
-	<main class="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<a
-			href="/negociacoes"
-			class="btn btn-sm preset-outlined-surface-500 text-surface-800-200"
-			aria-label="Voltar para negociações"
+			href={resolve('/negociacoes')}
+			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
 		>
-			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
+			<ChevronLeft class="h-4 w-4" />
 			Voltar
 		</a>
 
 		{#if loading}
 			<div class="flex justify-center py-16">
-				<LoadingIndicator label="Carregando negociação..." />
+				<div
+					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
+				></div>
 			</div>
 		{:else if errorMessage && !negotiation}
 			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
@@ -444,7 +421,7 @@
 
 			<div class="mt-4 grid gap-6 md:grid-cols-2 md:items-start">
 				<div class="space-y-4">
-					<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+					<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 						{#if negotiation.coverUrl}
 							<img
 								src={negotiation.coverUrl}
@@ -464,7 +441,7 @@
 								<div class="min-w-0">
 									{#if listingHref(negotiation)}
 										<a
-											href={listingHref(negotiation)}
+											href={resolve(listingHref(negotiation))}
 											class="text-xl font-bold text-surface-950-50 hover:text-primary-700"
 										>
 											{resolveListingTitle(negotiation)}
@@ -472,7 +449,7 @@
 									{:else}
 										<h1 class="text-xl font-bold text-surface-950-50">{resolveListingTitle(negotiation)}</h1>
 									{/if}
-									<p class="mt-1 text-sm text-surface-700-300">
+									<p class="mt-1 text-sm text-surface-600-400">
 										{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
 									</p>
 								</div>
@@ -488,14 +465,14 @@
 
 						<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
 							<div>
-								<dt class="text-xs text-surface-700-300">Valor proposto</dt>
+								<dt class="text-xs text-surface-600-400">Valor proposto</dt>
 								<dd class="font-semibold text-primary-700">
 									{formatCurrency(negotiation.proposed_price)}
 								</dd>
 							</div>
 							{#if negotiation.proposed_start_date}
 								<div class="col-span-2">
-									<dt class="text-xs text-surface-700-300">Período</dt>
+									<dt class="text-xs text-surface-600-400">Período</dt>
 									<dd class="font-medium text-surface-950-50">
 										{formatDbDate(negotiation.proposed_start_date)} — {formatDbDate(
 											negotiation.proposed_end_date
@@ -506,29 +483,35 @@
 						</dl>
 
 						{#if negotiation.message && canManage}
-							<p class="mt-3 rounded-container bg-surface-50-950 p-3 text-sm text-surface-700-300 whitespace-pre-wrap">
+							<p class="mt-3 rounded-container bg-surface-50-950 p-3 text-sm text-surface-600-400 whitespace-pre-wrap">
 								{negotiation.message}
 							</p>
 						{/if}
 					</div>
 
 					{#if isProvider && canManage}
-						<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+						<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 							<h2 class="text-sm font-bold text-surface-950-50">Ajustar termos</h2>
-							<p class="mt-1 text-xs text-surface-700-300">Altere preço e datas da proposta.</p>
+							<p class="mt-1 text-xs text-surface-600-400">Altere preço e datas da proposta.</p>
 							<div class="mt-3 space-y-3">
 								<input
 									type="text"
 									bind:value={editPrice}
-									class="input w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+									class="w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
 									placeholder="Valor final"
 								/>
-								<DateRangePicker
-									bind:startDate={editStart}
-									bind:endDate={editEnd}
-									startLabel="Início ajustado"
-									endLabel="Fim ajustado"
-								/>
+								<div class="grid grid-cols-2 gap-2">
+									<input
+										type="date"
+										bind:value={editStart}
+										class="rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+									/>
+									<input
+										type="date"
+										bind:value={editEnd}
+										class="rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+									/>
+								</div>
 								<button
 									type="button"
 									onclick={saveProposalEdits}
@@ -562,20 +545,9 @@
 						</div>
 					{/if}
 
-					{#if canManage}
-						<button
-							type="button"
-							onclick={() => (showCancelDialog = true)}
-							disabled={actionLoading}
-							class="w-full rounded-container border border-error-500 bg-surface-50-950 py-3 text-sm font-semibold text-error-500 hover:preset-tonal-error disabled:opacity-60"
-						>
-							Cancelar negociação
-						</button>
-					{/if}
-
 					{#if negotiation.status === 'aceita' && linkedBooking}
 						<a
-							href={`/operacoes/${linkedBooking.id}`}
+							href={resolve(`/operacoes/${linkedBooking.id}`)}
 							class="block rounded-container preset-filled-primary-500 px-4 py-3 text-center text-sm font-semibold"
 						>
 							Ver operação
@@ -619,16 +591,14 @@
 		oncancel={() => (showRejectDialog = false)}
 	/>
 
-	<ConfirmDialog
-		bind:open={showCancelDialog}
-		title="Cancelar negociação?"
-		message="A negociação será encerrada antes do aceite. Nenhuma operação ou avaliação será criada."
-		confirmLabel="Cancelar negociação"
-		variant="danger"
-		loading={actionLoading}
-		onconfirm={confirmCancelNegotiation}
-		oncancel={() => (showCancelDialog = false)}
-	/>
+	{#if toastMessage}
+		<div
+			class="fixed bottom-24 left-1/2 z-[110] max-w-sm -translate-x-1/2 rounded-container preset-filled-surface-900-100 px-4 py-3 text-center text-sm font-medium shadow-lg"
+			role="status"
+		>
+			{toastMessage}
+		</div>
+	{/if}
 
 	<BottomNav active="mais" />
 </div>

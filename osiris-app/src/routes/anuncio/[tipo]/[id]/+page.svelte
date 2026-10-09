@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -7,8 +8,7 @@
 	import Rating from '$lib/components/Rating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
-	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import { Carousel } from '@skeletonlabs/skeleton-svelte';
+	import { ChevronLeft } from 'lucide-svelte';
 
 	function resolveDisplayName(profile, authUser) {
 		return (
@@ -198,7 +198,6 @@
 	function resolveSellerName(profile) {
 		return (
 			profile?.display_name ||
-			profile?.email ||
 			'Anunciante'
 		);
 	}
@@ -219,7 +218,7 @@
 
 		const { data, error } = await supabase
 			.from('profiles')
-			.select('*')
+			.select('id, display_name, photo_url')
 			.eq('id', ownerId)
 			.maybeSingle();
 
@@ -426,27 +425,24 @@
 	});
 </script>
 
-<div class="min-h-screen bg-surface-50 pb-24 lg:pb-0">
+<div class="min-h-screen bg-surface-100-900 pb-24">
 	<Header />
 
-	<main class="mx-auto w-full max-w-6xl">
+	<main class="mx-auto w-full max-w-3xl">
 		<a
-			href="/buscar"
-			class="btn btn-sm mx-4 mt-4 preset-outlined-surface-500 text-surface-800-200"
-			aria-label="Voltar para a busca"
+			href={resolve('/buscar')}
+			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
-			<ChevronLeft class="h-4 w-4" aria-hidden="true" />
+			<ChevronLeft class="h-4 w-4" />
 			Voltar
 		</a>
 
 		{#if loading}
-			<div class="px-4 py-10 text-center text-sm text-surface-700-300">Carregando anúncio...</div>
+			<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando anúncio...</div>
 		{:else if errorMessage}
 			<div class="mx-4 mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 		{:else if item}
-			<section class="mt-4 rounded-container bg-surface-50-950 p-4 sm:p-6">
-				<div class="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
-					<div>
+			<section class="mt-4 rounded-container bg-surface-50-950 p-4 shadow-sm">
 				{#if galleryImages.length > 0}
 					{#if galleryImages.length === 1}
 						<img
@@ -455,44 +451,25 @@
 							class="aspect-[16/10] w-full rounded-container object-cover"
 						/>
 					{:else}
-						<Carousel slideCount={galleryImages.length} allowMouseDrag loop class="relative overflow-hidden rounded-container">
-						<Carousel.ItemGroup class="flex">
+						<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-container">
 							{#each galleryImages as imageUrl, index (imageUrl + index)}
-								<Carousel.Item {index} class="min-w-0 flex-[0_0_100%]">
-									<img
-										src={imageUrl}
-										alt={`${item.title} — imagem ${index + 1}`}
-										class="aspect-[16/10] w-full rounded-container object-cover"
-									/>
-								</Carousel.Item>
+								<img
+									src={imageUrl}
+									alt={`${item.title} — imagem ${index + 1}`}
+									class="aspect-[16/10] w-[85%] shrink-0 snap-center rounded-container object-cover"
+								/>
 							{/each}
-						</Carousel.ItemGroup>
-						<Carousel.Control class="absolute inset-x-3 top-1/2 flex -translate-y-1/2 justify-between">
-							<Carousel.PrevTrigger class="rounded-full bg-surface-950/60 p-2 text-white hover:bg-surface-950/80" aria-label="Imagem anterior">
-								<ChevronLeft class="size-5" />
-							</Carousel.PrevTrigger>
-							<Carousel.NextTrigger class="rounded-full bg-surface-950/60 p-2 text-white hover:bg-surface-950/80" aria-label="Próxima imagem">
-								<ChevronRight class="size-5" />
-							</Carousel.NextTrigger>
-						</Carousel.Control>
-						<Carousel.IndicatorGroup class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">
-							{#each galleryImages as _, index (index)}
-								<Carousel.Indicator {index} class="size-2 rounded-full bg-white/60 data-[current]:w-6 data-[current]:bg-white" aria-label="Ir para imagem {index + 1}" />
-							{/each}
-						</Carousel.IndicatorGroup>
-						</Carousel>
+						</div>
 					{/if}
 				{:else}
 					<div class="aspect-[16/10] rounded-container preset-tonal-primary"></div>
 				{/if}
-					</div>
 
-					<div>
-				<div class="flex items-start justify-between gap-3">
+				<div class="mt-4 flex items-start justify-between gap-3">
 					<div class="min-w-0 flex-1">
 						<p class="text-3xl font-extrabold text-primary-700">{item.priceLabel}</p>
 						<h1 class="mt-2 text-3xl font-bold text-surface-950-50">{item.title}</h1>
-						<p class="mt-3 text-base leading-7 text-surface-700-300">{item.description}</p>
+						<p class="mt-3 text-base leading-7 text-surface-600-400">{item.description}</p>
 					</div>
 					<FavoriteButton
 						productId={item.productId ?? null}
@@ -505,9 +482,9 @@
 						<h2 class="text-2xl font-semibold text-surface-950-50">Detalhes</h2>
 					</div>
 					<div class="divide-y divide-surface-200-800 px-4">
-						{#each item.details as detail}
+						{#each item.details as detail (detail.label)}
 							<div class="grid grid-cols-2 gap-3 py-3 text-sm">
-								<p class="font-semibold text-surface-700-300">{detail.label}</p>
+								<p class="font-semibold text-surface-600-400">{detail.label}</p>
 								<p class="font-medium text-surface-950-50">{detail.value}</p>
 							</div>
 						{/each}
@@ -515,7 +492,7 @@
 				</div>
 
 				<a
-					href={seller.id ? `/perfil/${seller.id}` : '#'}
+					href={seller.id ? resolve(`/perfil/${seller.id}`) : '#'}
 					class="mt-6 flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 transition-colors hover:border-primary-300"
 				>
 					{#if seller.avatarUrl}
@@ -544,8 +521,6 @@
 				>
 					Negociar
 				</button>
-					</div>
-				</div>
 
 				<div class="mt-8 overflow-hidden rounded-container border border-surface-200-800">
 					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">

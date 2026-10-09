@@ -1,5 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { X, Send } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 
@@ -106,7 +107,7 @@
 		if (!user) {
 			error = 'Faça login para enviar uma proposta.';
 			sending = false;
-			goto('/login?redirect=' + encodeURIComponent(window.location.pathname));
+			goto(resolve('/login?redirect=' + encodeURIComponent(window.location.pathname)));
 			return;
 		}
 
@@ -152,7 +153,7 @@
 
 		sending = false;
 		closeModal();
-		await goto(`/negociacoes/${negotiation.id}`);
+		await goto(resolve(`/negociacoes/${negotiation.id}`));
 	}
 </script>
 

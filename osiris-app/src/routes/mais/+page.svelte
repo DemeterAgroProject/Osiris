@@ -1,6 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import {
         Home,
         Search,
@@ -62,7 +63,7 @@
     let authUser = $state(null);
     let profile = $state(null);
     let signingOut = $state(false);
-    let imgError = $state(false);
+    let imgError = $state(false); 
 
     const displayName = $derived(resolveDisplayName(profile, authUser));
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
@@ -126,7 +127,7 @@
 
     async function refreshUser() {
         loading = true;
-        imgError = false;
+        imgError = false; 
 
         const {
             data: { user }
@@ -134,7 +135,7 @@
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
@@ -149,7 +150,7 @@
         authUser = null;
         profile = null;
         signingOut = false;
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     onMount(() => {
@@ -170,10 +171,10 @@
     <meta name="description" content="Atalhos, conta e descoberta no marketplace agro Osiris." />
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
+<div class="min-h-screen bg-surface-50-950 pb-24">
     <Header />
 
-    <section class="mx-auto w-full max-w-7xl preset-filled-primary-500 px-4 pb-5 pt-2 sm:px-6 lg:mt-6 lg:rounded-container lg:px-8 lg:py-6">
+    <section class="preset-filled-primary-500 px-4 pb-5 pt-2">
         {#if loading}
             <div class="flex items-center gap-3 py-4">
                 <div class="h-14 w-14 animate-pulse rounded-full bg-surface-50-950/20"></div>
@@ -184,7 +185,7 @@
             </div>
         {:else if isLoggedIn}
             <a
-                href={profileHref}
+                href={resolve(profileHref)}
                 class="flex items-center gap-3 rounded-container py-3 transition-opacity hover:opacity-95"
             >
                 {#if avatarUrl && !imgError}
@@ -214,8 +215,8 @@
                 <p class="text-lg font-bold">Olá, visitante</p>
                 <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
                 <a
-                    href="/login"
-                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700  transition-colors hover:preset-tonal"
+                    href={resolve('/login')}
+                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:preset-tonal"
                 >
                     <LogIn class="h-4 w-4" />
                     Entrar com Google
@@ -225,7 +226,7 @@
 
         <div class="mt-2 space-y-2">
             <a
-                href="/anunciar"
+                href={resolve('/anunciar')}
                 class="flex items-center justify-between rounded-container bg-surface-50-950/15 px-4 py-3.5 backdrop-blur-sm transition-colors hover:bg-surface-50-950/20"
             >
                 <div class="flex items-center gap-3">
@@ -242,7 +243,7 @@
 
             {#if isLoggedIn}
                 <a
-                    href="/painel-de-controle"
+                    href={resolve('/painel-de-controle')}
                     class="flex items-center justify-between rounded-container preset-tonal-warning px-4 py-3.5 transition-colors"
                 >
                     <div class="flex items-center gap-3">
@@ -262,12 +263,12 @@
         </div>
     </section>
 
-    <main class="mx-auto w-full max-w-7xl bg-surface-50-950 sm:px-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:px-8 lg:py-6">
+    <main class="bg-surface-50-950">
         <nav aria-label="Atalhos" class="border-b border-surface-200-800">
             {#each shortcuts as item (item.label)}
                 {#if item.href}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
@@ -275,7 +276,7 @@
                     </a>
                 {:else}
                     <div
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-700-300 last:border-b-0"
+                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
                         aria-disabled="true"
                     >
                         <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -296,23 +297,23 @@
         </nav>
 
         <section aria-labelledby="mais-atividade">
-            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">
+            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
                 Minha atividade
             </h2>
             <nav aria-label="Minha atividade">
                 {#each activityItems as item (item.label)}
                     {#if item.href}
                         <a
-                            href={item.href}
+                            href={resolve(item.href)}
                             class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                         >
                             <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                             <span class="flex-1 text-sm font-medium">{item.label}</span>
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                         </a>
                     {:else}
                         <div
-                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-700-300 last:border-b-0"
+                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
                             aria-disabled="true"
                         >
                             <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
@@ -334,11 +335,11 @@
         </section>
 
         <section aria-labelledby="mais-descubra" class="border-t border-surface-200-800">
-            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">Descubra</h2>
+            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">Descubra</h2>
             <nav aria-label="Descubra">
                 {#each discoverItems as item (item.label)}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
@@ -353,7 +354,7 @@
                                 {item.badge}
                             </span>
                         {:else}
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
+                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                         {/if}
                     </a>
                 {/each}
@@ -361,18 +362,18 @@
         </section>
 
         <section aria-labelledby="mais-vender" class="border-t border-surface-200-800">
-            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-700-300">
+            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
                 Vender e gerir
             </h2>
             <nav aria-label="Vender e gerir">
                 {#each sellItems as item (item.label)}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
                         <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-700-300" />
+                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
                     </a>
                 {/each}
 
@@ -395,18 +396,18 @@
             <ul class="space-y-3">
                 {#each legalLinks as link (link.label)}
                     <li>
-                        <span class="text-sm text-surface-700-300">{link.label}</span>
+                        <span class="text-sm text-surface-600-400">{link.label}</span>
                     </li>
                 {/each}
             </ul>
-            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-700-300">
+            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-600-400">
                 <Info class="mt-0.5 h-4 w-4 shrink-0 text-primary-600" />
                 <p>
                     Marketplace agro da região. Alguns atalhos (negociações, ajuda, termos) serão liberados em
                     atualizações futuras.
                 </p>
             </div>
-            <div class="mt-4 flex items-center gap-2 text-xs text-surface-700-300">
+            <div class="mt-4 flex items-center gap-2 text-xs text-surface-600-400">
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
             </div>

@@ -1,6 +1,7 @@
 <script>
 	import { Heart } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 
 	let { productId = null, serviceId = null, class: className = '' } = $props();
@@ -8,7 +9,6 @@
 	let loading = $state(true);
 	let toggling = $state(false);
 	let isFavorited = $state(false);
-	let authUserId = $state(null);
 
 	async function checkFavorite() {
 		loading = true;
@@ -16,8 +16,6 @@
 		const {
 			data: { user }
 		} = await supabase.auth.getUser();
-
-		authUserId = user?.id ?? null;
 
 		if (!user || (!productId && !serviceId)) {
 			isFavorited = false;
@@ -49,7 +47,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+			await goto(resolve(`/login?redirect=${encodeURIComponent(window.location.pathname)}`));
 			return;
 		}
 

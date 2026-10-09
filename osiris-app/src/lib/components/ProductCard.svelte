@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { MapPin, Eye, Clock } from 'lucide-svelte';
 
 	function formatCurrency(value) {
@@ -38,54 +39,42 @@
 	const resolvedHref = $derived(href || (tipo && adId ? `/anuncio/${tipo}/${adId}` : ''));
 </script>
 
-<article
-	class="card group h-full overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300-700"
->
+<article class="overflow-hidden rounded-container bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md">
 	{#if resolvedHref}
-		<a
-			href={resolvedHref}
-			class="block rounded-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-			aria-label={`Ver anúncio: ${resolvedTitle}`}
-		>
+		<a href={resolve(resolvedHref)} class="block" aria-label={`Ver anúncio: ${resolvedTitle}`}>
 			<div class="relative aspect-[4/3] overflow-hidden">
 				{#if resolvedImage}
-					<img
-						src={resolvedImage}
-						alt={resolvedTitle}
-						loading="lazy"
-						decoding="async"
-						class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-					/>
+					<img src={resolvedImage} alt={resolvedTitle} class="h-full w-full object-cover" />
 				{:else}
-					<div class="flex h-full w-full items-center justify-center bg-surface-100-900 text-xs font-medium text-surface-700-300">
+					<div class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-medium text-primary-700">
 						Sem imagem
 					</div>
 				{/if}
 				{#if sponsored}
 					<span
-						class="badge absolute left-2 top-2 preset-filled-warning-500 text-white"
+						class="absolute left-2 top-2 rounded-md preset-filled-warning-500 px-2 py-1 text-xs font-medium"
 					>
 						Patrocinado
 					</span>
 				{/if}
 			</div>
 
-			<div class="p-3.5">
-				<h3 class="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-surface-950-50">{resolvedTitle}</h3>
-				<p class="mt-1 text-base font-bold tracking-tight text-primary-600-400">{resolvedPrice}</p>
+			<div class="p-3">
+				<h3 class="truncate text-sm font-medium text-surface-950-50">{resolvedTitle}</h3>
+				<p class="mt-1 text-base font-bold text-primary-600">{resolvedPrice}</p>
 
-				<div class="mt-2 flex items-center gap-1 text-xs text-surface-700-300">
-					<MapPin class="h-3 w-3 shrink-0" aria-hidden="true" />
+				<div class="mt-2 flex items-center gap-1 text-xs text-surface-600-400">
+					<MapPin class="h-3 w-3" />
 					<span class="truncate">{location}</span>
 				</div>
 
-				<div class="mt-2 flex items-center justify-between text-xs text-surface-700-300">
+				<div class="mt-2 flex items-center justify-between text-xs text-surface-600-400">
 					<div class="flex items-center gap-1">
-						<Eye class="h-3 w-3" aria-hidden="true" />
+						<Eye class="h-3 w-3" />
 						<span>{views}</span>
 					</div>
 					<div class="flex items-center gap-1">
-						<Clock class="h-3 w-3" aria-hidden="true" />
+						<Clock class="h-3 w-3" />
 						<span>{resolvedPublishedAt}</span>
 					</div>
 				</div>
@@ -94,7 +83,7 @@
 	{:else}
 		<div class="relative aspect-[4/3] overflow-hidden">
 			{#if resolvedImage}
-				<img src={resolvedImage} alt={resolvedTitle} loading="lazy" decoding="async" class="h-full w-full object-cover" />
+				<img src={resolvedImage} alt={resolvedTitle} class="h-full w-full object-cover" />
 			{:else}
 				<div class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-medium text-primary-700">
 					Sem imagem
