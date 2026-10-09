@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import {
 		Settings,
 		User,
@@ -81,7 +82,7 @@
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
@@ -96,7 +97,7 @@
 
     function navigate(href) {
         closeMenu();
-        goto(href);
+        goto(resolve(href));
     }
 
     async function handleSignOut() {
@@ -106,7 +107,7 @@
         profile = null;
         signingOut = false;
         closeMenu();
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     $effect(() => {

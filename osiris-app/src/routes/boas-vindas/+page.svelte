@@ -1,6 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { ChevronLeft, ChevronRight, Cog, Leaf } from 'lucide-svelte';
+	import { resolve } from '$app/paths';
+	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import OnboardingSlide from '$lib/components/OnboardingSlide.svelte';
 	import carIllustration from '$lib/images/car.png';
 	import chatIllustration from '$lib/images/chat.png';
@@ -58,11 +59,11 @@
 	}
 
 	function skip() {
-		goto('/login');
+		goto(resolve('/login'));
 	}
 
 	function finish() {
-		goto('/login');
+		goto(resolve('/login'));
 	}
 </script>
 
@@ -116,7 +117,7 @@
 
 		<footer class="shrink-0 px-6 pb-10 pt-2">
 			<div class="mb-6 flex justify-center gap-2" role="tablist" aria-label="Progresso do onboarding">
-				{#each slides as _, index (index)}
+				{#each slides as slide, index (slide.title ?? index)}
 					<button
 						type="button"
 						role="tab"

@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { AlertTriangle, Tractor } from 'lucide-svelte';
 
@@ -51,7 +52,7 @@
 		{/if}
 
 		<a
-			href="/"
+			href={resolve('/')}
 			class="btn preset-filled-primary-500 mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-container px-6 text-sm font-semibold shadow-sm transition-colors sm:w-auto"
 		>
 			Voltar para o Início

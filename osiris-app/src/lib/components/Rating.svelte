@@ -25,7 +25,7 @@
 
 <div class="inline-flex flex-wrap items-center gap-1.5">
 	<div class="flex items-center gap-0.5" aria-label="Nota {clampedValue.toFixed(1)} de 5">
-		{#each Array(5) as _, index}
+		{#each [0, 1, 2, 3, 4] as index (index)}
 			{@const filled = index < totalFull}
 			{@const half = !filled && hasHalfStar && index === totalFull}
 			<Star

@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import ProductCard from './ProductCard.svelte';
 
 	let {
@@ -19,7 +20,7 @@
 			<h2 class="text-lg font-bold text-primary-700">{title}</h2>
 			{#if showSeeMore}
 				<a
-					href={seeMoreHref}
+					href={resolve(seeMoreHref)}
 					class="shrink-0 text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700"
 				>
 					{seeMoreLabel}

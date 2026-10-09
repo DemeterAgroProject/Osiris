@@ -1,8 +1,9 @@
 <script>
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
-    import { ChevronRight, ChevronLeft, Tractor, MapPin } from 'lucide-svelte';
+    import { ChevronRight, Tractor, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
@@ -114,7 +115,7 @@
         if (currentStep > 0) {
             currentStep--;
         } else {
-            goto('/inventario');
+            goto(resolve('/inventario'));
         }
     }
 
@@ -228,7 +229,7 @@
             }
 
             message = { text: 'Anúncio publicado com sucesso no Osíris!', type: 'success' };
-            setTimeout(() => goto('/inventario'), 2000);
+            setTimeout(() => goto(resolve('/inventario')), 2000);
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
@@ -321,7 +322,7 @@
                                 <label class="block text-sm font-medium text-surface-700-300 mb-1" for="type">Tipo</label>
                                 <select id="type" bind:value={form.type_id} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                     <option value="" disabled>Selecione</option>
-                                    {#each types as type}
+                                    {#each types as type (type.id)}
                                         <option value={type.id}>{type.name}</option>
                                     {/each}
                                 </select>
@@ -330,7 +331,7 @@
                                 <label class="block text-sm font-medium text-surface-700-300 mb-1" for="brand">Marca</label>
                                 <select id="brand" bind:value={form.brand_id} class="w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
                                     <option value="" disabled>Selecione</option>
-                                    {#each brands as brand}
+                                    {#each brands as brand (brand.id)}
                                         <option value={brand.id}>{brand.name}</option>
                                     {/each}
                                 </select>
@@ -401,7 +402,7 @@
                 <div class="relative flex-1 overflow-hidden rounded-container border border-surface-200-800 bg-surface-100-900 min-h-[300px]">
                     <div class="absolute inset-0 flex items-center justify-center bg-surface-100-900">
                         <svg class="absolute inset-0 h-full w-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            {#each Array(10) as _, i}
+                            {#each [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as i (i)}
                                 <line x1="0" y1={i * 10} x2="100" y2={i * 10} stroke="currentColor" stroke-width="0.5" />
                                 <line x1={i * 10} y1="0" x2={i * 10} y2="100" stroke="currentColor" stroke-width="0.5" />
                             {/each}

@@ -25,7 +25,7 @@
 
 {#if loading}
 	<div class="space-y-3">
-		{#each Array(3) as _, index (index)}
+		{#each [0, 1, 2] as index (index)}
 			<div class="animate-pulse rounded-container border border-surface-200-800 bg-surface-50-950 p-4">
 				<div class="flex gap-3">
 					<div class="h-10 w-10 rounded-full bg-surface-200-800"></div>

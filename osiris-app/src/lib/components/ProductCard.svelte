@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { MapPin, Eye, Clock } from 'lucide-svelte';
 
 	function formatCurrency(value) {
@@ -40,7 +41,7 @@
 
 <article class="overflow-hidden rounded-container bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md">
 	{#if resolvedHref}
-		<a href={resolvedHref} class="block" aria-label={`Ver anúncio: ${resolvedTitle}`}>
+		<a href={resolve(resolvedHref)} class="block" aria-label={`Ver anúncio: ${resolvedTitle}`}>
 			<div class="relative aspect-[4/3] overflow-hidden">
 				{#if resolvedImage}
 					<img src={resolvedImage} alt={resolvedTitle} class="h-full w-full object-cover" />

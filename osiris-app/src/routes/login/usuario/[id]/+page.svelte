@@ -1,17 +1,18 @@
 <script>
     import { page } from '$app/state';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import Rating from '$lib/components/Rating.svelte';
     import ReviewList from '$lib/components/ReviewList.svelte';
     import { supabase } from '$lib/supabase';
+    import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
     import {
         Star,
         Mail,
         Phone,
         Check,
-        AlertCircle,
         SquarePen,
         ArrowLeft,
         Camera,
@@ -253,11 +254,7 @@
         } = await supabase.auth.getUser();
         authUser = user;
 
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id, display_name, email, phone_number, photo_url, role, cpf')
-            .eq('id', userId)
-            .maybeSingle();
+        const { data, error } = await fetchProfile(userId, user?.id);
 
         if (error) {
             errorMessage = 'Não foi possível carregar o perfil.';
@@ -326,7 +323,7 @@
                 photo_url: form.photoUrl.trim() || null
             })
             .eq('id', authUser.id)
-            .select('id, display_name, email, phone_number, photo_url, role, cpf')
+            .select(PUBLIC_PROFILE_COLUMNS)
             .maybeSingle();
 
         if (error) {
@@ -336,13 +333,14 @@
             return;
         }
 
-        profile = data ?? {
+        profile = {
             ...profile,
             display_name,
             email,
             phone_number: form.phone.trim() || null,
             cpf: form.cpf.trim() || null,
-            photo_url: form.photoUrl.trim() || null
+            photo_url: form.photoUrl.trim() || null,
+            ...data
         };
         syncFormFromProfile();
         imgError = false;
@@ -661,7 +659,7 @@
                     <button
                         type="button"
                         disabled={!canBecomeAdvertiser}
-                        onclick={() => goto('/anunciar')}
+                        onclick={() => goto(resolve('/anunciar'))}
                         class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {canBecomeAdvertiser
                             ? 'preset-filled-primary-500'
                             : 'bg-surface-100-900 text-surface-600-400'}"

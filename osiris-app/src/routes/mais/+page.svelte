@@ -1,6 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import {
         Home,
         Search,
@@ -134,7 +135,7 @@
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
@@ -149,7 +150,7 @@
         authUser = null;
         profile = null;
         signingOut = false;
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     onMount(() => {
@@ -184,7 +185,7 @@
             </div>
         {:else if isLoggedIn}
             <a
-                href={profileHref}
+                href={resolve(profileHref)}
                 class="flex items-center gap-3 rounded-container py-3 transition-opacity hover:opacity-95"
             >
                 {#if avatarUrl && !imgError}
@@ -214,7 +215,7 @@
                 <p class="text-lg font-bold">Olá, visitante</p>
                 <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
                 <a
-                    href="/login"
+                    href={resolve('/login')}
                     class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:preset-tonal"
                 >
                     <LogIn class="h-4 w-4" />
@@ -225,7 +226,7 @@
 
         <div class="mt-2 space-y-2">
             <a
-                href="/anunciar"
+                href={resolve('/anunciar')}
                 class="flex items-center justify-between rounded-container bg-surface-50-950/15 px-4 py-3.5 backdrop-blur-sm transition-colors hover:bg-surface-50-950/20"
             >
                 <div class="flex items-center gap-3">
@@ -242,7 +243,7 @@
 
             {#if isLoggedIn}
                 <a
-                    href="/painel-de-controle"
+                    href={resolve('/painel-de-controle')}
                     class="flex items-center justify-between rounded-container preset-tonal-warning px-4 py-3.5 transition-colors"
                 >
                     <div class="flex items-center gap-3">
@@ -267,7 +268,7 @@
             {#each shortcuts as item (item.label)}
                 {#if item.href}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
@@ -303,7 +304,7 @@
                 {#each activityItems as item (item.label)}
                     {#if item.href}
                         <a
-                            href={item.href}
+                            href={resolve(item.href)}
                             class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                         >
                             <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
@@ -338,7 +339,7 @@
             <nav aria-label="Descubra">
                 {#each discoverItems as item (item.label)}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
@@ -367,7 +368,7 @@
             <nav aria-label="Vender e gerir">
                 {#each sellItems as item (item.label)}
                     <a
-                        href={item.href}
+                        href={resolve(item.href)}
                         class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
                     >
                         <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />

@@ -1,5 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Heart } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -26,6 +27,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		if (!productIds?.length) return map;
 
@@ -123,7 +125,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto('/login?redirect=/favoritos');
+			await goto(resolve('/login?redirect=/favoritos'));
 			return;
 		}
 
@@ -173,7 +175,7 @@
 		</div>
 		
 		<a
-			href="/buscar"
+			href={resolve('/buscar')}
 			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
 			<ChevronLeft class="h-4 w-4" />
@@ -198,7 +200,7 @@
 					Toque no coração em um anúncio para favoritá-lo e guardá-lo aqui.
 				</p>
 				<a
-					href="/buscar"
+					href={resolve('/buscar')}
 					class="btn preset-filled-primary-500 mt-5 inline-flex rounded-container px-4 py-3 text-sm font-semibold"
 				>
 					Explorar marketplace

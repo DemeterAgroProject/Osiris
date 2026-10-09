@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 
 	onMount(async () => {
@@ -9,11 +10,11 @@
 		} = await supabase.auth.getUser();
 
 		if (user?.id) {
-			await goto(`/login/usuario/${user.id}`, { replaceState: true });
+			await goto(resolve(`/login/usuario/${user.id}`), { replaceState: true });
 			return;
 		}
 
-		await goto('/login?redirect=/login/usuario', { replaceState: true });
+		await goto(resolve('/login?redirect=/login/usuario'), { replaceState: true });
 	});
 </script>
 

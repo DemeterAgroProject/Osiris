@@ -49,12 +49,6 @@
 
 	const laborKindOptions = [{ id: 'mao-de-obra', label: 'Mão de obra' }];
 
-	const statusOptions = [
-		{ id: '', label: 'Todos' },
-		{ id: 'ativo', label: 'Ativo' },
-		{ id: 'pausado', label: 'Pausado' }
-	];
-
 	const sortOptions = [
 		{ id: 'recentes', label: 'Mais recentes' },
 		{ id: 'preco-asc', label: 'Menor preço' },

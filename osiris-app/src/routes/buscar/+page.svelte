@@ -32,6 +32,7 @@
 	}
 
 	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
 		const map = new Map();
 		if (!productIds?.length) return map;
 
@@ -108,17 +109,6 @@
 
 	function escapeIlike(term) {
 		return term.replace(/[%_,.()]/g, ' ').trim();
-	}
-
-	function activeFilterCount(filterState) {
-		let count = 0;
-		if (filterState.listingTypes.length) count++;
-		if (filterState.productKinds.length) count++;
-		if (filterState.serviceKinds.length) count++;
-		if (filterState.laborKinds.length) count++;
-		if (filterState.location) count++;
-		if (filterState.minPrice || filterState.maxPrice) count++;
-		return count;
 	}
 
 	function mapProductListing(product, imagesByProductId) {

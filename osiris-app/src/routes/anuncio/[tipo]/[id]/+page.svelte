@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -197,7 +198,6 @@
 	function resolveSellerName(profile) {
 		return (
 			profile?.display_name ||
-			profile?.email ||
 			'Anunciante'
 		);
 	}
@@ -218,7 +218,7 @@
 
 		const { data, error } = await supabase
 			.from('profiles')
-			.select('*')
+			.select('id, display_name, photo_url')
 			.eq('id', ownerId)
 			.maybeSingle();
 
@@ -430,7 +430,7 @@
 
 	<main class="mx-auto w-full max-w-3xl">
 		<a
-			href="/buscar"
+			href={resolve('/buscar')}
 			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
 			<ChevronLeft class="h-4 w-4" />
@@ -482,7 +482,7 @@
 						<h2 class="text-2xl font-semibold text-surface-950-50">Detalhes</h2>
 					</div>
 					<div class="divide-y divide-surface-200-800 px-4">
-						{#each item.details as detail}
+						{#each item.details as detail (detail.label)}
 							<div class="grid grid-cols-2 gap-3 py-3 text-sm">
 								<p class="font-semibold text-surface-600-400">{detail.label}</p>
 								<p class="font-medium text-surface-950-50">{detail.value}</p>
@@ -492,7 +492,7 @@
 				</div>
 
 				<a
-					href={seller.id ? `/perfil/${seller.id}` : '#'}
+					href={seller.id ? resolve(`/perfil/${seller.id}`) : '#'}
 					class="mt-6 flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 transition-colors hover:border-primary-300"
 				>
 					{#if seller.avatarUrl}

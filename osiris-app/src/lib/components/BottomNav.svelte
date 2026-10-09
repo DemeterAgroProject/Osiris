@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 	import { Home, Search, Archive, Toolbox, MoreHorizontal } from 'lucide-svelte';
 
 	let { active = 'inicio' } = $props();
@@ -17,7 +18,7 @@
 		{#each navItems as item (item.id)}
 				{@const Icon = item.icon}
 				<a
-				href={item.href}
+				href={resolve(item.href)}
 				class="flex flex-col items-center gap-1 px-2 py-1 transition-colors {active === item.id
 					? 'text-primary-600'
 					: 'text-surface-600-400 hover:text-surface-700-300'}"
