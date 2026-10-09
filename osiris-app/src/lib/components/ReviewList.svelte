@@ -1,6 +1,6 @@
 <script>
 	import { MessageSquare } from 'lucide-svelte';
-	import Rating from '$lib/components/Rating.svelte';
+	import AppRating from '$lib/components/ui/AppRating.svelte';
 	function formatReviewDate(value) {
 		if (!value) return '';
 
@@ -77,7 +77,7 @@
 						</div>
 
 						<div class="mt-2">
-							<Rating value={review.rating} count={0} showCount={false} size="sm" showValue={false} />
+							<AppRating value={review.rating} count={0} showCount={false} size="sm" showValue={false} />
 						</div>
 
 						{#if review.comment}

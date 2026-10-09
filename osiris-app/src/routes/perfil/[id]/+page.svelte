@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import Rating from '$lib/components/Rating.svelte';
+	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import { supabase } from '$lib/supabase';
@@ -492,7 +492,7 @@
 					</span>
 
 					<div class="mt-2">
-						<Rating value={rating} count={reviewCount} size="sm" />
+						<AppRating value={rating} count={reviewCount} size="sm" />
 					</div>
 
 					{#if isOwner}
@@ -546,7 +546,7 @@
 							</p>
 						</div>
 					</div>
-					<Rating value={rating} count={reviewCount} size="sm" />
+					<AppRating value={rating} count={reviewCount} size="sm" />
 				</div>
 
 				<ReviewList

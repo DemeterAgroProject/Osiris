@@ -4,7 +4,7 @@
     import { resolve } from '$app/paths';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
-    import Rating from '$lib/components/Rating.svelte';
+    import AppRating from '$lib/components/ui/AppRating.svelte';
     import ReviewList from '$lib/components/ReviewList.svelte';
     import { supabase } from '$lib/supabase';
     import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
@@ -437,7 +437,7 @@
                         <h2 class="mt-4 text-center text-lg font-bold">{displayName}</h2>
 
                         <div class="mt-2">
-                            <Rating value={rating} count={reviewCount} size="sm" />
+                            <AppRating value={rating} count={reviewCount} size="sm" />
                         </div>
 
                         {#if isOwner}
@@ -566,7 +566,7 @@
                                 Feedback de outros usuários sobre {displayName}
                             </p>
                         </div>
-                        <Rating value={rating} count={reviewCount} size="sm" />
+                        <AppRating value={rating} count={reviewCount} size="sm" />
                     </div>
 
                     <ReviewList
