@@ -25,6 +25,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Não há testes a
 
 - Links e navegação sempre com `resolve()` de `$app/paths`: `href={resolve('/x')}`, `goto(resolve('/x'))` (exigido pelo ESLint).
 - Todo `{#each}` tem chave: `{#each items as item (item.id)}`.
+- Diálogo, gaveta, menu, popover, abas, toast e nota com estrelas vêm de `src/lib/components/ui/` (`AppDialog`, `AppConfirmDialog`, `AppMenu`, `AppPopover`, `AppTabs`/`AppTabsPanel`, `AppRating`), que envolvem o Skeleton já com as classes do app. As telas importam essas versões, não `@skeletonlabs/skeleton-svelte` direto. Toast: `showToast(mensagem)` de `$lib/components/ui/toast.js`.
 - `Map` e `URLSearchParams` locais que não são estado usam a classe nativa com `// eslint-disable-next-line svelte/prefer-svelte-reactivity -- <motivo>`; `SvelteMap` só quando o valor é reativo.
 - **Perfis**: e-mail, telefone e CPF não são legíveis por outros usuários (privilégio por coluna). Use `fetchProfile()` / `PUBLIC_PROFILE_COLUMNS` de `src/lib/profiles.js`. Nunca `select('*')` em `profiles`, nem `.select()` com colunas sensíveis após um `update`: falha com "permission denied".
 - Cancelar operação: sempre pela RPC `cancel_booking` (componente `CancelBookingDialog.svelte`), nunca `update({ status: 'cancelado' })`.
