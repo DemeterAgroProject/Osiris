@@ -16,15 +16,6 @@ import {
 
 const buyerStorageState = path.join(E2E_AUTH_DIR, 'buyer.json');
 
-function readBuyerLocalStorage() {
-	const storageState = JSON.parse(fs.readFileSync(buyerStorageState, 'utf8'));
-	const entries = storageState.origins?.flatMap((origin) => origin.localStorage ?? []) ?? [];
-	if (entries.length === 0) {
-		throw new Error('O storageState do comprador nao possui uma sessao local para o AUTH-03.');
-	}
-	return entries;
-}
-
 async function createDisposableBuyerStorageState(baseURL, { renew = false } = {}) {
 	const client = renew
 		? await passwordSupabaseClient('buyer')

@@ -9,9 +9,10 @@ npm run dev      # dev server
 npm run lint     # ESLint (precisa passar sem avisos)
 npm run check    # svelte-check
 npm run build
+npm run test:e2e # Playwright (tests/e2e); 1ª vez: npx playwright install chromium
 ```
 
-Rode `lint` e `check` antes de considerar uma mudança pronta. Não há testes automatizados neste repositório.
+Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rodam contra o **banco real** (o projeto só tem um), com as contas `comprador-e2e` e `vendedor-e2e` (não admin) e as variáveis `OSIRIS_E2E_PASSWORD` e `SUPABASE_SERVICE_ROLE_KEY` do `.env`; eles criam registros `[E2E]` e os apagam no teardown. Não rode a suíte sem necessidade e nunca em paralelo com outra pessoa.
 
 ## Arquitetura
 
