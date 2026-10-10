@@ -23,6 +23,11 @@ export default defineConfig([
 		files: ['static/sw.js'],
 		languageOptions: { globals: globals.serviceworker }
 	},
+	{
+		// o Playwright exige desestruturar o 1º argumento: `async ({}, testInfo) => …`
+		files: ['tests/**/*.js'],
+		rules: { 'no-empty-pattern': ['error', { allowObjectPatternsAsParameters: true }] }
+	},
 
 	{
 		// Override or add rule settings here, such as:

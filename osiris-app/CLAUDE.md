@@ -9,9 +9,10 @@ npm run dev      # dev server
 npm run lint     # ESLint (precisa passar sem avisos)
 npm run check    # svelte-check
 npm run build
+npm run test:e2e # Playwright (tests/e2e); 1ª vez: npx playwright install chromium
 ```
 
-Rode `lint` e `check` antes de considerar uma mudança pronta. Não há testes automatizados neste repositório.
+Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rodam contra o **banco real** (o projeto só tem um), com as contas `comprador-e2e` e `vendedor-e2e` (não admin) e as variáveis `OSIRIS_E2E_PASSWORD` e `SUPABASE_SERVICE_ROLE_KEY` do `.env`; eles criam registros `[E2E]` e os apagam no teardown. Não rode a suíte sem necessidade e nunca em paralelo com outra pessoa.
 
 ## Arquitetura
 
@@ -25,7 +26,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Não há testes a
 
 - Links e navegação sempre com `resolve()` de `$app/paths`: `href={resolve('/x')}`, `goto(resolve('/x'))` (exigido pelo ESLint).
 - Todo `{#each}` tem chave: `{#each items as item (item.id)}`.
-- Diálogo, gaveta, menu, popover, abas, toast e nota com estrelas vêm de `src/lib/components/ui/` (`AppDialog`, `AppConfirmDialog`, `AppMenu`, `AppPopover`, `AppTabs`/`AppTabsPanel`, `AppRating`), que envolvem o Skeleton já com as classes do app. As telas importam essas versões, não `@skeletonlabs/skeleton-svelte` direto. Toast: `showToast(mensagem)` de `$lib/components/ui/toast.js`.
+- Diálogo, gaveta, menu, popover, abas, toast e nota com estrelas vêm de `src/lib/components/ui/` (`AppDialog`, `AppConfirmDialog`, `AppMenu`, `AppPopover`, `AppTabs`/`AppTabsPanel`, `AppRating`, `AppSteps` para as etapas de assistentes), que envolvem o Skeleton já com as classes do app. As telas importam essas versões, não `@skeletonlabs/skeleton-svelte` direto. Toast: `showToast(mensagem)` de `$lib/components/ui/toast.js`.
 - `Map` e `URLSearchParams` locais que não são estado usam a classe nativa com `// eslint-disable-next-line svelte/prefer-svelte-reactivity -- <motivo>`; `SvelteMap` só quando o valor é reativo.
 - **Perfis**: e-mail, telefone e CPF não são legíveis por outros usuários (privilégio por coluna). Use `fetchProfile()` / `PUBLIC_PROFILE_COLUMNS` de `src/lib/profiles.js`. Nunca `select('*')` em `profiles`, nem `.select()` com colunas sensíveis após um `update`: falha com "permission denied".
 - Cancelar operação: sempre pela RPC `cancel_booking` (componente `CancelBookingDialog.svelte`), nunca `update({ status: 'cancelado' })`.
@@ -47,6 +48,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Não há testes a
 - Armadilha: em função `SECURITY DEFINER`, `current_user` é sempre o dono (`postgres`). Checagens baseadas em `current_user` precisam de `SECURITY INVOKER`.
 - O dump completo (`supabase db dump`) e o `db diff` precisam do Docker Desktop rodando.
 - Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados por uma suíte E2E externa: não apague.
+- A migração planejada para um Supabase self-hosted tem sua lista de verificação em `docs/migracao-self-hosted.md`.
 
 ## Push
 

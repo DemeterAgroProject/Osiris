@@ -1,6 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import OnboardingSlide from '$lib/components/OnboardingSlide.svelte';
 	import carIllustration from '$lib/images/car.png';
@@ -34,28 +35,9 @@
 	const totalSlides = slides.length;
 	const stepLabel = $derived(`${currentSlide + 1}/${totalSlides}`);
 	const isLastSlide = $derived(currentSlide === totalSlides - 1);
-	const activeSlide = $derived(slides[currentSlide]);
 
 	function enterOnboarding() {
 		showSplash = false;
-	}
-
-	function nextSlide() {
-		if (currentSlide < totalSlides - 1) {
-			currentSlide += 1;
-		}
-	}
-
-	function prevSlide() {
-		if (currentSlide > 0) {
-			currentSlide -= 1;
-		}
-	}
-
-	function goToSlide(index) {
-		if (index >= 0 && index < totalSlides) {
-			currentSlide = index;
-		}
 	}
 
 	function skip() {
@@ -105,65 +87,67 @@
 			</button>
 		</header>
 
-		<div class="flex min-h-0 flex-1 flex-col">
-			{#key currentSlide}
-				<OnboardingSlide
-					imageSrc={activeSlide.imageSrc}
-					title={activeSlide.title}
-					description={activeSlide.description}
-				/>
-			{/key}
-		</div>
-
-		<footer class="shrink-0 px-6 pb-10 pt-2">
-			<div class="mb-6 flex justify-center gap-2" role="tablist" aria-label="Progresso do onboarding">
-				{#each slides as slide, index (slide.title ?? index)}
-					<button
-						type="button"
-						role="tab"
-						aria-selected={index === currentSlide}
-						aria-label="Slide {index + 1} de {totalSlides}"
-						onclick={() => goToSlide(index)}
-						class="rounded-full transition-all duration-300 {index === currentSlide
-							? 'h-2 w-8 bg-surface-950-50'
-							: 'h-2 w-2 bg-surface-400-600 hover:preset-tonal'}"
-					></button>
+		<!-- arrastar com o dedo (ou o mouse) troca de slide; setas e pontos também -->
+		<Carousel
+			slideCount={totalSlides}
+			page={currentSlide}
+			onPageChange={(details) => (currentSlide = details.page)}
+			allowMouseDrag
+			class="flex min-h-0 flex-1 flex-col"
+		>
+			<Carousel.ItemGroup class="flex min-h-0 flex-1">
+				{#each slides as slide, index (slide.title)}
+					<Carousel.Item {index} class="flex min-h-0 flex-col">
+						<OnboardingSlide
+							imageSrc={slide.imageSrc}
+							title={slide.title}
+							description={slide.description}
+						/>
+					</Carousel.Item>
 				{/each}
-			</div>
+			</Carousel.ItemGroup>
 
-			<div class="flex items-center justify-between">
-				{#if currentSlide > 0}
-					<button
-						type="button"
-						onclick={prevSlide}
-						class="rounded-full p-2 text-surface-400-600 transition-colors hover:preset-tonal hover:text-surface-600-400"
-						aria-label="Slide anterior"
-					>
-						<ChevronLeft class="h-7 w-7" strokeWidth={2} />
-					</button>
-				{:else}
-					<div class="w-11" aria-hidden="true"></div>
-				{/if}
+			<footer class="shrink-0 px-6 pb-10 pt-2">
+				<Carousel.IndicatorGroup class="mb-6 flex justify-center gap-2" aria-label="Progresso do onboarding">
+					{#each slides as slide, index (slide.title)}
+						<Carousel.Indicator
+							{index}
+							aria-label="Slide {index + 1} de {totalSlides}"
+							class="h-2 w-2 rounded-full bg-surface-400-600 transition-all duration-300 hover:preset-tonal data-[current]:w-8 data-[current]:bg-surface-950-50"
+						/>
+					{/each}
+				</Carousel.IndicatorGroup>
 
-				{#if isLastSlide}
-					<button
-						type="button"
-						onclick={finish}
-						class="text-base font-bold text-primary-600 transition-colors hover:text-primary-700"
-					>
-						Começar
-					</button>
-				{:else}
-					<button
-						type="button"
-						onclick={nextSlide}
-						class="rounded-full p-2 text-primary-600 transition-colors hover:preset-tonal-primary hover:text-primary-700"
-						aria-label="Próximo slide"
-					>
-						<ChevronRight class="h-7 w-7" strokeWidth={2} />
-					</button>
-				{/if}
-			</div>
-		</footer>
+				<div class="flex items-center justify-between">
+					{#if currentSlide > 0}
+						<Carousel.PrevTrigger
+							class="rounded-full p-2 text-surface-400-600 transition-colors hover:preset-tonal hover:text-surface-600-400"
+							aria-label="Slide anterior"
+						>
+							<ChevronLeft class="h-7 w-7" strokeWidth={2} />
+						</Carousel.PrevTrigger>
+					{:else}
+						<div class="w-11" aria-hidden="true"></div>
+					{/if}
+
+					{#if isLastSlide}
+						<button
+							type="button"
+							onclick={finish}
+							class="text-base font-bold text-primary-600 transition-colors hover:text-primary-700"
+						>
+							Começar
+						</button>
+					{:else}
+						<Carousel.NextTrigger
+							class="rounded-full p-2 text-primary-600 transition-colors hover:preset-tonal-primary hover:text-primary-700"
+							aria-label="Próximo slide"
+						>
+							<ChevronRight class="h-7 w-7" strokeWidth={2} />
+						</Carousel.NextTrigger>
+					{/if}
+				</div>
+			</footer>
+		</Carousel>
 	</div>
 {/if}
