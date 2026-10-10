@@ -8,6 +8,7 @@
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
     import AppSteps from '$lib/components/ui/AppSteps.svelte';
+    import { showToast } from '$lib/components/ui/toast.js';
 
     function createEmptyImageRow(isCover = false) {
         return { id: null, url: '', is_cover: isCover, removed: false };
@@ -229,8 +230,8 @@
                 }
             }
 
-            message = { text: 'Anúncio publicado com sucesso no Osíris!', type: 'success' };
-            setTimeout(() => goto(resolve('/inventario')), 2000);
+            showToast('Anúncio publicado com sucesso!', 'success');
+            await goto(resolve('/inventario'));
 
         } catch (error) {
             console.error("Erro ao salvar:", error);

@@ -1,6 +1,7 @@
 <script>
     import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
     import AppSteps from '$lib/components/ui/AppSteps.svelte';
+    import { showToast } from '$lib/components/ui/toast.js';
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { supabase } from '$lib/supabase';
@@ -72,8 +73,8 @@
             message = { text: 'Ocorreu um erro ao publicar o serviço. Tente novamente.', type: 'error' };
             loading = false;
         } else {
-            message = { text: 'Serviço publicado com sucesso no Osíris!', type: 'success' };
-            setTimeout(() => goto(resolve('/servicos')), 2000);
+            showToast('Serviço publicado com sucesso!', 'success');
+            await goto(resolve('/servicos'));
         }
     }
 </script>
