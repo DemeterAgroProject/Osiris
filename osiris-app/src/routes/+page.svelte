@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Header from '$lib/components/Header.svelte';
 	import ProductSection from '$lib/components/ProductSection.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import PartnerSection from '$lib/components/PartnerSection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -412,19 +413,19 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen pb-24">
+<div class="min-h-screen pb-24 lg:pb-0">
 	<Header />
 
-	<div class="px-4 pb-2">
-		<div class="rounded-container preset-filled-primary-500 p-4 shadow-sm">
+	<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
+		<div class="rounded-container preset-filled-primary-500 p-4 ">
 			<p class="text-xs font-medium uppercase tracking-wider opacity-90">Marketplace Osiris</p>
-			<h1 class="mt-1 text-xl font-bold">Máquinas, produtos e serviços em um só lugar</h1>
-			<p class="mt-1 text-sm opacity-90">Descubra oportunidades novas todos os dias.</p>
+			<h1 class="mt-1 text-xl font-bold sm:text-2xl lg:text-3xl">Máquinas, produtos e serviços em um só lugar</h1>
+			<p class="mt-1 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
 		</div>
 	</div>
 
 	{#if loading}
-		<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando destaques...</div>
+		<ListingSkeleton variant="carousel" count={3} sections={3} label="Carregando destaques..." />
 	{:else if errorMessage}
 		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 	{:else if hasDiscoveryMode}
@@ -433,7 +434,7 @@
 				class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
 			>
 				<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
-				<p class="mt-1 text-xs text-surface-600-400">
+				<p class="mt-1 text-xs text-surface-700-300">
 					Ajuste a busca ou os filtros para ver mais resultados.
 				</p>
 			</div>

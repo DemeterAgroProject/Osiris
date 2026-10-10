@@ -17,8 +17,16 @@
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
+	import AppMenu from '$lib/components/ui/AppMenu.svelte';
+	import AppTabs from '$lib/components/ui/AppTabs.svelte';
+	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
+
+	const serviceTabs = [
+		{ value: 'mao_de_obra', label: 'Mão de Obra', icon: Users },
+		{ value: 'pacote_completo', label: 'Pacote Completo', icon: Briefcase }
+	];
 
 	let activeTab = $state('mao_de_obra');
 	let searchQuery = $state('');
@@ -27,8 +35,6 @@
 	let ownerProfile = $state(null);
 	let statusMessage = $state({ text: '', type: '' });
 
-	let openMenu = $state(null);
-	let menuOpensUp = $state(false);
 	let imgErrors = $state({});
 
 	let editOpen = $state(false);
@@ -131,53 +137,12 @@
 		return `${formatted}${model !== 'Fixo' && model !== 'Empreitada/Fixo' && model !== 'A Combinar' ? ` / ${model}` : ''}`;
 	}
 
-	function menuPositionClass() {
-		return menuOpensUp
-			? 'bottom-full mb-0.5 origin-bottom-right'
-			: 'top-full mt-0.5 origin-top-right';
-	}
-
-	function toggleMenu(id, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (openMenu === id) {
-			openMenu = null;
-			return;
-		}
-
-		const trigger = event.currentTarget;
-		if (trigger instanceof HTMLElement) {
-			const rect = trigger.getBoundingClientRect();
-			const menuHeight = 224;
-			const bottomReserve = 112;
-			const spaceBelow = window.innerHeight - rect.bottom - bottomReserve;
-			menuOpensUp = spaceBelow < menuHeight;
-		} else {
-			menuOpensUp = false;
-		}
-
-		openMenu = id;
-	}
-
-	function handleWindowClick(event) {
-		if (!openMenu) return;
-		if (event.target instanceof Element && event.target.closest('[data-service-menu]')) {
-			return;
-		}
-		openMenu = null;
-	}
-
-	function openEdit(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function openEdit(service) {
 		editingService = service;
 		editOpen = true;
 	}
 
-	function requestToggleStatus(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestToggleStatus(service) {
 		statusConfirmItem = service;
 		statusConfirmOpen = true;
 	}
@@ -186,15 +151,37 @@
 		statusConfirmItem = null;
 	}
 
-	function requestDelete(service, event) {
-		event.stopPropagation();
-		openMenu = null;
+	function requestDelete(service) {
 		deleteConfirmItem = service;
 		deleteConfirmOpen = true;
 	}
 
 	function cancelDelete() {
 		deleteConfirmItem = null;
+	}
+
+	function serviceMenuItems(service) {
+		const active = isActiveStatus(service.status);
+		return [
+			{ value: 'ver', label: 'Ver anúncio', icon: ExternalLink, href: getServiceHref(service) },
+			{ value: 'editar', label: 'Editar', icon: Edit, onselect: () => openEdit(service) },
+			{
+				value: 'status',
+				label: active ? 'Pausar serviço' : 'Ativar serviço',
+				icon: active ? Pause : Play,
+				disabled: togglingId === service.id,
+				onselect: () => requestToggleStatus(service)
+			},
+			{
+				value: 'excluir',
+				label: 'Excluir',
+				icon: Trash2,
+				danger: true,
+				separator: true,
+				disabled: deletingId === service.id,
+				onselect: () => requestDelete(service)
+			}
+		];
 	}
 
 	async function fetchServices() {
@@ -365,7 +352,107 @@
 	});
 </script>
 
-<svelte:window onclick={handleWindowClick} />
+{#snippet serviceList()}
+	<div class="space-y-3">
+		{#each filteredServices as serv (serv.id)}
+			{@const Icon = serviceIcon(serv)}
+			<article
+				class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
+					serv.status
+				)
+					? 'opacity-80'
+					: ''}"
+			>
+				<div class="flex gap-4 p-4">
+					<div
+						class="flex h-16 w-16 shrink-0 items-center justify-center rounded-container {serv.service_type ===
+						'Pacote Completo'
+							? 'preset-tonal-secondary'
+							: 'preset-tonal-primary'}"
+					>
+						<Icon
+							class="h-8 w-8 {serv.service_type === 'Pacote Completo'
+								? 'text-secondary-600'
+								: 'text-primary-600'} opacity-80"
+						/>
+					</div>
+
+					<div class="flex min-w-0 flex-1 flex-col justify-center">
+						<h3 class="line-clamp-1 font-bold text-surface-950-50">{serv.title}</h3>
+						<p class="mt-0.5 text-sm font-medium text-primary-700">
+							{formatPrice(serv.price, serv.pricing_model)}
+						</p>
+						<p class="mt-1 line-clamp-2 text-xs text-surface-600-400">{serv.description}</p>
+						<div class="mt-2 flex flex-wrap items-center gap-2">
+							<span
+								class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
+									serv.status
+								)}"
+							>
+								{getStatusLabel(serv.status)}
+							</span>
+							<span class="flex items-center gap-1 text-xs text-surface-600-400">
+								<MapPin class="h-3 w-3" />
+								{serv.location}
+							</span>
+						</div>
+						{#if ownerProfile}
+							<div class="mt-2 flex items-center gap-2">
+								<div class="h-6 w-6 overflow-hidden rounded-full bg-surface-200-800">
+									{#if ownerProfile.photo_url && !imgErrors[serv.id]}
+										<img
+											src={ownerProfile.photo_url}
+											alt={ownerProfile.display_name}
+											class="h-full w-full object-cover"
+											onerror={() => (imgErrors[serv.id] = true)}
+										/>
+									{:else}
+										<div
+											class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-bold"
+										>
+											{ownerProfile.display_name?.charAt(0) || '?'}
+										</div>
+									{/if}
+								</div>
+								<span class="text-xs font-medium text-surface-700-300"
+									>{ownerProfile.display_name || 'Usuário'}</span
+								>
+							</div>
+						{/if}
+					</div>
+
+					<div class="shrink-0 self-start">
+						<AppMenu
+							items={serviceMenuItems(serv)}
+							label="Ações do serviço"
+							triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
+						>
+							{#snippet trigger()}
+								<MoreVertical class="h-5 w-5" />
+							{/snippet}
+						</AppMenu>
+					</div>
+				</div>
+			</article>
+		{:else}
+			<div class="px-4 py-16 text-center">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-100-900"
+				>
+					{#if activeTab === 'mao_de_obra'}
+						<Users class="h-8 w-8 text-surface-600-400" />
+					{:else}
+						<Briefcase class="h-8 w-8 text-surface-600-400" />
+					{/if}
+				</div>
+				<h3 class="mb-1 text-lg font-medium text-surface-950-50">Nenhum serviço encontrado</h3>
+				<p class="text-sm text-surface-600-400">
+					Você ainda não possui serviços cadastrados nesta categoria.
+				</p>
+			</div>
+		{/each}
+	</div>
+{/snippet}
 
 <div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
@@ -392,210 +479,35 @@
 			</div>
 		{/if}
 
-		<div class="mb-6 flex rounded-container bg-surface-200-800 p-1">
-			<button
-				type="button"
-				onclick={() => (activeTab = 'mao_de_obra')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
-				'mao_de_obra'
-					? 'bg-surface-50-950 text-primary-700 shadow-sm'
-					: 'text-surface-600-400 hover:text-surface-950-50'}"
-			>
-				<Users class="h-4 w-4" />
-				Mão de Obra
-			</button>
-			<button
-				type="button"
-				onclick={() => (activeTab = 'pacote_completo')}
-				class="flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-medium transition-all {activeTab ===
-				'pacote_completo'
-					? 'bg-surface-50-950 text-primary-700 shadow-sm'
-					: 'text-surface-600-400 hover:text-surface-950-50'}"
-			>
-				<Briefcase class="h-4 w-4" />
-				Pacote Completo
-			</button>
-		</div>
-
-		<div class="relative mb-6 shadow-sm rounded-container">
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
-			<input
-				type="search"
-				placeholder="Buscar nos meus serviços..."
-				bind:value={searchQuery}
-				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-			/>
-		</div>
-
-		{#if loading}
-			<div class="flex justify-center py-12">
-				<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
+		<AppTabs bind:value={activeTab} items={serviceTabs} label="Tipo de serviço" variant="segmented" class="gap-6">
+			<div class="relative shadow-sm rounded-container">
+				<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+				<input
+					type="search"
+					placeholder="Buscar nos meus serviços..."
+					bind:value={searchQuery}
+					class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				/>
 			</div>
-		{:else}
-			<div class="space-y-3">
-				{#each filteredServices as serv (serv.id)}
-					{@const Icon = serviceIcon(serv)}
-					<article
-						class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
-							serv.status
-						)
-							? 'opacity-80'
-							: ''}"
-					>
-						<div class="flex gap-4 p-4">
-							<div
-								class="flex h-16 w-16 shrink-0 items-center justify-center rounded-container {serv.service_type ===
-								'Pacote Completo'
-									? 'preset-tonal-secondary'
-									: 'preset-tonal-primary'}"
-							>
-								<Icon
-									class="h-8 w-8 {serv.service_type === 'Pacote Completo'
-										? 'text-secondary-600'
-										: 'text-primary-600'} opacity-80"
-								/>
-							</div>
 
-							<div class="flex min-w-0 flex-1 flex-col justify-center">
-								<h3 class="line-clamp-1 font-bold text-surface-950-50">{serv.title}</h3>
-								<p class="mt-0.5 text-sm font-medium text-primary-700">
-									{formatPrice(serv.price, serv.pricing_model)}
-								</p>
-								<p class="mt-1 line-clamp-2 text-xs text-surface-600-400">{serv.description}</p>
-								<div class="mt-2 flex flex-wrap items-center gap-2">
-									<span
-										class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
-											serv.status
-										)}"
-									>
-										{getStatusLabel(serv.status)}
-									</span>
-									<span class="flex items-center gap-1 text-xs text-surface-600-400">
-										<MapPin class="h-3 w-3" />
-										{serv.location}
-									</span>
-								</div>
-								{#if ownerProfile}
-									<div class="mt-2 flex items-center gap-2">
-										<div class="h-6 w-6 overflow-hidden rounded-full bg-surface-200-800">
-											{#if ownerProfile.photo_url && !imgErrors[serv.id]}
-												<img
-													src={ownerProfile.photo_url}
-													alt={ownerProfile.display_name}
-													class="h-full w-full object-cover"
-													onerror={() => (imgErrors[serv.id] = true)}
-												/>
-											{:else}
-												<div
-													class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-bold"
-												>
-													{ownerProfile.display_name?.charAt(0) || '?'}
-												</div>
-											{/if}
-										</div>
-										<span class="text-xs font-medium text-surface-700-300"
-											>{ownerProfile.display_name || 'Usuário'}</span
-										>
-									</div>
-								{/if}
-							</div>
-
-							<div class="relative z-10 shrink-0 self-start" data-service-menu>
-								<button
-									type="button"
-									onclick={(event) => toggleMenu(serv.id, event)}
-									class="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-									aria-label="Ações do serviço"
-									aria-expanded={openMenu === serv.id}
-									aria-haspopup="menu"
-								>
-									<MoreVertical class="h-5 w-5" />
-								</button>
-								{#if openMenu === serv.id}
-									<ul
-										role="menu"
-										tabindex="-1"
-										class="absolute right-0 z-[60] m-0 w-48 list-none rounded-container border border-surface-200-800 bg-surface-50-950 p-0 py-1 shadow-2xl {menuPositionClass()}"
-									>
-										<li role="none">
-											<a
-												role="menuitem"
-												href={resolve(getServiceHref(serv))}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<ExternalLink class="h-4 w-4" />
-												Ver anúncio
-											</a>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												onclick={(event) => openEdit(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal"
-											>
-												<Edit class="h-4 w-4" />
-												Editar
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={togglingId === serv.id}
-												onclick={(event) => requestToggleStatus(serv, event)}
-												class="flex w-full items-center gap-2 px-4 py-3 text-sm text-surface-700-300 hover:preset-tonal disabled:opacity-50"
-											>
-												{#if isActiveStatus(serv.status)}
-													<Pause class="h-4 w-4" />
-													Pausar serviço
-												{:else}
-													<Play class="h-4 w-4" />
-													Ativar serviço
-												{/if}
-											</button>
-										</li>
-										<li role="none">
-											<button
-												type="button"
-												role="menuitem"
-												disabled={deletingId === serv.id}
-												onclick={(event) => requestDelete(serv, event)}
-												class="flex w-full items-center gap-2 border-t border-surface-200-800 px-4 py-3 text-sm font-medium text-error-500 hover:preset-tonal-error disabled:opacity-50"
-											>
-												<Trash2 class="h-4 w-4" />
-												Excluir
-											</button>
-										</li>
-									</ul>
-								{/if}
-							</div>
-						</div>
-					</article>
-				{:else}
-					<div class="px-4 py-16 text-center">
-						<div
-							class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-100-900"
-						>
-							{#if activeTab === 'mao_de_obra'}
-								<Users class="h-8 w-8 text-surface-600-400" />
-							{:else}
-								<Briefcase class="h-8 w-8 text-surface-600-400" />
-							{/if}
-						</div>
-						<h3 class="mb-1 text-lg font-medium text-surface-950-50">Nenhum serviço encontrado</h3>
-						<p class="text-sm text-surface-600-400">
-							Você ainda não possui serviços cadastrados nesta categoria.
-						</p>
-					</div>
-				{/each}
-			</div>
-		{/if}
+			{#if loading}
+				<div class="flex justify-center py-12">
+					<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
+				</div>
+			{:else}
+				<AppTabsPanel value="mao_de_obra">
+					{@render serviceList()}
+				</AppTabsPanel>
+				<AppTabsPanel value="pacote_completo">
+					{@render serviceList()}
+				</AppTabsPanel>
+			{/if}
+		</AppTabs>
 	</main>
 
 	<ServiceEditSheet bind:open={editOpen} service={editingService} onsaved={handleEditSaved} />
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={statusConfirmOpen}
 		title={statusConfirmContent?.title ?? ''}
 		message={statusConfirmContent?.message ?? ''}
@@ -606,7 +518,7 @@
 		oncancel={cancelToggleStatus}
 	/>
 
-	<ConfirmDialog
+	<AppConfirmDialog
 		bind:open={deleteConfirmOpen}
 		title={deleteConfirmContent?.title ?? ''}
 		message={deleteConfirmContent?.message ?? ''}

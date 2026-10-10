@@ -1,5 +1,5 @@
 <script>
-	import { X } from 'lucide-svelte';
+	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 
 	// valores aceitos por bookings_cancellation_reason_check
@@ -67,100 +67,66 @@
 	}
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (open && event.key === 'Escape' && !loading) close();
-	}}
-/>
+<AppDialog
+	bind:open
+	{title}
+	description={message}
+	role="alertdialog"
+	dismissible={!loading}
+>
+	<label for="cancel-booking-reason" class="mb-1 block text-sm font-medium text-surface-700-300">
+		Motivo
+	</label>
+	<select
+		id="cancel-booking-reason"
+		bind:value={reason}
+		disabled={loading}
+		class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
+	>
+		<option value="" disabled>Selecione</option>
+		{#each REASONS as option (option.id)}
+			<option value={option.id}>{option.label}</option>
+		{/each}
+	</select>
 
-{#if open}
-	<div class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="presentation">
-		<button
-			type="button"
-			class="absolute inset-0 z-0 border-0 bg-surface-950/50 p-0"
-			onclick={close}
-			aria-label="Fechar diálogo"
+	{#if needsDetails}
+		<label for="cancel-booking-details" class="mb-1 mt-3 block text-sm font-medium text-surface-700-300">
+			Descreva o motivo
+		</label>
+		<textarea
+			id="cancel-booking-details"
+			bind:value={details}
 			disabled={loading}
-		></button>
+			rows="3"
+			class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
+		></textarea>
+		<p class="mt-1 text-xs text-surface-600-400">
+			Mínimo de {MIN_DETAILS_LENGTH} caracteres ({details.trim().length}/{MIN_DETAILS_LENGTH}).
+		</p>
+	{/if}
 
-		<div
-			class="relative z-10 w-full max-w-sm rounded-container bg-surface-50-950 p-5 shadow-2xl"
-			role="alertdialog"
-			aria-modal="true"
-			aria-labelledby="cancel-booking-title"
-			aria-describedby="cancel-booking-message"
-		>
-			<div class="mb-4 flex items-start justify-between gap-3">
-				<div class="min-w-0 flex-1">
-					<h2 id="cancel-booking-title" class="text-lg font-bold text-surface-950-50">{title}</h2>
-					<p id="cancel-booking-message" class="mt-2 text-sm leading-relaxed text-surface-600-400">
-						{message}
-					</p>
-				</div>
-				<button
-					type="button"
-					onclick={close}
-					disabled={loading}
-					class="shrink-0 rounded-full p-1.5 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-600-400 disabled:opacity-50"
-					aria-label="Fechar"
-				>
-					<X class="h-5 w-5" />
-				</button>
-			</div>
+	{#if errorMessage}
+		<p class="mt-3 text-sm text-error-500">{errorMessage}</p>
+	{/if}
 
-			<label for="cancel-booking-reason" class="mb-1 block text-sm font-medium text-surface-700-300">
-				Motivo
-			</label>
-			<select
-				id="cancel-booking-reason"
-				bind:value={reason}
+	{#snippet footer()}
+		<div class="grid grid-cols-2 gap-2">
+			<button
+				type="button"
+				onclick={close}
 				disabled={loading}
-				class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
+				class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal disabled:opacity-50"
 			>
-				<option value="" disabled>Selecione</option>
-				{#each REASONS as option (option.id)}
-					<option value={option.id}>{option.label}</option>
-				{/each}
-			</select>
-
-			{#if needsDetails}
-				<label for="cancel-booking-details" class="mb-1 mt-3 block text-sm font-medium text-surface-700-300">
-					Descreva o motivo
-				</label>
-				<textarea
-					id="cancel-booking-details"
-					bind:value={details}
-					disabled={loading}
-					rows="3"
-					class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
-				></textarea>
-				<p class="mt-1 text-xs text-surface-600-400">
-					Mínimo de {MIN_DETAILS_LENGTH} caracteres ({details.trim().length}/{MIN_DETAILS_LENGTH}).
-				</p>
-			{/if}
-
-			{#if errorMessage}
-				<p class="mt-3 text-sm text-error-500">{errorMessage}</p>
-			{/if}
-
-			<div class="mt-5 grid grid-cols-2 gap-2">
-				<button
-					type="button"
-					onclick={close}
-					disabled={loading}
-					class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal disabled:opacity-50"
-				>
-					Voltar
-				</button>
-				<button
-					type="button"
-					onclick={handleConfirm}
-					disabled={loading || !canSubmit}
-					class="rounded-container preset-filled-error-500 py-3 text-sm font-semibold transition-colors focus:ring-2 focus:ring-error-500/30 focus:ring-offset-1 disabled:opacity-60"
-				>
-					{loading ? 'Aguarde...' : 'Cancelar operação'}
-				</button>
-			</div>
+				Voltar
+			</button>
+			<button
+				type="button"
+				onclick={handleConfirm}
+				disabled={loading || !canSubmit}
+				class="rounded-container preset-filled-error-500 py-3 text-sm font-semibold transition-colors focus:ring-2 focus:ring-error-500/30 focus:ring-offset-1 disabled:opacity-60"
+			>
+				{loading ? 'Aguarde...' : 'Cancelar operação'}
+			</button>
 		</div>
-	</div>
-{/if}
+	{/snippet}
+</AppDialog>

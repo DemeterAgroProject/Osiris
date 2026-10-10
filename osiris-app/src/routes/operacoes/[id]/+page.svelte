@@ -6,6 +6,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
+	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import { supabase } from '$lib/supabase';
 
 	function formatCurrency(value) {
@@ -454,19 +455,8 @@
 							Você já enviou sua avaliação ({myReview.rating}/5).
 						</p>
 					{:else if canReview}
-						<div class="mt-3 flex gap-1">
-							{#each [1, 2, 3, 4, 5] as star (star)}
-								<button
-									type="button"
-									onclick={() => (rating = star)}
-									class="rounded p-1 {rating >= star
-										? 'text-warning-500'
-										: 'text-surface-400-600'}"
-									aria-label="{star} estrelas"
-								>
-									<Star class="h-7 w-7 {rating >= star ? 'fill-current' : ''}" />
-								</button>
-							{/each}
+						<div class="mt-3">
+							<AppRating bind:value={rating} readOnly={false} label="Sua nota" />
 						</div>
 						<textarea
 							rows="3"

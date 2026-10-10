@@ -2,6 +2,7 @@
 	import { onNavigate } from '$app/navigation';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import AppToaster from '$lib/components/ui/AppToaster.svelte';
 
 	let { children } = $props();
 
@@ -21,3 +22,4 @@
 <div class="app-container">
     {@render children()}
 </div>
+<AppToaster />

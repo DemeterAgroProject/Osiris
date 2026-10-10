@@ -5,7 +5,7 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
 	import FavoriteButton from '$lib/components/FavoriteButton.svelte';
-	import Rating from '$lib/components/Rating.svelte';
+	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
 	import { ChevronLeft } from 'lucide-svelte';
@@ -507,7 +507,7 @@
 					<div class="min-w-0 flex-1">
 						<p class="text-sm font-semibold text-primary-700">Anunciante</p>
 						<p class="truncate text-xl font-semibold text-surface-950-50">{seller.name}</p>
-						<Rating
+						<AppRating
 							value={sellerReviewStats.average}
 							count={sellerReviewStats.count}
 							size="sm"
@@ -526,7 +526,7 @@
 					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">
 						<h2 class="text-lg font-semibold text-surface-950-50">Avaliações do anúncio</h2>
 						<div class="mt-1">
-							<Rating
+							<AppRating
 								value={productReviewStats.average}
 								count={productReviewStats.count}
 								size="sm"
