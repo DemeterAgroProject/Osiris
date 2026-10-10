@@ -2,10 +2,9 @@
  * Cria no Google Forms o formulário de avaliação da demonstração do Osiris.
  *
  * Como usar:
- *  1. Preencha CONFIG (projeto, responsável, contato) e UEQ_S (abaixo) com os pares de adjetivos da
- *     versão OFICIAL em português do UEQ-S (https://www.ueq-online.org), na mesma ordem e com os
- *     mesmos lados (esquerda = valor 1, direita = valor 7). A planilha oficial de análise do UEQ-S
- *     espera exatamente essa ordem e polaridade.
+ *  1. Confira CONFIG (projeto, responsável, contato) e UEQ_S (abaixo). UEQ_S traz a adaptação brasileira
+ *     dos pares do UEQ-S: se o comitê ou o pré-teste pedirem ajustes, mude só as palavras, nunca a
+ *     ordem nem os lados (esquerda = valor 1, direita = valor 7), que a planilha oficial de análise espera.
  *  2. Em https://script.google.com, crie um projeto, cole este arquivo e execute criarFormulario.
  *  3. Autorize o acesso quando o Google pedir. Os links aparecem no Registro de execução.
  *
@@ -14,21 +13,24 @@
 
 const CONFIG = {
   titulo: 'Avaliação do Osiris',
-  projeto: '[NOME DO PROJETO / TRABALHO]',
-  responsavel: '[NOME DO RESPONSÁVEL]',
-  contato: '[E-MAIL DE CONTATO]'
+  projeto: 'OSIRIS',
+  responsavel: 'Eduardo P. Tiadoro e Miguel B. Muniz',
+  contato: 'projetoosiris@unipampa.edu.br'
 };
 
-// [lado esquerdo (1), lado direito (7)] — copie os 8 pares do material oficial do UEQ-S em português.
+// [lado esquerdo (1), lado direito (7)]: adaptação para o português do Brasil feita pela equipe a partir
+// do original em inglês do UEQ-S (https://www.ueq-online.org/Material/UEQS_Items.pdf), pendente de revisão
+// por especialistas e de pré-teste com produtores. Mantém a ordem e a polaridade do original, que a
+// planilha oficial de análise espera. Itens 1–4: qualidade pragmática; 5–8: qualidade hedônica.
 const UEQ_S = [
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER'],
-  ['PREENCHER', 'PREENCHER']
+  ['Que atrapalha', 'Que ajuda'], //       obstructive / supportive
+  ['Complicado', 'Fácil'], //              complicated / easy
+  ['Ineficiente', 'Eficiente'], //         inefficient / efficient
+  ['Confuso', 'Claro'], //                 confusing / clear
+  ['Chato', 'Empolgante'], //              boring / exciting
+  ['Desinteressante', 'Interessante'], //  not interesting / interesting
+  ['Convencional', 'Criativo'], //         conventional / inventive
+  ['Comum', 'Inovador'] //                 usual / leading edge
 ];
 
 const CONCORDANCIA = ['Discordo totalmente', 'Concordo totalmente'];
@@ -44,6 +46,7 @@ function criarFormulario() {
     )
     .setCollectEmail(false)
     .setLimitOneResponsePerUser(false) // exigiria login no Google, o que afasta parte dos produtores
+    .setRequireLogin(false) // em contas Workspace (ex.: unipampa.edu.br) o padrão restringe ao domínio
     .setAllowResponseEdits(false)
     .setShowLinkToRespondAgain(false)
     .setProgressBar(true)
