@@ -7,6 +7,7 @@
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+    import AppSteps from '$lib/components/ui/AppSteps.svelte';
 
     function createEmptyImageRow(isCover = false) {
         return { id: null, url: '', is_cover: isCover, removed: false };
@@ -252,9 +253,15 @@
             </div>
         {/if}
 
+        <AppSteps
+            bind:step={currentStep}
+            labels={['Categoria', 'Detalhes', 'Local', 'Preço']}
+            label="Etapas do novo anúncio"
+            class="mb-7"
+        />
+
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 1 de 4</p>
                 <h2 class="mb-4 text-base text-surface-600-400">O que você deseja anunciar?</h2>
 
                 <div class="space-y-3">
@@ -288,7 +295,6 @@
 
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 2 de 4</p>
                 <h2 class="mb-4 text-lg font-semibold text-surface-950-50">
                     Detalhes do {form.category === 'maquinario' ? 'Maquinário' : 'Produto'}
                 </h2>
@@ -397,7 +403,6 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 3 de 4</p>
                 <h2 class="mb-4 text-base text-surface-600-400">Localização</h2>
                 <div class="relative flex-1 overflow-hidden rounded-container border border-surface-200-800 bg-surface-100-900 min-h-[300px]">
                     <div class="absolute inset-0 flex items-center justify-center bg-surface-100-900">
@@ -427,7 +432,6 @@
 
         {:else if currentStep === 3}
             <div class="flex flex-1 flex-col">
-                <p class="mb-2 text-sm text-surface-600-400">Etapa 4 de 4</p>
                 <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Qual é o valor cobrado?</h2>
 
                 <div>

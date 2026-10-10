@@ -1,5 +1,6 @@
 <script>
-    import { Steps, ToggleGroup } from '@skeletonlabs/skeleton-svelte';
+    import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
+    import AppSteps from '$lib/components/ui/AppSteps.svelte';
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { supabase } from '$lib/supabase';
@@ -89,31 +90,12 @@
             </div>
         {/if}
 
-        <Steps
-            step={currentStep}
-            count={totalSteps}
-            linear
-            onStepChange={(details) => {
-                if (details.step <= currentStep) currentStep = details.step;
-            }}
+        <AppSteps
+            bind:step={currentStep}
+            labels={['Tipo', 'Detalhes', 'Cobrança']}
+            label="Etapas do novo serviço"
             class="mb-7"
-        >
-            <Steps.List class="flex items-start" aria-label="Etapas do novo serviço">
-                {#each ['Tipo', 'Detalhes', 'Cobrança'] as label, index (label)}
-                    <Steps.Item {index} class="flex flex-1 items-start">
-                        <Steps.Trigger disabled={index > currentStep} class="group flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center">
-                            <Steps.Indicator class="flex size-8 items-center justify-center rounded-full border border-surface-300-700 bg-surface-50-950 text-xs font-bold text-surface-700-300 data-[complete]:border-primary-500 data-[complete]:preset-filled-primary-500 data-[current]:border-primary-500 data-[current]:preset-filled-primary-500">
-                                {index + 1}
-                            </Steps.Indicator>
-                            <span class="text-[11px] font-medium text-surface-700-300">{label}</span>
-                        </Steps.Trigger>
-                        {#if index < totalSteps - 1}
-                            <Steps.Separator class="mt-4 h-px flex-1 bg-surface-300-700 data-[complete]:bg-primary-500" />
-                        {/if}
-                    </Steps.Item>
-                {/each}
-            </Steps.List>
-        </Steps>
+        />
 
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
