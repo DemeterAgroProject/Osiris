@@ -1,7 +1,5 @@
 <script>
     import { page } from '$app/state';
-    import { goto } from '$app/navigation';
-    import { resolve } from '$app/paths';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import AppRating from '$lib/components/ui/AppRating.svelte';
@@ -17,10 +15,7 @@
         ArrowLeft,
         Camera,
         User,
-        IdCard,
-        Award,
-        Megaphone,
-        ChevronRight
+        IdCard
     } from 'lucide-svelte';
 
     function resolveDisplayName(profile, authUser) {
@@ -156,7 +151,7 @@
         };
     }
 
-    /** @typedef {'profile' | 'verification' | 'edit' | 'reviews'} ProfileView */
+    /** @typedef {'profile' | 'edit' | 'reviews'} ProfileView */
 
     let loading = $state(true);
     let saving = $state(false);
@@ -196,9 +191,6 @@
         )
     );
 
-    const phoneVerified = $derived(false);
-
-    const canBecomeAdvertiser = $derived(emailVerified && phoneVerified);
 
     const reviewStats = $derived(computeReviewStats(reviews));
     const rating = $derived(reviewStats.average);
@@ -206,12 +198,10 @@
 
     const pageTitle = $derived(
         view === 'edit'
-            ? 'Editar Perfil'
-            : view === 'verification'
-                ? 'Verificação'
-                : view === 'reviews'
-                    ? 'Avaliações'
-                    : 'Meu perfil'
+            ? 'Editar perfil'
+            : view === 'reviews'
+                ? 'Avaliações'
+                : 'Meu perfil'
     );
 
     async function loadReviews() {
@@ -352,20 +342,6 @@
         }, 1200);
     }
 
-    async function handleValidatePhone() {
-        saveMessage = { text: '', type: '' };
-        if (!phone?.trim()) {
-            openView('edit');
-            saveMessage = { text: 'Cadastre um telefone antes de validar.', type: 'error' };
-            return;
-        }
-        // Fluxo de SMS/OTP pode ser integrado depois
-        saveMessage = {
-            text: 'Validação por SMS em breve. Por enquanto, complete o telefone no perfil.',
-            type: 'error'
-        };
-    }
-
     $effect(() => {
         void userId;
         loadProfile();
@@ -452,14 +428,7 @@
                                             class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                                         >
                                             <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {:else}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
+                                            Verificado
                                         </span>
                                     {/if}
                                 </div>
@@ -469,21 +438,6 @@
                                         <Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-600-400" />
                                         <span class="truncate text-sm text-surface-700-300">{phone || 'Não informado'}</span>
                                     </div>
-                                    {#if phoneVerified}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {:else}
-                                        <span
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                            <Check class="h-3 w-3" />
-                                            Validado
-                                        </span>
-                                    {/if}
                                 </div>
 
                                 <div class="flex items-start gap-2">
@@ -540,22 +494,6 @@
                         </button>
                     </section>
 
-                    <button
-                        type="button"
-                        onclick={() => openView('verification')}
-                        class="mt-4 flex w-full items-center justify-between rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-4 text-left shadow-sm transition-colors hover:border-primary-500"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-                                <Check class="h-5 w-5 text-surface-950-50" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Verificação e status</p>
-                                <p class="text-xs text-surface-700-300">Email, telefone e anunciante</p>
-                            </div>
-                        </div>
-                        <ChevronRight class="h-5 w-5 text-surface-600-400" />
-                    </button>
                 {/if}
             {:else if view === 'reviews'}
                 <section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
@@ -576,118 +514,6 @@
                         emptyTitle="Nenhuma avaliação recebida"
                         emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
                     />
-                </section>
-            {:else if view === 'verification'}
-                <section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Mail class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Validar email</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                {emailVerified
-                                    ? 'Seu email já está validado.'
-                                    : 'Confirme seu email para aumentar a confiança da sua conta.'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={emailVerified}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {emailVerified
-                            ? 'bg-surface-100-900 text-surface-600-400'
-                            : 'preset-filled-primary-500'}"
-                    >
-                        {emailVerified ? 'Email validado' : 'Validar email'}
-                    </button>
-                </section>
-
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Phone class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Validar telefone</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                Valide seu número de telefone para aumentar a segurança da sua conta.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={phoneVerified}
-                        onclick={handleValidatePhone}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {phoneVerified
-                            ? 'bg-surface-100-900 text-surface-600-400'
-                            : 'preset-filled-primary-500'}"
-                    >
-                        {phoneVerified ? 'Telefone validado' : 'Validar telefone'}
-                    </button>
-                </section>
-
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Megaphone class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Torne-se um anunciante</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                Complete seu perfil, verifique seu email e telefone para se tornar um anunciante
-                                e publicar no Osiris.
-                            </p>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase {emailVerified
-                                        ? 'preset-tonal-primary'
-                                        : 'preset-tonal-warning'}"
-                                >
-                                    {emailVerified ? 'Email verificado' : 'Email não verificado'}
-                                </span>
-                                <span
-                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase {phoneVerified
-                                        ? 'preset-tonal-primary'
-                                        : 'preset-tonal-warning'}"
-                                >
-                                    {phoneVerified ? 'Telefone verificado' : 'Telefone não verificado'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        disabled={!canBecomeAdvertiser}
-                        onclick={() => goto(resolve('/anunciar'))}
-                        class="mt-4 w-full rounded-container py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed {canBecomeAdvertiser
-                            ? 'preset-filled-primary-500'
-                            : 'bg-surface-100-900 text-surface-600-400'}"
-                    >
-                        {canBecomeAdvertiser ? 'Começar a anunciar' : 'Evoluir para Anunciante'}
-                    </button>
-                </section>
-
-                <section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-primary">
-                            <Award class="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <h3 class="font-semibold">Certificados</h3>
-                            <p class="mt-1 text-sm text-surface-600-400">
-                                {profile?.certificates?.length
-                                    ? `Você possui ${profile.certificates.length} certificado(s).`
-                                    : 'Você não possui certificados.'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        class="mt-4 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold transition-colors"
-                    >
-                        Gerenciar certificados
-                    </button>
                 </section>
             {:else if view === 'edit' && isOwner}
                 <form class="space-y-4" onsubmit={handleSaveProfile}>
