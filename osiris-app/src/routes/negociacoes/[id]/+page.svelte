@@ -9,6 +9,7 @@
 	import { showToast } from '$lib/components/ui/toast.js';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 
 	function parseCurrencyToNumber(value) {
 		if (value === null || value === undefined || value === '') return null;
@@ -218,8 +219,7 @@
 		if (error) {
 			console.error('Erro ao carregar negociação:', error);
 			errorMessage =
-				error.message ||
-				'Erro ao carregar a negociação. Confira as políticas RLS de SELECT no Supabase.';
+				userMessage(error, 'Não foi possível carregar a negociação.');
 			loading = false;
 			return;
 		}
@@ -323,7 +323,7 @@
 			.eq('id', negotiation.id);
 
 		if (error) {
-			errorMessage = error.message;
+			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
 			await loadNegotiation();
 		}
@@ -339,7 +339,7 @@
 		});
 
 		if (error) {
-			errorMessage = error.message || 'Não foi possível aceitar a proposta.';
+			errorMessage = userMessage(error, 'Não foi possível aceitar a proposta.');
 			actionLoading = false;
 			showAcceptDialog = false;
 			return;
@@ -375,7 +375,7 @@
 		showRejectDialog = false;
 
 		if (error) {
-			errorMessage = error.message;
+			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
 			await loadNegotiation();
 		}

@@ -268,7 +268,7 @@
 		if (negRes.error) {
 			console.error('Erro ao listar negociações:', negRes.error);
 			errorMessage =
-				'Não foi possível carregar as negociações. Verifique as políticas RLS de leitura (SELECT) no Supabase.';
+				'Não foi possível carregar as negociações. Tente novamente.';
 			negotiations = [];
 		} else {
 			negotiations = await enrichNegotiations(negRes.data ?? []);

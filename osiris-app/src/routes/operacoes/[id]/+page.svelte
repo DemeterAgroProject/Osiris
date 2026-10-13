@@ -8,6 +8,7 @@
 	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
 	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined || value === '') return 'Preço a combinar';
@@ -223,7 +224,7 @@
 
 		if (error) {
 			console.error('Erro ao carregar operação:', error);
-			errorMessage = error.message || 'Erro ao carregar a operação.';
+			errorMessage = userMessage(error, 'Erro ao carregar a operação.');
 			loading = false;
 			return;
 		}
@@ -269,7 +270,7 @@
 		actionLoading = false;
 
 		if (error) {
-			errorMessage = error.message;
+			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
 			await loadBooking(id);
 		}
@@ -303,7 +304,7 @@
 		reviewSubmitting = false;
 
 		if (error) {
-			errorMessage = error.message;
+			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 			return;
 		}
 

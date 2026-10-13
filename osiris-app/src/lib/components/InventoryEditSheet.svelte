@@ -20,7 +20,7 @@
 
 	function formatImageError(error) {
 		if (error?.code === '42501' || error?.status === 403) {
-			return 'Sem permissão para salvar imagens. Aplique as políticas RLS em supabase/product_images_rls.sql no Supabase.';
+			return 'Não foi possível salvar as imagens. Tente novamente.';
 		}
 		return 'Anúncio salvo, mas falhou ao atualizar as imagens.';
 	}

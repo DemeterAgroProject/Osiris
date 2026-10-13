@@ -5,6 +5,7 @@
     import AppRating from '$lib/components/ui/AppRating.svelte';
     import ReviewList from '$lib/components/ReviewList.svelte';
     import { supabase } from '$lib/supabase';
+    import { userMessage } from '$lib/errors';
     import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
     import {
         Star,
@@ -318,7 +319,7 @@
 
         if (error) {
             console.error('Erro ao salvar perfil:', error);
-            saveMessage = { text: error.message || 'Não foi possível salvar as alterações.', type: 'error' };
+            saveMessage = { text: userMessage(error, 'Não foi possível salvar as alterações.'), type: 'error' };
             saving = false;
             return;
         }

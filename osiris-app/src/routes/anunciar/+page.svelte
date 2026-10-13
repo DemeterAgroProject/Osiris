@@ -135,7 +135,7 @@
             (error?.code === '42501' || error?.status === 403) &&
             String(error?.message ?? '').includes('product_images')
         ) {
-            return 'Não foi possível salvar as imagens. Execute o SQL em supabase/product_images_rls.sql no Supabase (SQL Editor).';
+            return 'Não foi possível salvar as imagens. Tente novamente.';
         }
         return 'Ocorreu um erro ao publicar o anúncio. Tente novamente.';
     }
