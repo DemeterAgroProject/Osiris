@@ -1,6 +1,7 @@
 <script>
 	import { Heart } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 
 	let { productId = null, serviceId = null, class: className = '' } = $props();
@@ -8,7 +9,6 @@
 	let loading = $state(true);
 	let toggling = $state(false);
 	let isFavorited = $state(false);
-	let authUserId = $state(null);
 
 	async function checkFavorite() {
 		loading = true;
@@ -16,8 +16,6 @@
 		const {
 			data: { user }
 		} = await supabase.auth.getUser();
-
-		authUserId = user?.id ?? null;
 
 		if (!user || (!productId && !serviceId)) {
 			isFavorited = false;
@@ -49,7 +47,7 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			await goto(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+			await goto(resolve(`/login?redirect=${encodeURIComponent(window.location.pathname)}`));
 			return;
 		}
 
@@ -99,11 +97,11 @@
 	type="button"
 	onclick={toggleFavorite}
 	disabled={loading || toggling || (!productId && !serviceId)}
-	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition-colors hover:border-green-300 hover:text-green-700 disabled:opacity-50 {className}"
+	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-700 disabled:opacity-50 {className}"
 	aria-label={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
 	aria-pressed={isFavorited}
 >
 	<Heart
-		class="h-5 w-5 {isFavorited ? 'fill-red-500 text-red-500' : ''} {toggling ? 'animate-pulse' : ''}"
+		class="h-5 w-5 {isFavorited ? 'fill-error-500 text-error-500' : ''} {toggling ? 'animate-pulse' : ''}"
 	/>
 </button>

@@ -1,7 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 
 	onMount(async () => {
 		const {
@@ -9,11 +11,11 @@
 		} = await supabase.auth.getUser();
 
 		if (user?.id) {
-			await goto(`/login/usuario/${user.id}`, { replaceState: true });
+			await goto(resolve(`/login/usuario/${user.id}`), { replaceState: true });
 			return;
 		}
 
-		await goto('/login?redirect=/login/usuario', { replaceState: true });
+		await goto(resolve('/login?redirect=/login/usuario'), { replaceState: true });
 	});
 </script>
 
@@ -21,9 +23,6 @@
 	<title>Meu perfil — Osiris</title>
 </svelte:head>
 
-<div class="flex min-h-dvh items-center justify-center bg-gray-50">
-	<div
-		class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
-		aria-label="Carregando"
-	></div>
+<div class="flex min-h-dvh items-center justify-center bg-surface-50-950">
+	<LoadingIndicator label="Carregando perfil..." />
 </div>

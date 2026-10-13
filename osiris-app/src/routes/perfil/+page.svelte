@@ -1,7 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 
 	let loading = $state(true);
 
@@ -11,11 +13,11 @@
 		} = await supabase.auth.getUser();
 
 		if (user?.id) {
-			await goto(`/perfil/${user.id}`, { replaceState: true });
+			await goto(resolve(`/perfil/${user.id}`), { replaceState: true });
 			return;
 		}
 
-		await goto('/login?redirect=/perfil', { replaceState: true });
+		await goto(resolve('/login?redirect=/perfil'), { replaceState: true });
 	});
 </script>
 
@@ -23,11 +25,8 @@
 	<title>Perfil — Osiris</title>
 </svelte:head>
 
-<div class="flex min-h-dvh items-center justify-center bg-gray-50">
+<div class="flex min-h-dvh items-center justify-center bg-surface-50-950">
 	{#if loading}
-		<div
-			class="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
-			aria-label="Carregando"
-		></div>
+		<LoadingIndicator label="Carregando perfil..." />
 	{/if}
 </div>

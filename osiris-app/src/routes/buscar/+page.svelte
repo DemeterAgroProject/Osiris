@@ -5,13 +5,57 @@
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import FilterBar from '$lib/components/FilterBar.svelte';
 	import ProductList from '$lib/components/ProductList.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
-	const DEFAULT_LOCATION = 'Alegrete, RS';
 	const FETCH_LIMIT = 60;
 	const DEBOUNCE_MS = 350;
+
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	function resolveProductImageUrl(images = [], legacyImageUrl = null) {
+		const fromGallery = pickCoverImage(images);
+		if (fromGallery) return fromGallery;
+		const legacy = legacyImageUrl?.trim?.() ?? legacyImageUrl;
+		return legacy || null;
+	}
+
+	function coverUrlFromMap(imagesByProductId, productId, legacyImageUrl = null) {
+		const images = imagesByProductId.get(productId) ?? [];
+		return resolveProductImageUrl(images, legacyImageUrl);
+	}
+
+	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
+		const map = new Map();
+		if (!productIds?.length) return map;
+
+		const uniqueIds = [...new Set(productIds.filter(Boolean))];
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.in('product_id', uniqueIds)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar product_images:', error);
+			return map;
+		}
+
+		for (const row of data ?? []) {
+			if (!map.has(row.product_id)) map.set(row.product_id, []);
+			map.get(row.product_id).push(row);
+		}
+
+		return map;
+	}
 
 	function createDefaultFilters() {
 		return {
@@ -67,36 +111,23 @@
 		return term.replace(/[%_,.()]/g, ' ').trim();
 	}
 
-	function activeFilterCount(filterState) {
-		let count = 0;
-		if (filterState.listingTypes.length) count++;
-		if (filterState.productKinds.length) count++;
-		if (filterState.serviceKinds.length) count++;
-		if (filterState.laborKinds.length) count++;
-		if (filterState.location) count++;
-		if (filterState.minPrice || filterState.maxPrice) count++;
-		return count;
-	}
-
-	function mapProductListing(product) {
+	function mapProductListing(product, imagesByProductId) {
 		return {
 			id: `product-${product.id}`,
 			adId: product.id,
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
-			imageUrl: null,
-			sponsored: false,
+			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category,
 			description: product.description ?? '',
 			href: `/anuncio/produto/${product.id}`
 		};
 	}
 
-	function mapMachineryListing(product) {
+	function mapMachineryListing(product, imagesByProductId) {
 		const machineryRaw = product.agricultural_machinery;
 		const m = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
 		const brandName = m?.brands?.name;
@@ -108,11 +139,9 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
-			imageUrl: null,
-			sponsored: false,
+			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
 			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
@@ -127,11 +156,9 @@
 			tipo: 'servico',
 			title: service.title,
 			price: service.price,
-			location: service.location || DEFAULT_LOCATION,
-			views: '-',
+			location: service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: null,
-			sponsored: false,
 			category: service.service_type,
 			serviceType: service.service_type,
 			description: service.description ?? '',
@@ -290,8 +317,15 @@
 			machinery = [];
 			services = [];
 		} else {
-			products = (productsResult.data ?? []).map(mapProductListing);
-			machinery = (machineryResult.data ?? []).map(mapMachineryListing);
+			const productRows = productsResult.data ?? [];
+			const machineryRows = machineryResult.data ?? [];
+			const imagesByProductId = await fetchProductImagesByProductIds([
+				...productRows.map((row) => row.id),
+				...machineryRows.map((row) => row.id)
+			]);
+
+			products = productRows.map((row) => mapProductListing(row, imagesByProductId));
+			machinery = machineryRows.map((row) => mapMachineryListing(row, imagesByProductId));
 			services = (servicesResult.data ?? []).map(mapServiceListing);
 		}
 
@@ -334,19 +368,21 @@
 	<title>Buscar — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header />
 	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar no marketplace..." />
 	<FilterBar bind:filters locations={locationOptions} resultCount={visibleListings.length} />
 
 	{#if loading}
-		<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando anúncios...</div>
+		<div class="px-4 py-5">
+			<ListingSkeleton variant="grid" count={6} label="Carregando anúncios..." />
+		</div>
 	{:else if errorMessage}
-		<div class="mx-4 my-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 	{:else if visibleListings.length === 0}
-		<div class="mx-4 my-8 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
-			<p class="text-sm font-semibold text-gray-800">Nenhum anúncio encontrado</p>
-			<p class="mt-1 text-xs text-gray-500">Tente outros termos ou limpe os filtros.</p>
+		<div class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center">
+			<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
+			<p class="mt-1 text-xs text-surface-700-300">Tente outros termos ou limpe os filtros.</p>
 		</div>
 	{:else}
 		<ProductList title="Resultados da busca" products={visibleListings} />

@@ -1,5 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import {
 		Settings,
 		User,
@@ -8,10 +9,10 @@
 		MessageSquare,
 		Heart,
 		LogOut,
-		ChevronRight,
 		Leaf
 	} from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
+    import AppMenu from '$lib/components/ui/AppMenu.svelte';
 
     function resolveDisplayName(profile, authUser) {
         return (
@@ -44,7 +45,7 @@
         );
     }
 
-    let { open = $bindable(false) } = $props();
+    let { open = $bindable(false), triggerClass = '', trigger } = $props();
 
     let authUser = $state(null);
     let profile = $state(null);
@@ -58,16 +59,27 @@
     const email = $derived(profile?.email || authUser?.email || '');
     const profileHref = $derived(authUser ? `/login/usuario/${authUser.id}` : '/login');
 
-	const menuSections = $derived([
-		[
-			{ icon: User, label: 'Meu perfil', href: profileHref },
-			{ icon: Heart, label: 'Favoritos', href: '/favoritos' },
-			{ icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
-			{ icon: Archive, label: 'Meu inventário', href: '/inventario' },
-			{ icon: Megaphone, label: 'Anunciar', href: '/anunciar' }
-		],
-        [{ icon: Leaf, label: 'Explorar marketplace', href: '/' }]
-    ]);
+    const menuItems = $derived(
+        !authUser && !loading
+            ? []
+            : [
+                  { value: 'perfil', icon: User, label: 'Meu perfil', href: profileHref },
+                  { value: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos' },
+                  { value: 'negociacoes', icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
+                  { value: 'inventario', icon: Archive, label: 'Meu inventário', href: '/inventario' },
+                  { value: 'anunciar', icon: Megaphone, label: 'Anunciar', href: '/anunciar' },
+                  { value: 'marketplace', icon: Leaf, label: 'Explorar marketplace', href: '/', separator: true },
+                  {
+                      value: 'sair',
+                      icon: LogOut,
+                      label: signingOut ? 'Saindo...' : 'Sair da conta',
+                      danger: true,
+                      separator: true,
+                      disabled: signingOut,
+                      onselect: handleSignOut
+                  }
+              ]
+    );
 
     async function loadUserData() {
         if (!open) return;
@@ -81,7 +93,7 @@
         authUser = user;
 
         if (user) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            const { data } = await supabase.from('profiles').select('id, display_name, photo_url').eq('id', user.id).maybeSingle();
             profile = data;
         } else {
             profile = null;
@@ -94,11 +106,6 @@
         open = false;
     }
 
-    function navigate(href) {
-        closeMenu();
-        goto(href);
-    }
-
     async function handleSignOut() {
         signingOut = true;
         await supabase.auth.signOut();
@@ -106,7 +113,7 @@
         profile = null;
         signingOut = false;
         closeMenu();
-        goto('/login');
+        goto(resolve('/login'));
     }
 
     $effect(() => {
@@ -114,97 +121,54 @@
     });
 </script>
 
-<svelte:window
-    onkeydown={(event) => {
-        if (open && event.key === 'Escape') closeMenu();
-    }}
-/>
-
-{#if open}
-    <button
-        type="button"
-        class="fixed inset-0 z-[60] border-0 bg-black/40 p-0"
-        onclick={closeMenu}
-        aria-label="Fechar menu"
-    ></button>
-
-    <div
-        class="fixed right-3 top-[3.75rem] z-[70] w-[min(100vw-1.5rem,20rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
-        role="menu"
-        aria-label="Menu do usuário"
-    >
+<AppMenu
+    bind:open
+    items={menuItems}
+    label="Abrir menu do usuário"
+    variant="nav"
+    {triggerClass}
+    {trigger}
+    contentClass="w-[min(100vw-1.5rem,20rem)]"
+>
+    {#snippet header()}
         {#if !authUser && !loading}
-            <div class="px-4 py-6 text-center text-sm text-gray-500">Sessão encerrada.</div>
+            <div class="px-4 py-6 text-center text-sm text-surface-600-400">Sessão encerrada.</div>
         {:else}
-        <div class="flex items-center gap-3 border-b border-gray-100 px-4 py-4">
-            
-            {#if avatarUrl && !imgError}
-                <img 
-                    src={avatarUrl} 
-                    alt={displayName} 
-                    class="h-12 w-12 shrink-0 rounded-full object-cover" 
-                    onerror={() => imgError = true}
-                />
-            {:else}
-                <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-emerald-500 text-sm font-bold text-white"
-                >
-                    {initials}
-                </div>
-            {/if}
-
-            <div class="min-w-0 flex-1">
-                {#if loading}
-                    <div class="h-4 w-32 animate-pulse rounded bg-gray-100"></div>
-                    <div class="mt-2 h-3 w-40 animate-pulse rounded bg-gray-100"></div>
+            <div class="mb-1 flex items-center gap-3 border-b border-surface-200-800 px-4 py-4">
+                {#if avatarUrl && !imgError}
+                    <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        class="h-12 w-12 shrink-0 rounded-full object-cover"
+                        onerror={() => (imgError = true)}
+                    />
                 {:else}
-                    <p class="truncate text-sm font-bold text-gray-900">{displayName}</p>
-                    <p class="truncate text-xs text-gray-500">{email}</p>
-                {/if}
-            </div>
-
-            <button
-                type="button"
-                onclick={() => navigate(profileHref)}
-                class="shrink-0 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                aria-label="Configurações do perfil"
-            >
-                <Settings class="h-5 w-5" />
-            </button>
-        </div>
-
-        {#each menuSections as section, sectionIndex (sectionIndex)}
-            <div class="py-1" role="none">
-                {#each section as item (item.label)}
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onclick={() => navigate(item.href)}
-                        class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50"
+                    <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full preset-filled-primary-500 text-sm font-bold"
                     >
-                        <item.icon class="h-5 w-5 shrink-0 text-gray-600" />
-                        <span class="flex-1 font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 text-gray-300" />
-                    </button>
-                {/each}
-            </div>
-            {#if sectionIndex < menuSections.length - 1}
-                <div class="border-t border-gray-100" role="separator"></div>
-            {/if}
-        {/each}
+                        {initials}
+                    </div>
+                {/if}
 
-        <div class="border-t border-gray-100 py-1" role="none">
-            <button
-                type="button"
-                role="menuitem"
-                onclick={handleSignOut}
-                disabled={signingOut}
-                class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60"
-            >
-                <LogOut class="h-5 w-5 shrink-0" />
-                <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
-            </button>
-        </div>
+                <div class="min-w-0 flex-1">
+                    {#if loading}
+                        <div class="h-4 w-32 animate-pulse rounded bg-surface-200-800"></div>
+                        <div class="mt-2 h-3 w-40 animate-pulse rounded bg-surface-200-800"></div>
+                    {:else}
+                        <p class="truncate text-sm font-bold text-surface-950-50">{displayName}</p>
+                        <p class="truncate text-xs text-surface-600-400">{email}</p>
+                    {/if}
+                </div>
+
+                <a
+                    href={resolve(profileHref)}
+                    onclick={closeMenu}
+                    class="shrink-0 rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-700-300"
+                    aria-label="Configurações do perfil"
+                >
+                    <Settings class="h-5 w-5" />
+                </a>
+            </div>
         {/if}
-    </div>
-{/if}
+    {/snippet}
+</AppMenu>

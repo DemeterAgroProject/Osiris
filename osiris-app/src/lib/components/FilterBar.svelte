@@ -1,5 +1,7 @@
 <script>
-	import { SlidersHorizontal, X, Check, ChevronDown } from 'lucide-svelte';
+	import { SlidersHorizontal, Check, ChevronDown } from 'lucide-svelte';
+	import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
+	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 
 	function createDefaultMarketplaceFilters() {
 		return {
@@ -48,12 +50,6 @@
 	const serviceKindOptions = [{ id: 'pacote', label: 'Pacote completo' }];
 
 	const laborKindOptions = [{ id: 'mao-de-obra', label: 'Mão de obra' }];
-
-	const statusOptions = [
-		{ id: '', label: 'Todos' },
-		{ id: 'ativo', label: 'Ativo' },
-		{ id: 'pausado', label: 'Pausado' }
-	];
 
 	const sortOptions = [
 		{ id: 'recentes', label: 'Mais recentes' },
@@ -110,10 +106,6 @@
 		isOpen = true;
 	}
 
-	function closeFilters() {
-		isOpen = false;
-	}
-
 	function clearDraft() {
 		draft = createDefaultMarketplaceFilters();
 	}
@@ -123,13 +115,8 @@
 		isOpen = false;
 	}
 
-	function toggleArrayItem(key, id) {
-		const values = draft[key];
-		if (values.includes(id)) {
-			draft = { ...draft, [key]: values.filter((value) => value !== id) };
-		} else {
-			draft = { ...draft, [key]: [...values, id] };
-		}
+	function updateDraftArray(key, values) {
+		draft = { ...draft, [key]: values };
 	}
 
 	function isSelected(key, id) {
@@ -137,24 +124,18 @@
 	}
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (event.key === 'Escape' && isOpen) closeFilters();
-	}}
-/>
-
-<div class="space-y-2 px-4 pb-3 mt-4">
+<div class="mx-auto mt-4 w-full max-w-7xl space-y-2 px-4 pb-3 sm:px-6 lg:px-8">
 	<div class="flex items-center gap-2">
 		<button
 			type="button"
 			onclick={openFilters}
-			class="relative flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-green-500 hover:text-green-600"
+			class="relative flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-600"
 		>
 			<SlidersHorizontal class="h-4 w-4 shrink-0" />
 			<span>Filtros</span>
 			{#if activeCount > 0}
 				<span
-					class="rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+					class="rounded-full preset-filled-primary-500 px-2 py-0.5 text-[10px] font-semibold"
 				>
 					{activeCount}
 				</span>
@@ -162,7 +143,7 @@
 		</button>
 
 		{#if resultCount !== null}
-			<p class="shrink-0 text-xs font-medium text-gray-500">
+			<p class="shrink-0 text-xs font-medium text-surface-700-300">
 				{resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
 			</p>
 		{/if}
@@ -172,7 +153,7 @@
 		<div class="flex flex-wrap gap-1.5">
 			{#each activeLabels as label (label)}
 				<span
-					class="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-800"
+					class="rounded-full border border-primary-500 preset-tonal-primary px-2.5 py-1 text-[10px] font-semibold text-primary-700"
 				>
 					{label}
 				</span>
@@ -181,200 +162,181 @@
 	{/if}
 </div>
 
-{#if isOpen}
-	<button
-		type="button"
-		class="fixed inset-0 z-[70] border-0 bg-black/30 p-0"
-		onclick={closeFilters}
-		aria-label="Fechar filtros"
-	></button>
-	<div
-		class="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl bg-white shadow-2xl"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="filter-bar-title"
-	>
-		<div class="mx-auto w-full max-w-3xl px-4 pb-6 pt-4">
-			<div class="mb-4 flex items-center justify-between">
-				<div>
-					<h2 id="filter-bar-title" class="text-base font-semibold text-gray-900">
-						Filtros do marketplace
-					</h2>
-					<p class="text-xs text-gray-500">Produtos, maquinários e serviços</p>
-				</div>
-				<button
-					type="button"
-					onclick={closeFilters}
-					class="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-					aria-label="Fechar filtros"
+<AppDialog
+	bind:open={isOpen}
+	title="Filtros do marketplace"
+	description="Produtos, maquinários e serviços"
+	variant="sheet"
+	size="lg"
+	closeLabel="Fechar filtros"
+>
+	<div class="space-y-5">
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+				Tipo de anúncio
+			</p>
+			<ToggleGroup
+				multiple
+				value={draft.listingTypes}
+				onValueChange={(details) => updateDraftArray('listingTypes', details.value)}
+				class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-4"
+			>
+				{#each listingTypeOptions as option (option.id)}
+					<ToggleGroup.Item
+						value={option.id}
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
+					>
+						{#if isSelected('listingTypes', option.id)}
+							<Check class="h-3.5 w-3.5 shrink-0" />
+						{/if}
+						<span class="min-w-0">{option.label}</span>
+					</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup>
+		</div>
+
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Produtos</p>
+			<ToggleGroup
+				multiple
+				value={draft.productKinds}
+				onValueChange={(details) => updateDraftArray('productKinds', details.value)}
+				class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent!"
+			>
+				{#each productKindOptions as option (option.id)}
+					<ToggleGroup.Item
+						value={option.id}
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+					>
+						{#if isSelected('productKinds', option.id)}
+							<Check class="h-3.5 w-3.5 shrink-0" />
+						{/if}
+						<span class="min-w-0">{option.label}</span>
+					</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup>
+		</div>
+
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Serviços</p>
+			<ToggleGroup
+				multiple
+				value={draft.serviceKinds}
+				onValueChange={(details) => updateDraftArray('serviceKinds', details.value)}
+				class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
+			>
+				{#each serviceKindOptions as option (option.id)}
+					<ToggleGroup.Item
+						value={option.id}
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+					>
+						{#if isSelected('serviceKinds', option.id)}
+							<Check class="h-3.5 w-3.5 shrink-0" />
+						{/if}
+						<span class="min-w-0">{option.label}</span>
+					</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup>
+		</div>
+
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Mão de obra</p>
+			<ToggleGroup
+				multiple
+				value={draft.laborKinds}
+				onValueChange={(details) => updateDraftArray('laborKinds', details.value)}
+				class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
+			>
+				{#each laborKindOptions as option (option.id)}
+					<ToggleGroup.Item
+						value={option.id}
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+					>
+						{#if isSelected('laborKinds', option.id)}
+							<Check class="h-3.5 w-3.5 shrink-0" />
+						{/if}
+						<span class="min-w-0">{option.label}</span>
+					</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup>
+		</div>
+
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Localidade</p>
+			<div class="relative">
+				<select
+					bind:value={draft.location}
+					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				>
-					<X class="h-5 w-5" />
-				</button>
+					<option value="">Todas as regiões</option>
+					{#each locationOptions as option (option.id)}
+						<option value={option.id}>{option.label}</option>
+					{/each}
+				</select>
+				<ChevronDown
+					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
+				/>
 			</div>
+		</div>
 
-			<div class="max-h-[70vh] space-y-5 overflow-y-auto pb-3">
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
-						Tipo de anúncio
-					</p>
-					<div class="flex flex-wrap gap-2">
-						{#each listingTypeOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('listingTypes', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'listingTypes',
-									option.id
-								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
-							>
-								{#if isSelected('listingTypes', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Produtos</p>
-					<div class="flex flex-wrap gap-2">
-						{#each productKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('productKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'productKinds',
-									option.id
-								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
-							>
-								{#if isSelected('productKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Serviços</p>
-					<div class="flex flex-wrap gap-2">
-						{#each serviceKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('serviceKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'serviceKinds',
-									option.id
-								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
-							>
-								{#if isSelected('serviceKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Mão de obra</p>
-					<div class="flex flex-wrap gap-2">
-						{#each laborKindOptions as option (option.id)}
-							<button
-								type="button"
-								onclick={() => toggleArrayItem('laborKinds', option.id)}
-								class="flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors {isSelected(
-									'laborKinds',
-									option.id
-								)
-									? 'border-green-600 bg-green-50 text-green-700'
-									: 'border-gray-200 text-gray-600'}"
-							>
-								{#if isSelected('laborKinds', option.id)}<Check class="h-3 w-3" />{/if}
-								{option.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Localidade</p>
-					<div class="relative">
-						<select
-							bind:value={draft.location}
-							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-						>
-							<option value="">Todas as regiões</option>
-							{#each locationOptions as option (option.id)}
-								<option value={option.id}>{option.label}</option>
-							{/each}
-						</select>
-						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-						/>
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ordenação</p>
-					<div class="relative">
-						<select
-							bind:value={draft.sort}
-							class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-						>
-							{#each sortOptions as option (option.id)}
-								<option value={option.id}>{option.label}</option>
-							{/each}
-						</select>
-						<ChevronDown
-							class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-						/>
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
-						Faixa de preço (R$)
-					</p>
-					<div class="grid grid-cols-2 gap-2">
-						<input
-							type="number"
-							min="0"
-							inputmode="numeric"
-							bind:value={draft.minPrice}
-							placeholder="Mínimo"
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-						/>
-						<input
-							type="number"
-							min="0"
-							inputmode="numeric"
-							bind:value={draft.maxPrice}
-							placeholder="Máximo"
-							class="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-						/>
-					</div>
-				</div>
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Ordenação</p>
+			<div class="relative">
+				<select
+					bind:value={draft.sort}
+					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				>
+					{#each sortOptions as option (option.id)}
+						<option value={option.id}>{option.label}</option>
+					{/each}
+				</select>
+				<ChevronDown
+					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
+				/>
 			</div>
+		</div>
 
-			<div class="mt-5 grid grid-cols-2 gap-2">
-				<button
-					type="button"
-					onclick={clearDraft}
-					class="rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-				>
-					Limpar
-				</button>
-				<button
-					type="button"
-					onclick={applyFilters}
-					class="rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
-				>
-					Aplicar filtros
-				</button>
+		<div class="space-y-2">
+			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+				Faixa de preço (R$)
+			</p>
+			<div class="grid grid-cols-2 gap-2">
+				<input
+					type="number"
+					min="0"
+					inputmode="numeric"
+					bind:value={draft.minPrice}
+					placeholder="Mínimo"
+					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				/>
+				<input
+					type="number"
+					min="0"
+					inputmode="numeric"
+					bind:value={draft.maxPrice}
+					placeholder="Máximo"
+					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				/>
 			</div>
 		</div>
 	</div>
-{/if}
+
+	{#snippet footer()}
+		<div class="grid grid-cols-2 gap-2">
+			<button
+				type="button"
+				onclick={clearDraft}
+				class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal"
+			>
+				Limpar
+			</button>
+			<button
+				type="button"
+				onclick={applyFilters}
+				class="rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold transition-colors"
+			>
+				Aplicar filtros
+			</button>
+		</div>
+	{/snippet}
+</AppDialog>

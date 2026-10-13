@@ -1,42 +1,58 @@
-# sv
+# Osiris
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Marketplace agro em formato de app mobile (PWA) para anunciar e contratar **maquinário agrícola**, **produtos e insumos** e **serviços** (mão de obra ou pacote completo). O fluxo vai do anúncio à negociação, contrato, operação em campo e avaliação.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **SvelteKit 2 + Svelte 5** (runes), JavaScript com JSDoc
+- **Tailwind CSS 4 + Skeleton v4**, ícones `lucide-svelte`
+- **Supabase**: Auth, Postgres com RLS, Realtime, Vault, `pg_cron` e Edge Functions
+- **Web Push**: `static/sw.js` + Edge Function `send-push`
 
-```sh
-# create a new project
-npx sv create my-app
-```
+O app fala direto com o Supabase pelo cliente em `src/lib/supabase.js`; não há API própria. As regras de negócio e de permissão ficam no banco (policies, triggers e RPCs).
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --no-types --add tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:auto" --install npm osiris-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Rodando localmente
 
 ```sh
+npm install
+cp .env.example .env   # preencha com os dados do projeto Supabase
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+| Script | O que faz |
+| --- | --- |
+| `npm run dev` | servidor de desenvolvimento |
+| `npm run build` / `npm run preview` | build de produção e pré-visualização |
+| `npm run lint` | ESLint |
+| `npm run check` | `svelte-check` (tipos via JSDoc) |
 
-To create a production version of your app:
+## Fluxo principal
+
+1. **Anunciar** (`/anunciar`, `/servicos/novo`): produto, maquinário (`products` + `agricultural_machinery`) ou serviço. Exige `can_rent_out` ou `can_offer_services` no perfil, concedidos por um admin.
+2. **Negociar** (`/negociacoes/[id]`): proposta de preço e período com chat em tempo real. Status `solicitada` → `em_negociacao` → `aceita` / `recusada` / `cancelado`. Só o prestador aceita, recusa ou altera os termos.
+3. **Contrato**: ao aceitar, a RPC `aceitar_negociacao` cria o registro em `bookings`.
+4. **Operação** (`/operacoes/[id]`): `pendente` → `em_operacao` → `em_avaliacao` → `finalizada`, avançada pelo prestador. Cancelamento via RPC `cancel_booking`, com motivo.
+5. **Avaliação**: cliente e prestador se avaliam; a operação finaliza quando os dois avaliam. Lembretes saem a cada hora pelo job `lembretes-de-avaliacao` do `pg_cron`.
+
+## Banco de dados
+
+O schema é versionado em `supabase/migrations/`. A primeira migration é o estado do banco em 2026-09-25; as seguintes são incrementais.
 
 ```sh
-npm run build
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase migration list   # compara local x remoto
+npx supabase db push          # aplica migrations pendentes
 ```
 
-You can preview the production build with `npm run preview`.
+Dados pessoais do perfil (e-mail, telefone, CPF) não são legíveis por outros usuários: leia o próprio perfil com `supabase.rpc('get_my_profile')` (ver `src/lib/profiles.js`) e use só as colunas públicas para os demais.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Push
+
+Cada `insert` em `notifications` dispara o trigger `trg_notify_push`, que chama a Edge Function `send-push` com o id da notificação e o cabeçalho `x-webhook-secret`. A função confere o segredo, busca a notificação no banco e envia o push para as inscrições do usuário, removendo as expiradas.
+
+Configuração (uma vez por projeto):
+
+- Vault: segredos `project_url` e `push_webhook_secret`
+- Secrets da função: `PUSH_WEBHOOK_SECRET` (mesmo valor do Vault), `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
+- Deploy: `npx supabase functions deploy send-push --use-api --no-verify-jwt`

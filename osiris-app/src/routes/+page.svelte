@@ -1,20 +1,61 @@
 <script>
 	import { onMount } from 'svelte';
 	import Header from '$lib/components/Header.svelte';
-	import SearchBar from '$lib/components/SearchBar.svelte';
-	import FilterBar from '$lib/components/FilterBar.svelte';
 	import ProductSection from '$lib/components/ProductSection.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
-	import PartnerSection from '$lib/components/PartnerSection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
-	const DEFAULT_LOCATION = 'Alegrete, RS';
 	const HOME_CAROUSEL_LIMIT = 6;
 	const HOME_FETCH_LIMIT = 6;
 	const SEARCH_FETCH_LIMIT = 48;
 	const DEBOUNCE_MS = 350;
+
+	function pickCoverImage(images = []) {
+		if (!images?.length) return null;
+		const cover = images.find((img) => img.is_cover && img.url?.trim());
+		return cover?.url?.trim() ?? images.find((img) => img.url?.trim())?.url?.trim() ?? null;
+	}
+
+	function resolveProductImageUrl(images = [], legacyImageUrl = null) {
+		const fromGallery = pickCoverImage(images);
+		if (fromGallery) return fromGallery;
+		const legacy = legacyImageUrl?.trim?.() ?? legacyImageUrl;
+		return legacy || null;
+	}
+
+	function coverUrlFromMap(imagesByProductId, productId, legacyImageUrl = null) {
+		const images = imagesByProductId.get(productId) ?? [];
+		return resolveProductImageUrl(images, legacyImageUrl);
+	}
+
+	async function fetchProductImagesByProductIds(productIds) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- mapa local, não é estado
+		const map = new Map();
+		if (!productIds?.length) return map;
+
+		const uniqueIds = [...new Set(productIds.filter(Boolean))];
+		const { data, error } = await supabase
+			.from('product_images')
+			.select('id, product_id, url, is_cover, created_at')
+			.in('product_id', uniqueIds)
+			.order('is_cover', { ascending: false })
+			.order('created_at', { ascending: true });
+
+		if (error) {
+			console.error('Erro ao carregar product_images:', error);
+			return map;
+		}
+
+		for (const row of data ?? []) {
+			if (!map.has(row.product_id)) map.set(row.product_id, []);
+			map.get(row.product_id).push(row);
+		}
+
+		return map;
+	}
 
 	function createDefaultFilters() {
 		return {
@@ -35,7 +76,6 @@
 	let filters = $state(createDefaultFilters());
 
 	let loading = $state(true);
-	let fetching = $state(false);
 	let errorMessage = $state('');
 	let products = $state([]);
 	let machinery = $state([]);
@@ -64,25 +104,23 @@
 		return count;
 	}
 
-	function mapProductListing(product) {
+	function mapProductListing(product, imagesByProductId) {
 		return {
 			id: `product-${product.id}`,
 			adId: product.id,
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
-			imageUrl: null,
-			sponsored: false,
+			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category,
 			description: product.description ?? '',
 			href: `/anuncio/produto/${product.id}`
 		};
 	}
 
-	function mapMachineryListing(product) {
+	function mapMachineryListing(product, imagesByProductId) {
 		const machineryRaw = product.agricultural_machinery;
 		const m = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
 		const brandName = m?.brands?.name;
@@ -94,11 +132,9 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
-			imageUrl: null,
-			sponsored: false,
+			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
 			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
@@ -113,11 +149,9 @@
 			tipo: 'servico',
 			title: service.title,
 			price: service.price,
-			location: service.location || DEFAULT_LOCATION,
-			views: '-',
+			location: service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: null,
-			sponsored: false,
 			category: service.service_type,
 			serviceType: service.service_type,
 			description: service.description ?? '',
@@ -214,6 +248,7 @@
 	}
 
 	function buildBuscarHref({ tipo = null } = {}) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- usado só para montar a URL
 		const params = new URLSearchParams();
 		const q = searchQuery.trim();
 		if (q) params.set('q', q);
@@ -234,7 +269,6 @@
 		const useServerSearch = term.length >= 2;
 		const fetchLimit = resolveFetchLimit(searchTerm);
 
-		if (!loading) fetching = true;
 		errorMessage = '';
 
 		let productQuery = supabase
@@ -292,13 +326,19 @@
 			machinery = [];
 			services = [];
 		} else {
-			products = (productsResult.data ?? []).map(mapProductListing);
-			machinery = (machineryResult.data ?? []).map(mapMachineryListing);
+			const productRows = productsResult.data ?? [];
+			const machineryRows = machineryResult.data ?? [];
+			const imagesByProductId = await fetchProductImagesByProductIds([
+				...productRows.map((row) => row.id),
+				...machineryRows.map((row) => row.id)
+			]);
+
+			products = productRows.map((row) => mapProductListing(row, imagesByProductId));
+			machinery = machineryRows.map((row) => mapMachineryListing(row, imagesByProductId));
 			services = (servicesResult.data ?? []).map(mapServiceListing);
 		}
 
 		loading = false;
-		fetching = false;
 	}
 
 	const catalog = $derived(mergeListingGroups({ products, machinery, services }));
@@ -309,16 +349,10 @@
 		normalizeText(searchQuery).length > 0 || activeFilterCount(filters) > 0
 	);
 
-	const locationOptions = $derived([...new Set(catalog.map((item) => item.location).filter(Boolean))]);
-
 	const homePreviewListings = $derived(visibleListings.slice(0, HOME_CAROUSEL_LIMIT));
 
 	const featuredListings = $derived(
 		sortListings(catalog, 'recentes').slice(0, HOME_CAROUSEL_LIMIT)
-	);
-
-	const sponsoredListings = $derived(
-		machinery.slice(0, HOME_CAROUSEL_LIMIT).map((item) => ({ ...item, sponsored: true }))
 	);
 
 	const machineryHighlights = $derived(
@@ -367,27 +401,30 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 pb-24">
+<div class="min-h-screen pb-24 lg:pb-0">
 	<Header />
-	<SearchBar bind:value={searchQuery} loading={fetching} placeholder="Buscar máquinas, produtos e serviços..." />
-	
-	<div class="px-4 pb-2">
-		<div class="rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 p-4 text-white shadow-sm">
-			<p class="text-xs font-medium uppercase tracking-wider text-green-100">Marketplace Osiris</p>
-			<h1 class="mt-1 text-xl font-bold">Máquinas, produtos e serviços em um só lugar</h1>
-			<p class="mt-1 text-sm text-green-100">Descubra oportunidades novas todos os dias.</p>
+
+	<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
+		<div class="rounded-container preset-filled-primary-500 p-4 ">
+			<p class="text-xs font-medium uppercase tracking-wider opacity-90">Marketplace Osiris</p>
+			<h1 class="mt-1 text-xl font-bold sm:text-2xl lg:text-3xl">Máquinas, produtos e serviços em um só lugar</h1>
+			<p class="mt-1 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
 		</div>
 	</div>
 
 	{#if loading}
-		<div class="px-4 py-10 text-center text-sm text-gray-500">Carregando destaques...</div>
+		<ListingSkeleton variant="carousel" count={3} sections={3} label="Carregando destaques..." />
 	{:else if errorMessage}
-		<div class="mx-4 my-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>
+		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
 	{:else if hasDiscoveryMode}
 		{#if visibleListings.length === 0}
-			<div class="mx-4 my-8 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center">
-				<p class="text-sm font-semibold text-gray-800">Nenhum anúncio encontrado</p>
-				<p class="mt-1 text-xs text-gray-500">Ajuste a busca ou os filtros para ver mais resultados.</p>
+			<div
+				class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
+			>
+				<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
+				<p class="mt-1 text-xs text-surface-700-300">
+					Ajuste a busca ou os filtros para ver mais resultados.
+				</p>
 			</div>
 		{:else}
 			<ProductSection
@@ -400,37 +437,30 @@
 		{/if}
 	{:else}
 		<ProductSection
-			title="Em destaque"
+			title="Novidades"
 			products={featuredListings}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref="/buscar"
 		/>
+		<CategorySection />
 		<ProductSection
-			title="Patrocinados"
-			products={sponsoredListings}
-			limit={HOME_CAROUSEL_LIMIT}
-			seeMoreHref="/buscar"
-		/>
-		<ProductSection
-			title="Máquinas em alta"
+			title="Máquinas"
 			products={machineryHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'maquinario' })}
 		/>
 		<ProductSection
-			title="Produtos em alta"
+			title="Produtos e insumos"
 			products={productHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'produto' })}
 		/>
 		<ProductSection
-			title="Serviços em alta"
+			title="Serviços"
 			products={serviceHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'servico' })}
 		/>
-		<CategorySection />
-		<PartnerSection />
 	{/if}
 
 	<BottomNav active="inicio" />

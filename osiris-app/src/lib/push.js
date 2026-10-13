@@ -24,6 +24,9 @@ export async function subscribeToPush(userId) {
     { onConflict: 'endpoint' }
   );
 
+  if (error) {
+    console.error('Erro ao salvar inscrição de notificações:', error.message);
+  }
 }
 
 function urlBase64ToUint8Array(base64String) {
