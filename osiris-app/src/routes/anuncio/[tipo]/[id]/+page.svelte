@@ -1,6 +1,7 @@
 <script>
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
@@ -180,6 +181,15 @@
 		avatarUrl: null
 	});
 	let showNegotiationModal = $state(false);
+	let viewerId = $state(null);
+	const isOwnListing = $derived(Boolean(viewerId && seller.id && viewerId === seller.id));
+
+	onMount(async () => {
+		const {
+			data: { user }
+		} = await supabase.auth.getUser();
+		viewerId = user?.id ?? null;
+	});
 	let reviews = $state([]);
 	let reviewsLoading = $state(false);
 	let sellerReviewStats = $state({ average: 0, count: 0 });
@@ -515,12 +525,24 @@
 					</div>
 				</a>
 
-				<button
-					onclick={() => (showNegotiationModal = true)}
-					class="mt-6 w-full rounded-container preset-filled-primary-500 px-4 py-4 text-lg font-semibold transition-colors"
-				>
-					Negociar
-				</button>
+				{#if isOwnListing}
+					<div class="mt-6 rounded-container preset-tonal-primary p-4 text-sm">
+						<p class="font-semibold">Este anúncio é seu.</p>
+						<a
+							href={resolve(page.params.tipo === 'servico' ? '/servicos' : '/inventario')}
+							class="mt-1 inline-block font-medium underline"
+						>
+							Gerenciar meus anúncios
+						</a>
+					</div>
+				{:else}
+					<button
+						onclick={() => (showNegotiationModal = true)}
+						class="mt-6 w-full rounded-container preset-filled-primary-500 px-4 py-4 text-lg font-semibold transition-colors"
+					>
+						Negociar
+					</button>
+				{/if}
 
 				<div class="mt-8 overflow-hidden rounded-container border border-surface-200-800">
 					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">

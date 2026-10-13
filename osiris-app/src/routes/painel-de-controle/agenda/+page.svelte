@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
+	import { requireUser } from '$lib/auth';
 	import {
 		ChevronLeft,
 		ChevronRight,
@@ -113,15 +114,8 @@
 	async function loadAgenda() {
 		loading = true;
 
-		const {
-			data: { user }
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			agendaItems = [];
-			loading = false;
-			return;
-		}
+		const user = await requireUser('/painel-de-controle/agenda');
+		if (!user) return;
 
 		const [bookingsRes, negotiationsRes] = await Promise.all([
 			supabase

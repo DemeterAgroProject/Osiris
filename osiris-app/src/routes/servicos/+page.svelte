@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
+	import { requireUser } from '$lib/auth';
 	import {
 		Search,
 		Plus,
@@ -188,16 +189,8 @@
 		loading = true;
 		statusMessage = { text: '', type: '' };
 
-		const {
-			data: { user }
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			allServices = [];
-			ownerProfile = null;
-			loading = false;
-			return;
-		}
+		const user = await requireUser('/servicos');
+		if (!user) return;
 
 		const [{ data, error }, profileResult] = await Promise.all([
 			supabase

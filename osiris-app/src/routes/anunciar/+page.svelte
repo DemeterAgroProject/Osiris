@@ -3,6 +3,7 @@
     import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
+    import { requireUser } from '$lib/auth';
     import { ChevronRight, Tractor, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
@@ -81,6 +82,9 @@
     });
 
     onMount(async () => {
+        // pede o login antes de a pessoa preencher as etapas, não só no envio
+        if (!(await requireUser('/anunciar'))) return;
+
         const [{ data: bData }, { data: tData }] = await Promise.all([
             supabase.from('brands').select('*').order('name'),
             supabase.from('machinery_types').select('*').order('name')

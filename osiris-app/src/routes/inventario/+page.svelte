@@ -20,6 +20,7 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import { supabase } from '$lib/supabase';
+	import { requireUser } from '$lib/auth';
 	import { onMount } from 'svelte';
 
 	function pickCoverImage(images = []) {
@@ -202,16 +203,8 @@
 		loading = true;
 		statusMessage = { text: '', type: '' };
 
-		const {
-			data: { user }
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			maquinarios = [];
-			produtos = [];
-			loading = false;
-			return;
-		}
+		const user = await requireUser('/inventario');
+		if (!user) return;
 
 		const { data: allAds, error } = await fetchOwnerProducts(user.id);
 
