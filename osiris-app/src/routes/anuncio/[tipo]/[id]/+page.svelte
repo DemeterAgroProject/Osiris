@@ -184,11 +184,14 @@
 	let viewerId = $state(null);
 	const isOwnListing = $derived(Boolean(viewerId && seller.id && viewerId === seller.id));
 
+	let viewerChecked = $state(false);
+
 	onMount(async () => {
 		const {
 			data: { user }
 		} = await supabase.auth.getUser();
 		viewerId = user?.id ?? null;
+		viewerChecked = true;
 	});
 	let reviews = $state([]);
 	let reviewsLoading = $state(false);
@@ -551,6 +554,14 @@
 							Gerenciar meus anúncios
 						</a>
 					</div>
+				{:else if viewerChecked && !viewerId}
+					<!-- visitante: entra antes de escrever a proposta, para não perder o que digitou -->
+					<a
+						href={resolve(`/login?redirect=/anuncio/${page.params.tipo}/${page.params.id}`)}
+						class="mt-6 block w-full rounded-container preset-filled-primary-500 px-4 py-4 text-center text-lg font-semibold transition-colors"
+					>
+						Entrar para negociar
+					</a>
 				{:else}
 					<button
 						onclick={() => (showNegotiationModal = true)}
