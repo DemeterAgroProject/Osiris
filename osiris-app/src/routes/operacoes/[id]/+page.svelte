@@ -128,7 +128,7 @@
 	function counterpartyName() {
 		if (!booking) return '—';
 		const profile = isProvider ? booking.client : booking.provider;
-		return profile?.display_name || (isProvider ? 'Cliente' : 'Provedor');
+		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
 	}
 
 	function counterpartyPhoto() {
@@ -365,7 +365,7 @@
 								<h1 class="text-xl font-bold text-surface-950-50">{listingTitle()}</h1>
 							{/if}
 							<p class="mt-1 text-sm text-surface-600-400">
-								{isProvider ? 'Cliente' : 'Provedor'}: {counterpartyName()}
+								{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
 							</p>
 						</div>
 					</div>
@@ -436,7 +436,7 @@
 				</div>
 			{:else if booking.status === 'pendente'}
 				<p class="mt-4 rounded-container preset-tonal-warning p-3 text-sm">
-					Aguardando o provedor iniciar a operação em campo.
+					Aguardando o anunciante iniciar a operação em campo.
 				</p>
 			{:else if booking.status === 'em_operacao'}
 				<p class="mt-4 rounded-container preset-tonal-primary p-3 text-sm">
@@ -476,7 +476,7 @@
 					{/if}
 
 					<p class="mt-3 text-xs text-surface-600-400">
-						A operação será finalizada automaticamente quando cliente e provedor avaliarem.
+						A operação será finalizada automaticamente quando cliente e anunciante avaliarem.
 					</p>
 
 					{#if canManualFinalize}

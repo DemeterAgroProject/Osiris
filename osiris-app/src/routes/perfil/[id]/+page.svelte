@@ -149,8 +149,8 @@
 		const map = {
 			client: 'Cliente',
 			cliente: 'Cliente',
-			provider: 'Provedor',
-			provedor: 'Provedor',
+			provider: 'Anunciante',
+			provedor: 'Anunciante',
 			advertiser: 'Anunciante',
 			anunciante: 'Anunciante',
 			admin: 'Administrador'
