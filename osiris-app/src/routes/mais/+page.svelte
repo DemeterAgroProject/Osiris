@@ -5,7 +5,6 @@
     import {
         Home,
         Search,
-        Headphones,
         LayoutDashboard,
         Archive,
         MessageSquare,
@@ -16,13 +15,11 @@
         Briefcase,
         PlusCircle,
         Leaf,
-        Wrench,
         LogIn,
         LogOut,
         ChevronRight,
         Settings,
-        Shield,
-        Info
+        Shield
     } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
@@ -73,8 +70,7 @@
 
     const shortcuts = [
         { icon: Home, label: 'Marketplace', href: '/' },
-        { icon: Search, label: 'Buscar ofertas', href: '/buscar' },
-        { icon: Headphones, label: 'Ajuda e suporte', href: null, badge: 'Em breve', badgeTone: 'muted' }
+        { icon: Search, label: 'Buscar ofertas', href: '/buscar' }
     ];
 
     const activityItems = $derived(
@@ -94,16 +90,9 @@
     );
 
     const discoverItems = [
-        { icon: Tractor, label: 'Maquinário e equipamentos', href: '/' },
-        { icon: Leaf, label: 'Insumos e produtos', href: '/buscar' },
-        { icon: Briefcase, label: 'Serviços do agro', href: '/servicos' },
-        {
-            icon: Wrench,
-            label: 'Oferecer serviço',
-            href: '/servicos/novo',
-            badge: 'Novo',
-            badgeTone: 'accent'
-        }
+        { icon: Tractor, label: 'Maquinário e equipamentos', href: '/buscar?tipo=maquinario' },
+        { icon: Leaf, label: 'Insumos e produtos', href: '/buscar?tipo=produto' },
+        { icon: Briefcase, label: 'Serviços do agro', href: '/buscar?tipo=servico' }
     ];
 
     const sellItems = $derived(
@@ -118,12 +107,6 @@
                   { icon: Briefcase, label: 'Oferecer serviços', href: '/login?redirect=/servicos/novo' }
               ]
     );
-
-    const legalLinks = [
-        { label: 'Termos e condições', href: null },
-        { label: 'Privacidade e dados', href: null },
-        { label: 'Sobre o Osiris', href: null }
-    ];
 
     async function refreshUser() {
         loading = true;
@@ -393,21 +376,7 @@
 
         <section aria-labelledby="mais-info" class="border-t border-surface-200-800 px-4 py-6">
             <h2 id="mais-info" class="sr-only">Informações</h2>
-            <ul class="space-y-3">
-                {#each legalLinks as link (link.label)}
-                    <li>
-                        <span class="text-sm text-surface-600-400">{link.label}</span>
-                    </li>
-                {/each}
-            </ul>
-            <div class="mt-6 flex items-start gap-2 rounded-container bg-surface-50-950 p-3 text-xs text-surface-600-400">
-                <Info class="mt-0.5 h-4 w-4 shrink-0 text-primary-600" />
-                <p>
-                    Marketplace agro da região. Alguns atalhos (negociações, ajuda, termos) serão liberados em
-                    atualizações futuras.
-                </p>
-            </div>
-            <div class="mt-4 flex items-center gap-2 text-xs text-surface-600-400">
+            <div class="flex items-center gap-2 text-xs text-surface-600-400">
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
             </div>
