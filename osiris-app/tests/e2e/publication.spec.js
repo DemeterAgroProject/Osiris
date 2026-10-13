@@ -82,9 +82,8 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.machinery);
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
-		await page.getByRole('button', { name: /Próximo/i }).click();
 		await page.getByPlaceholder('500').fill('950');
-		await page.getByRole('button', { name: 'Publicar Anúncio' }).click();
+		await page.getByRole('button', { name: 'Publicar anúncio' }).click();
 		await expect(page.getByText(/Anúncio publicado com sucesso/i)).toBeVisible();
 
 		const product = await findProductByName(seller, title);
@@ -132,9 +131,8 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.product);
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
-		await page.getByRole('button', { name: /Próximo/i }).click();
 		await page.getByPlaceholder('500').fill('275');
-		await page.getByRole('button', { name: 'Publicar Anúncio' }).click();
+		await page.getByRole('button', { name: 'Publicar anúncio' }).click();
 		await expect(page.getByText(/Anúncio publicado com sucesso/i)).toBeVisible();
 
 		const product = await findProductByName(seller, title);

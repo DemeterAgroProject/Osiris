@@ -4,7 +4,7 @@
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
     import { requireUser } from '$lib/auth';
-    import { ChevronRight, Tractor, MapPin } from 'lucide-svelte';
+    import { ChevronRight, Tractor, Leaf } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
@@ -48,7 +48,7 @@
 
     // Step management
     let currentStep = $state(0);
-    const totalSteps = 4;
+    const totalSteps = 3;
     let loading = $state(false);
     let message = $state({ text: '', type: '' });
 
@@ -63,7 +63,6 @@
             name: '',
             description: '',
             price: null,
-            location: 'Alegrete, RS',
             
             // Campos específicos de Maquinário
             brand_id: '',
@@ -105,8 +104,7 @@
             return form.name.trim().length > 0 && form.product_category !== '' && form.quantity > 0;
         }
         
-        if (currentStep === 2) return true;
-        if (currentStep === 3) return form.price !== null && form.price > 0; 
+        if (currentStep === 2) return form.price !== null && form.price > 0;
         
         return true;
     }
@@ -260,7 +258,7 @@
 
         <AppSteps
             bind:step={currentStep}
-            labels={['Categoria', 'Detalhes', 'Local', 'Preço']}
+            labels={['Categoria', 'Detalhes', 'Preço']}
             label="Etapas do novo anúncio"
             class="mb-7"
         />
@@ -288,7 +286,7 @@
                         class="flex w-full items-center gap-3 rounded-container border-2 p-4 text-left transition-all {form.category === 'produto' ? 'border-primary-500 preset-tonal-primary' : 'border-surface-200-800 bg-surface-50-950 hover:border-primary-300'}"
                     >
                         <div class="flex h-12 w-12 items-center justify-center rounded-container preset-tonal-warning">
-                            <span class="text-xl">🌱</span>
+                            <Leaf class="h-6 w-6" />
                         </div>
                         <div class="flex-1">
                             <h3 class="font-medium text-surface-950-50">Insumos ou Produtos</h3>
@@ -408,35 +406,6 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <h2 class="mb-4 text-base text-surface-600-400">Localização</h2>
-                <div class="relative flex-1 overflow-hidden rounded-container border border-surface-200-800 bg-surface-100-900 min-h-[300px]">
-                    <div class="absolute inset-0 flex items-center justify-center bg-surface-100-900">
-                        <svg class="absolute inset-0 h-full w-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            {#each [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as i (i)}
-                                <line x1="0" y1={i * 10} x2="100" y2={i * 10} stroke="currentColor" stroke-width="0.5" />
-                                <line x1={i * 10} y1="0" x2={i * 10} y2="100" stroke="currentColor" stroke-width="0.5" />
-                            {/each}
-                        </svg>
-                    </div>
-                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
-                        <div class="relative">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full preset-filled-error-500 shadow-lg">
-                                <MapPin class="h-5 w-5" />
-                            </div>
-                            <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 preset-filled-error-500"></div>
-                        </div>
-                    </div>
-                    <div class="absolute bottom-4 left-4 right-4">
-                        <div class="rounded-container bg-surface-50-950/90 px-4 py-2 shadow-sm backdrop-blur-sm border border-surface-200-800">
-                            <p class="text-sm font-medium text-surface-950-50">{form.location}</p>
-                            <p class="text-xs text-surface-600-400">Alegrete e Região</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        {:else if currentStep === 3}
-            <div class="flex flex-1 flex-col">
                 <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Qual é o valor cobrado?</h2>
 
                 <div>
@@ -468,10 +437,10 @@
                     disabled={!canProceed() || loading}
                     class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
                 >
-                    {loading ? 'Salvando no Banco...' : 'Publicar Anúncio'}
+                    {loading ? 'Publicando...' : 'Publicar anúncio'}
                 </button>
                 <button onclick={prevStep} disabled={loading} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50">
-                    Voltar e Revisar
+                    Voltar e revisar
                 </button>
             {:else}
                 <button
