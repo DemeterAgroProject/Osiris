@@ -84,6 +84,10 @@
     }
 </script>
 
+<svelte:head>
+	<title>Novo serviço — Osiris</title>
+</svelte:head>
+
 <div class="flex min-h-screen flex-col bg-surface-50-950 pb-20 lg:pb-0">
     <Header />
 

@@ -65,6 +65,10 @@
     const totalAds = $derived(stats.maquinarios + stats.produtos + stats.servicos);
 </script>
 
+<svelte:head>
+	<title>Painel — Osiris</title>
+</svelte:head>
+
 <div class="min-h-screen bg-surface-50-950 pb-20">
     <Header />
 
@@ -196,5 +200,5 @@
         {/if}
     </main>
 
-    <BottomNav active="inicio" />
+    <BottomNav active="mais" />
 </div>

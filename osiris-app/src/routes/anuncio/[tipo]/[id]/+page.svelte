@@ -205,6 +205,14 @@
 		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
 	}
 
+	// valores aceitos por services_pricing_model_check
+	const PRICING_SUFFIX = { 'Por Hora': ' / hora', 'Por Hectare': ' / hectare', 'Empreitada/Fixo': ' (valor fechado)' };
+
+	function servicePriceLabel(price, pricingModel) {
+		if (pricingModel === 'A Combinar' || price === null || price === undefined || price === '') return 'Preço a combinar';
+		return formatCurrency(price) + (PRICING_SUFFIX[pricingModel] ?? '');
+	}
+
 	function resolveSellerName(profile) {
 		return (
 			profile?.display_name ||
@@ -316,12 +324,10 @@
 				productId: data.id,
 				title: data.name,
 				priceLabel: formatCurrency(data.price),
-				description: data.description || 'Anúncio público de produto no marketplace Osiris.',
+				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Categoria', value: data.category || 'Não informado' },
-					{ label: 'Quantidade', value: data.quantity ?? 'Não informado' },
-					{ label: 'Unidade', value: data.stock_unit || 'Não informado' },
-					{ label: 'Status', value: data.status || 'Não informado' }
+					{ label: 'Quantidade disponível', value: data.quantity != null ? `${data.quantity} ${data.stock_unit || ''}`.trim() : 'Não informado' }
 				]
 			};
 
@@ -377,14 +383,13 @@
 				productId: data.id,
 				title: data.name,
 				priceLabel: `${formatCurrency(data.price)} / hora`,
-				description: data.description || 'Anúncio de maquinário agrícola no marketplace Osiris.',
+				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
 					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
 					{ label: 'Modelo', value: machinery.model || 'Não informado' },
 					{ label: 'Ano', value: machinery.manufacture_year || 'Não informado' },
-					{ label: 'Horímetro', value: machinery.current_horimeter || 'Não informado' },
-					{ label: 'Status', value: data.status || 'Não informado' }
+					{ label: 'Horímetro', value: machinery.current_horimeter != null ? `${Number(machinery.current_horimeter).toLocaleString('pt-BR')} h` : 'Não informado' }
 				]
 			};
 
@@ -410,13 +415,11 @@
 				type: 'servico',
 				serviceId: data.id,
 				title: data.title,
-				priceLabel: formatCurrency(data.price),
-				description: data.description || 'Serviço no marketplace Osiris.',
+				priceLabel: servicePriceLabel(data.price, data.pricing_model),
+				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Tipo', value: data.service_type || 'Não informado' },
-					{ label: 'Modelo de preço', value: data.pricing_model || 'Não informado' },
-					{ label: 'Local', value: data.location || 'Não informado' },
-					{ label: 'Status', value: data.status || 'Não informado' }
+					{ label: 'Local', value: data.location || 'Não informado' }
 				]
 			};
 
@@ -435,12 +438,23 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{item?.title ? `${item.title} — Osiris` : 'Anúncio — Osiris'}</title>
+</svelte:head>
+
 <div class="min-h-screen bg-surface-100-900 pb-24">
 	<Header />
 
 	<main class="mx-auto w-full max-w-3xl">
+		<!-- volta para onde a pessoa estava; aberto direto por um link, vai para a busca -->
 		<a
 			href={resolve('/buscar')}
+			onclick={(event) => {
+				if (history.length > 1) {
+					event.preventDefault();
+					history.back();
+				}
+			}}
 			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
 		>
 			<ChevronLeft class="h-4 w-4" />
@@ -479,7 +493,9 @@
 					<div class="min-w-0 flex-1">
 						<p class="text-3xl font-extrabold text-primary-700">{item.priceLabel}</p>
 						<h1 class="mt-2 text-3xl font-bold text-surface-950-50">{item.title}</h1>
-						<p class="mt-3 text-base leading-7 text-surface-600-400">{item.description}</p>
+						{#if item.description}
+							<p class="mt-3 text-base leading-7 text-surface-600-400">{item.description}</p>
+						{/if}
 					</div>
 					<FavoriteButton
 						productId={item.productId ?? null}
@@ -579,5 +595,5 @@
 		serviceId={item?.serviceId ?? null}
 	/>
 
-	<BottomNav />
+	<BottomNav active="" />
 </div>

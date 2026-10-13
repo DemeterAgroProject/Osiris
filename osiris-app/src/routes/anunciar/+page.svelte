@@ -244,6 +244,10 @@
     }
 </script>
 
+<svelte:head>
+	<title>Novo anúncio — Osiris</title>
+</svelte:head>
+
 <div class="flex min-h-screen flex-col bg-surface-50-950 pb-20">
     <Header /> 
 
@@ -457,5 +461,5 @@
         </div>
     </main>
 
-    <BottomNav active="anunciar" />
+    <BottomNav active="inventario" />
 </div>

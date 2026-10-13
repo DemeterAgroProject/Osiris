@@ -451,6 +451,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Meu inventário — Osiris</title>
+</svelte:head>
+
 <div class="min-h-screen  pb-20">
 	<Header />
 

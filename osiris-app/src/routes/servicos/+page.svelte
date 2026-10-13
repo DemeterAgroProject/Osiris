@@ -345,6 +345,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Meus serviços — Osiris</title>
+</svelte:head>
+
 {#snippet serviceList()}
 	<div class="space-y-3">
 		{#each filteredServices as serv (serv.id)}
