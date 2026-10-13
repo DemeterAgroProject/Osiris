@@ -10,7 +10,6 @@
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
-	const DEFAULT_LOCATION = 'Alegrete, RS';
 	const FETCH_LIMIT = 60;
 	const DEBOUNCE_MS = 350;
 
@@ -119,11 +118,9 @@
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
-			sponsored: false,
 			category: product.category,
 			description: product.description ?? '',
 			href: `/anuncio/produto/${product.id}`
@@ -142,11 +139,9 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
-			sponsored: false,
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
 			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
@@ -161,11 +156,9 @@
 			tipo: 'servico',
 			title: service.title,
 			price: service.price,
-			location: service.location || DEFAULT_LOCATION,
-			views: '-',
+			location: service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: null,
-			sponsored: false,
 			category: service.service_type,
 			serviceType: service.service_type,
 			description: service.description ?? '',

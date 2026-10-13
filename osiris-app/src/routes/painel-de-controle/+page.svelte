@@ -2,10 +2,11 @@
     import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
+    import { requireUser } from '$lib/auth';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import { 
-        TrendingUp, Eye, Package, Tractor, Briefcase, 
+        TrendingUp, Package, Tractor, Briefcase,
         MessageCircle, PlusCircle, ArrowRight, Leaf, MessageSquare, Calendar
     } from 'lucide-svelte';
 
@@ -15,14 +16,15 @@
     let stats = $state({
         maquinarios: 0,
         produtos: 0,
-        servicos: 0
+        servicos: 0,
+        propostas: 0,
+        operacoes: 0
     });
 
     onMount(async () => {
         try {
             loading = true;
-            const { data: { user } } = await supabase.auth.getUser();
-
+            const user = await requireUser('/painel-de-controle');
             if (!user) return; 
 
             // 1. Busca o nome do usuário
@@ -37,16 +39,20 @@
             }
 
             // 2. Faz as contagens em paralelo
-            const [maqRes, prodRes, servRes] = await Promise.all([
+            const [maqRes, prodRes, servRes, propostasRes, operacoesRes] = await Promise.all([
                 supabase.from('products').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('category', 'Maquinário').eq('status', 'ativo'),
                 supabase.from('products').select('*', { count: 'exact', head: true }).neq('category', 'Maquinário').eq('owner_id', user.id).eq('status', 'ativo'),
-                supabase.from('services').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('status', 'ativo')
+                supabase.from('services').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('status', 'ativo'),
+                supabase.from('negotiations').select('id', { count: 'exact', head: true }).eq('provider_id', user.id).eq('status', 'solicitada'),
+                supabase.from('bookings').select('id', { count: 'exact', head: true }).or(`provider_id.eq.${user.id},client_id.eq.${user.id}`).in('status', ['pendente', 'em_operacao'])
             ]);
 
             stats = {
                 maquinarios: maqRes.count || 0,
                 produtos: prodRes.count || 0,
-                servicos: servRes.count || 0
+                servicos: servRes.count || 0,
+                propostas: propostasRes.count || 0,
+                operacoes: operacoesRes.count || 0
             };
 
         } catch (err) {
@@ -59,6 +65,10 @@
     const totalAds = $derived(stats.maquinarios + stats.produtos + stats.servicos);
 </script>
 
+<svelte:head>
+	<title>Painel — Osiris</title>
+</svelte:head>
+
 <div class="min-h-screen bg-surface-50-950 pb-20">
     <Header />
 
@@ -66,7 +76,7 @@
         
         <div>
             <h1 class="text-2xl font-bold">Olá, {userName}!</h1>
-            <p class="text-sm text-surface-600-400 mt-1">Aqui está o resumo dos seus negócios no Osíris.</p>
+            <p class="text-sm text-surface-600-400 mt-1">Aqui está o resumo dos seus negócios no Osiris.</p>
         </div>
 
         {#if loading}
@@ -75,39 +85,39 @@
             </div>
         {:else}
             <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2 flex items-center justify-between rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 p-5 text-black shadow-md">
+                <div class="col-span-2 flex items-center justify-between rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 p-5 shadow-md">
                     <div>
                         <p class="text-surface-600-400 text-sm font-medium">Total de Anúncios Ativos</p>
                         <p class="text-3xl font-bold mt-1">{totalAds}</p>
                     </div>
                     <div class="h-12 w-12 rounded-full bg-surface-100-900 flex items-center justify-center backdrop-blur-sm">
-                        <TrendingUp class="h-6 w-6 text-black" />
+                        <TrendingUp class="h-6 w-6 text-surface-950-50" />
                     </div>
                 </div>
 
-                <div class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between">
-                    <div class="flex justify-between items-start">
-                        <div class="h-8 w-8 rounded-full preset-tonal-secondary flex items-center justify-center">
-                            <Eye class="h-4 w-4" />
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <p class="text-2xl font-bold">124</p>
-                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Visitas este mês</p>
-                    </div>
-                </div>
-
-                <div class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between">
+                <a href={resolve('/negociacoes')} class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between hover:border-primary-500 transition-colors">
                     <div class="flex justify-between items-start">
                         <div class="h-8 w-8 rounded-full preset-tonal-warning flex items-center justify-center">
                             <MessageCircle class="h-4 w-4" />
                         </div>
                     </div>
                     <div class="mt-3">
-                        <p class="text-2xl font-bold">3</p>
-                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Novos contatos</p>
+                        <p class="text-2xl font-bold">{stats.propostas}</p>
+                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Propostas aguardando resposta</p>
                     </div>
-                </div>
+                </a>
+
+                <a href={resolve('/negociacoes')} class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between hover:border-primary-500 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div class="h-8 w-8 rounded-full preset-tonal-secondary flex items-center justify-center">
+                            <Calendar class="h-4 w-4" />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-2xl font-bold">{stats.operacoes}</p>
+                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Operações em andamento</p>
+                    </div>
+                </a>
             </div>
 
             <div>
@@ -190,5 +200,5 @@
         {/if}
     </main>
 
-    <BottomNav active="inicio" />
+    <BottomNav active="mais" />
 </div>

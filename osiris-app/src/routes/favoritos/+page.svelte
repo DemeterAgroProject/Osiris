@@ -6,6 +6,7 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProductCard from '$lib/components/ProductCard.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 	import { ChevronLeft } from 'lucide-svelte';
 
 	function pickCoverImage(images = []) {
@@ -137,7 +138,7 @@
 
 		if (error) {
 			console.error('Erro ao carregar favoritos:', error);
-			errorMessage = error.message || 'Não foi possível carregar os favoritos.';
+			errorMessage = userMessage(error, 'Não foi possível carregar os favoritos.');
 			loading = false;
 			return;
 		}

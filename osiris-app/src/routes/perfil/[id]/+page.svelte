@@ -6,6 +6,7 @@
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 	import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
 	import {
 		ArrowLeft,
@@ -148,8 +149,8 @@
 		const map = {
 			client: 'Cliente',
 			cliente: 'Cliente',
-			provider: 'Provedor',
-			provedor: 'Provedor',
+			provider: 'Anunciante',
+			provedor: 'Anunciante',
 			advertiser: 'Anunciante',
 			anunciante: 'Anunciante',
 			admin: 'Administrador'
@@ -235,7 +236,7 @@
 		const { data, error } = await fetchProfile(profileId, user?.id);
 
 		if (error) {
-			errorMessage = error.message || 'Não foi possível carregar o perfil.';
+			errorMessage = userMessage(error, 'Não foi possível carregar o perfil.');
 			console.error('Erro ao carregar perfil:', error.message, error.code, error.details);
 			profile = null;
 		} else if (!data) {
@@ -307,7 +308,7 @@
 			.maybeSingle();
 
 		if (error) {
-			saveMessage = { text: error.message || 'Não foi possível salvar as alterações.', type: 'error' };
+			saveMessage = { text: userMessage(error, 'Não foi possível salvar as alterações.'), type: 'error' };
 			saving = false;
 			return;
 		}

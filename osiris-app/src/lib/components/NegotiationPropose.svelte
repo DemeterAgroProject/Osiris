@@ -4,6 +4,7 @@
 	import { Send } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 
 	function parseCurrencyToNumber(value) {
 		if (value === null || value === undefined || value === '') return null;
@@ -141,7 +142,7 @@
 			.single();
 
 		if (insertError) {
-			error = insertError.message || 'Não foi possível enviar a proposta.';
+			error = userMessage(insertError, 'Não foi possível enviar a proposta.');
 			sending = false;
 			return;
 		}

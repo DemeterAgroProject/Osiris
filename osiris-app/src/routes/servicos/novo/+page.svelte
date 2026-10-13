@@ -5,9 +5,14 @@
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { supabase } from '$lib/supabase';
+    import { requireUser } from '$lib/auth';
+    import { onMount } from 'svelte';
     import { ChevronRight, Users, Briefcase, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
+
+    // pede o login antes de a pessoa preencher as etapas, não só no envio
+    onMount(() => requireUser('/servicos/novo'));
 
     let currentStep = $state(0);
     const totalSteps = 3;
@@ -78,6 +83,10 @@
         }
     }
 </script>
+
+<svelte:head>
+	<title>Novo serviço — Osiris</title>
+</svelte:head>
 
 <div class="flex min-h-screen flex-col bg-surface-50-950 pb-20 lg:pb-0">
     <Header />

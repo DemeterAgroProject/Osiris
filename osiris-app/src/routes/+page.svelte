@@ -4,12 +4,10 @@
 	import ProductSection from '$lib/components/ProductSection.svelte';
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
-	import PartnerSection from '$lib/components/PartnerSection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
-	const DEFAULT_LOCATION = 'Alegrete, RS';
 	const HOME_CAROUSEL_LIMIT = 6;
 	const HOME_FETCH_LIMIT = 6;
 	const SEARCH_FETCH_LIMIT = 48;
@@ -113,11 +111,9 @@
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
-			sponsored: false,
 			category: product.category,
 			description: product.description ?? '',
 			href: `/anuncio/produto/${product.id}`
@@ -136,11 +132,9 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			location: DEFAULT_LOCATION,
-			views: '-',
+			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
-			sponsored: false,
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
 			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
@@ -155,11 +149,9 @@
 			tipo: 'servico',
 			title: service.title,
 			price: service.price,
-			location: service.location || DEFAULT_LOCATION,
-			views: '-',
+			location: service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: null,
-			sponsored: false,
 			category: service.service_type,
 			serviceType: service.service_type,
 			description: service.description ?? '',
@@ -363,10 +355,6 @@
 		sortListings(catalog, 'recentes').slice(0, HOME_CAROUSEL_LIMIT)
 	);
 
-	const sponsoredListings = $derived(
-		machinery.slice(0, HOME_CAROUSEL_LIMIT).map((item) => ({ ...item, sponsored: true }))
-	);
-
 	const machineryHighlights = $derived(
 		hasDiscoveryMode
 			? visibleListings.filter((i) => i.tipo === 'maquinario').slice(0, HOME_CAROUSEL_LIMIT)
@@ -449,37 +437,30 @@
 		{/if}
 	{:else}
 		<ProductSection
-			title="Em destaque"
+			title="Novidades"
 			products={featuredListings}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref="/buscar"
 		/>
+		<CategorySection />
 		<ProductSection
-			title="Patrocinados"
-			products={sponsoredListings}
-			limit={HOME_CAROUSEL_LIMIT}
-			seeMoreHref="/buscar"
-		/>
-		<ProductSection
-			title="Máquinas em alta"
+			title="Máquinas"
 			products={machineryHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'maquinario' })}
 		/>
 		<ProductSection
-			title="Produtos em alta"
+			title="Produtos e insumos"
 			products={productHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'produto' })}
 		/>
 		<ProductSection
-			title="Serviços em alta"
+			title="Serviços"
 			products={serviceHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'servico' })}
 		/>
-		<CategorySection />
-		<PartnerSection />
 	{/if}
 
 	<BottomNav active="inicio" />

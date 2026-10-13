@@ -37,7 +37,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 - **Negociação** (`negotiations.status`): `solicitada` → `em_negociacao` → `aceita` | `recusada` | `cancelado`. Só o prestador (`provider_id`) aceita, recusa ou altera preço/datas. Participantes e alvo são imutáveis.
 - **Operação** (`bookings.status`): `pendente` → `em_operacao` → `em_avaliacao` → `finalizada`. O prestador avança as duas primeiras etapas; qualquer participante finaliza. Cancelamento só a partir de `pendente`/`em_operacao`, com motivo (`cancellation_reason`; `other` exige 15+ caracteres). Preço, datas e participantes são imutáveis.
-- **Permissões**: `account_type` (`cliente`/`admin`), `can_rent_out` e `can_offer_services` só mudam por admin. Admins (`current_user_is_admin()`) passam por cima das regras de transição.
+- **Permissões**: `account_type` (`cliente`/`admin`), `can_rent_out`, `can_offer_services` e `is_test_account` só mudam por admin. Todo usuário novo já pode anunciar (as duas permissões nascem `true`; um admin pode tirar). Admins (`current_user_is_admin()`) passam por cima das regras de transição.
 - Notificações são criadas por triggers (`create_notification`); o app não insere em `notifications`.
 
 ## Banco de dados (Supabase)
@@ -47,7 +47,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Para testar como usuário dentro da transação: `set local role authenticated` + `set_config('request.jwt.claims', json_build_object('sub', <uuid>, 'role', 'authenticated')::text, true)`. Atenção: vários perfis de teste são admin e mascaram as regras; rebaixe-os para `cliente` dentro da mesma transação.
 - Armadilha: em função `SECURITY DEFINER`, `current_user` é sempre o dono (`postgres`). Checagens baseadas em `current_user` precisam de `SECURITY INVOKER`.
 - O dump completo (`supabase db dump`) e o `db diff` precisam do Docker Desktop rodando.
-- Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados por uma suíte E2E externa: não apague.
+- Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados pela suíte E2E: não apague. Eles ficam ocultos do público pelas policies de SELECT de `products`/`services` (`is_test_listing`: dono com `profiles.is_test_account` ou nome começando por `[E2E`); só as contas de teste os veem.
 - A migração planejada para um Supabase self-hosted tem sua lista de verificação em `docs/migracao-self-hosted.md`.
 
 ## Push

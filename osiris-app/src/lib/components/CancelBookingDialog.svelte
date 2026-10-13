@@ -1,6 +1,7 @@
 <script>
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
+	import { userMessage } from '$lib/errors';
 
 	// valores aceitos por bookings_cancellation_reason_check
 	const REASONS = [
@@ -58,7 +59,7 @@
 		loading = false;
 
 		if (error) {
-			errorMessage = error.message || 'Não foi possível cancelar a operação.';
+			errorMessage = userMessage(error, 'Não foi possível cancelar a operação.');
 			return;
 		}
 

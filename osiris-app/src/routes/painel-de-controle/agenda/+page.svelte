@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
+	import { requireUser } from '$lib/auth';
 	import {
 		ChevronLeft,
 		ChevronRight,
@@ -113,15 +114,8 @@
 	async function loadAgenda() {
 		loading = true;
 
-		const {
-			data: { user }
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			agendaItems = [];
-			loading = false;
-			return;
-		}
+		const user = await requireUser('/painel-de-controle/agenda');
+		if (!user) return;
 
 		const [bookingsRes, negotiationsRes] = await Promise.all([
 			supabase
@@ -217,6 +211,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Agenda — Osiris</title>
+</svelte:head>
+
 <div class="min-h-screen bg-surface-50-950 pb-20">
 	<Header />
 
@@ -301,7 +299,7 @@
 						<span class="h-3 w-3 rounded preset-filled-secondary-500"></span> Em negociação
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded preset-tonal-warning"></span> Booking pendente
+						<span class="h-3 w-3 rounded preset-tonal-warning"></span> Operação pendente
 					</div>
 					<div class="flex items-center gap-1.5">
 						<span class="h-3 w-3 rounded preset-filled-primary-500"></span> Em operação
@@ -372,7 +370,7 @@
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="text-base font-bold text-surface-950-50">Bookings pendentes</h2>
+				<h2 class="text-base font-bold text-surface-950-50">Operações aguardando início</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
@@ -427,7 +425,7 @@
 					<div
 						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
 					>
-						Nenhum booking pendente no momento.
+						Nenhuma operação aguardando início.
 					</div>
 				{/each}
 			</div>
@@ -481,7 +479,7 @@
 		{/if}
 	</main>
 
-	<BottomNav active="inicio" />
+	<BottomNav active="mais" />
 </div>
 
 <CancelBookingDialog
