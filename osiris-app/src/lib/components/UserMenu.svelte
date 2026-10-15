@@ -57,7 +57,7 @@
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
     const email = $derived(profile?.email || authUser?.email || '');
-    const profileHref = $derived(authUser ? `/login/usuario/${authUser.id}` : '/login');
+    const profileHref = $derived(authUser ? `/perfil/${authUser.id}` : '/login');
 
     const menuItems = $derived(
         !authUser && !loading

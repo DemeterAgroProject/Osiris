@@ -9,6 +9,7 @@
 	import { showToast } from '$lib/components/ui/toast.js';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
+	import { watchChanges } from '$lib/realtime';
 	import { userMessage } from '$lib/errors';
 
 	function parseCurrencyToNumber(value) {
@@ -191,13 +192,16 @@
 		return { ...row, products, services, client, provider, coverUrl };
 	}
 
-	async function loadNegotiation() {
+	/** @param {{ silent?: boolean }} [options] silent: atualiza sem esconder a tela (mudança vinda do tempo real) */
+	async function loadNegotiation({ silent = false } = {}) {
 		if (!negotiationId) return;
 
-		loading = true;
-		errorMessage = '';
-		negotiation = null;
-		linkedBooking = null;
+		if (!silent) {
+			loading = true;
+			errorMessage = '';
+			negotiation = null;
+			linkedBooking = null;
+		}
 
 		const {
 			data: { user }
@@ -280,25 +284,12 @@
 		const id = negotiationId;
 		if (!id) return;
 
-		const channel = supabase
-			.channel(`negotiation-status-${id}`)
-			.on(
-				'postgres_changes',
-				{
-					event: 'UPDATE',
-					schema: 'public',
-					table: 'negotiations',
-					filter: `id=eq.${id}`
-				},
-				() => {
-					loadNegotiation();
-				}
-			)
-			.subscribe();
-
-		return () => {
-			supabase.removeChannel(channel);
-		};
+		// aceitar muda o status da negociação: o reload já encontra a operação criada
+		return watchChanges(
+			`negotiation-status-${id}`,
+			[{ event: 'UPDATE', schema: 'public', table: 'negotiations', filter: `id=eq.${id}` }],
+			() => loadNegotiation({ silent: true })
+		);
 	});
 
 	async function saveProposalEdits() {

@@ -38,7 +38,8 @@ async function createDisposableBuyerStorageState(baseURL, { renew = false } = {}
 					{
 						name: supabaseAuthStorageKey(env.supabaseUrl),
 						value: JSON.stringify(session)
-					}
+					},
+					{ name: 'osiris-boas-vindas-visto', value: '1' }
 				]
 			}
 		]
@@ -138,7 +139,7 @@ test.describe('Autenticacao tecnica', () => {
 
 			await page.goto('/favoritos');
 			await expect(page).toHaveURL('/login?redirect=/favoritos');
-			await expect(page.getByText('Bem-vindo de volta', { exact: true })).toBeVisible();
+			await expect(page.getByText('Entre no Osiris', { exact: true })).toBeVisible();
 		} finally {
 			await context.close();
 			const restoredStorageState = await createDisposableBuyerStorageState(baseURL, {

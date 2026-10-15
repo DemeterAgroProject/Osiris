@@ -32,6 +32,8 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Cancelar operação: sempre pela RPC `cancel_booking` (componente `CancelBookingDialog.svelte`), nunca `update({ status: 'cancelado' })`.
 - Aceitar proposta: RPC `aceitar_negociacao` (cria o registro em `bookings`).
 - Status de anúncio em minúsculas: `'ativo'` / `'pausado'`.
+- Preço: use `listingPriceLabel()` de `src/lib/pricing.js`. Máquina tem `agricultural_machinery.offer_type` (`venda`: preço da máquina; `aluguel`: preço por hora); serviço segue `pricing_model`.
+- Termos e privacidade (`/termos`, `/privacidade`) leem o responsável e o contato de `src/lib/legal.js`.
 
 ## Regras de negócio (aplicadas por triggers)
 
@@ -48,11 +50,16 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Armadilha: em função `SECURITY DEFINER`, `current_user` é sempre o dono (`postgres`). Checagens baseadas em `current_user` precisam de `SECURITY INVOKER`.
 - O dump completo (`supabase db dump`) e o `db diff` precisam do Docker Desktop rodando.
 - Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados pela suíte E2E: não apague. Eles ficam ocultos do público pelas policies de SELECT de `products`/`services` (`is_test_listing`: dono com `profiles.is_test_account` ou nome começando por `[E2E`); só as contas de teste os veem.
+- Catálogo de demonstração (vitrine para apresentações): `scripts/demo-catalogo.sql` cria 4 anunciantes fictícios sem senha (ids `d0000000-…`, e-mail `@demo.invalid`) com máquinas, insumos e serviços; rodar de novo recria, e `scripts/remover-demo-catalogo.sql` apaga. Fotos são URLs do Unsplash.
 - A migração planejada para um Supabase self-hosted tem sua lista de verificação em `docs/migracao-self-hosted.md`.
 
 ## Push
 
-`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`. Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
+`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`; para gerar um novo par VAPID: `scripts/gerar-vapid.ps1`. No app, a permissão é pedida pelo aviso `PushPrompt.svelte` (no layout raiz, só com um toque: celulares bloqueiam o pedido automático), que também refaz a inscrição se a chave VAPID mudou. No iPhone o push só funciona com o app adicionado à tela de início.
+
+## Tempo real
+
+Tabelas na publicação `supabase_realtime`: `notifications`, `negotiation_messages`, `negotiations` e `bookings` (o Realtime aplica as policies de SELECT). Nas telas, use `watchChanges()` de `src/lib/realtime.js`: ele também chama o callback sem payload quando o app volta do segundo plano ou o canal reconecta, e a tela deve recarregar nesse caso (eventos com o celular bloqueado se perdem). Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
 
 ## Segredos
 
