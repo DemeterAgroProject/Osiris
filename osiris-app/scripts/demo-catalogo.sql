@@ -129,25 +129,26 @@ from dados
 where exists (select 1 from produtos);
 
 -- 5. serviços
-insert into public.services (id, owner_id, title, description, service_type, pricing_model, price, location, status, created_at, updated_at)
+insert into public.services (id, owner_id, title, description, service_type, pricing_model, price, location, image_url, status, created_at, updated_at)
 select format('d4000000-0000-4000-8000-%s', lpad(v.n::text, 12, '0'))::uuid,
        format('d0000000-0000-4000-8000-%s', lpad(v.dono::text, 12, '0'))::uuid,
-       v.titulo, v.descricao, v.tipo, v.cobranca, v.preco, v.local, 'ativo',
+       v.titulo, v.descricao, v.tipo, v.cobranca, v.preco, v.local,
+       format('https://images.unsplash.com/%s?auto=format&fit=crop&w=1080&q=80', v.foto), 'ativo',
        now() - make_interval(hours => v.horas_atras), now() - make_interval(hours => v.horas_atras)
 from (values
   (1, 4, 'Colheita de soja com colheitadeira e operador',
    'Colheitadeira com plataforma de 30 pés, operador e caminhão de apoio. Agenda aberta para a safra.',
-   'Pacote Completo', 'Por Hectare', 280, 'São Gabriel e região, RS', 3),
+   'Pacote Completo', 'Por Hectare', 280, 'São Gabriel e região, RS', 3, 'photo-1565647952915-9644fcd446a4'),
   (2, 4, 'Pulverização terrestre com autopropelido',
    'Aplicação de defensivos com GPS e corte de seção. Receituário agronômico por conta do contratante.',
-   'Pacote Completo', 'Por Hectare', 45, 'Campanha gaúcha, RS', 26),
+   'Pacote Completo', 'Por Hectare', 45, 'Campanha gaúcha, RS', 26, 'photo-1627920768905-575535d6dd2e'),
   (3, 4, 'Operador de trator para plantio e preparo de solo',
    'Tratorista com 12 anos de experiência em plantio direto. Trabalho com o seu equipamento.',
-   'Mão de Obra', 'Por Hora', 60, 'Bagé, RS', 40),
+   'Mão de Obra', 'Por Hora', 60, 'Bagé, RS', 40, 'photo-1573353597405-d3a8e88b793d'),
   (4, 2, 'Manutenção de máquinas agrícolas a campo',
    'Mecânico com oficina móvel: revisões, hidráulica e solda. Orçamento após avaliação na propriedade.',
-   'Mão de Obra', 'A Combinar', null, 'Dom Pedrito, RS', 64)
-) as v(n, dono, titulo, descricao, tipo, cobranca, preco, local, horas_atras);
+   'Mão de Obra', 'A Combinar', null, 'Dom Pedrito, RS', 64, 'photo-1675640433299-ea7c9d56723c')
+) as v(n, dono, titulo, descricao, tipo, cobranca, preco, local, horas_atras, foto);
 
 select
   (select count(*) from public.profiles where id::text like 'd0000000-%') as anunciantes,

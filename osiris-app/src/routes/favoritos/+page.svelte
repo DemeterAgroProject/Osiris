@@ -92,7 +92,7 @@
 		if (row.service_id) {
 			const { data: service, error } = await supabase
 				.from('services')
-				.select('id, title, price, pricing_model')
+				.select('id, title, price, pricing_model, image_url')
 				.eq('id', row.service_id)
 				.maybeSingle();
 
@@ -107,7 +107,7 @@
 				title: service?.title || 'Serviço favoritado',
 				price: service?.price ?? null,
 				pricingModel: service?.pricing_model ?? null,
-				imageUrl: null,
+				imageUrl: service?.image_url || null,
 				publishedAt: row.created_at,
 				href: `/anuncio/servico/${row.service_id}`
 			};

@@ -395,7 +395,7 @@
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
-				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at')
+				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url')
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -417,6 +417,7 @@
 				]
 			};
 
+			galleryImages = data.image_url ? [data.image_url] : [];
 			await loadSeller(data.owner_id);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';

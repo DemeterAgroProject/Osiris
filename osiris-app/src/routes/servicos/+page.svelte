@@ -196,7 +196,7 @@
 			supabase
 				.from('services')
 				.select(
-					'id, title, description, service_type, pricing_model, price, location, status, created_at, owner_id'
+					'id, title, description, service_type, pricing_model, price, location, status, created_at, owner_id, image_url'
 				)
 				.eq('owner_id', user.id)
 				.order('created_at', { ascending: false }),
@@ -361,6 +361,9 @@
 					: ''}"
 			>
 				<div class="flex gap-4 p-4">
+					{#if serv.image_url}
+						<img src={serv.image_url} alt={serv.title} class="h-16 w-16 shrink-0 rounded-container object-cover" />
+					{:else}
 					<div
 						class="flex h-16 w-16 shrink-0 items-center justify-center rounded-container {serv.service_type ===
 						'Pacote Completo'
@@ -373,6 +376,7 @@
 								: 'text-primary-600'} opacity-80"
 						/>
 					</div>
+					{/if}
 
 					<div class="flex min-w-0 flex-1 flex-col justify-center">
 						<h3 class="line-clamp-1 font-bold text-surface-950-50">{serv.title}</h3>

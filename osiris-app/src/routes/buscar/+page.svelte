@@ -160,7 +160,7 @@
 			pricingModel: service.pricing_model,
 			location: service.location || null,
 			publishedAt: service.created_at,
-			imageUrl: null,
+			imageUrl: service.image_url || null,
 			category: service.service_type,
 			serviceType: service.service_type,
 			description: service.description ?? '',
@@ -290,7 +290,7 @@
 		let serviceQuery = supabase
 			.from('services')
 			.select(
-				'id, title, price, status, location, created_at, service_type, pricing_model, description'
+				'id, title, price, status, location, created_at, service_type, pricing_model, description, image_url'
 			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
