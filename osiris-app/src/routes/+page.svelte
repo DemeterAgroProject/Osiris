@@ -132,6 +132,7 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
+			pricingModel: m?.offer_type ?? null,
 			location: null, // produtos ainda não têm local no banco
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
@@ -149,6 +150,7 @@
 			tipo: 'servico',
 			title: service.title,
 			price: service.price,
+			pricingModel: service.pricing_model,
 			location: service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: null,
@@ -285,7 +287,7 @@
 				`
 				id, name, price, status, created_at, category, description,
 				agricultural_machinery!inner (
-					id, model, manufacture_year, current_horimeter,
+					id, model, manufacture_year, current_horimeter, offer_type,
 					brands (name), machinery_types (name)
 				)
 			`

@@ -1,11 +1,7 @@
 <script>
 	import { resolve } from '$app/paths';
 	import { MapPin, Clock } from 'lucide-svelte';
-
-	function formatCurrency(value) {
-		if (value === null || value === undefined || value === '') return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
-	}
+	import { listingPriceLabel } from '$lib/pricing';
 
 	function formatPublishedDate(value) {
 		if (!value) return 'Agora';
@@ -19,13 +15,13 @@
 		return `${diffInDays}d atrás`;
 	}
 
-	let { title, price, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '' } = $props();
+	let { title, price, pricingModel = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '' } = $props();
 
 	// imagem que falha ao carregar (link quebrado) cai no aviso "Sem imagem"
 	let failedImage = $state(null);
 
 	const resolvedTitle = $derived(title || 'Anúncio');
-	const resolvedPrice = $derived(formatCurrency(price));
+	const resolvedPrice = $derived(listingPriceLabel(tipo, price, pricingModel));
 	const resolvedPublishedAt = $derived(formatPublishedDate(publishedAt));
 	const resolvedImage = $derived(imageUrl && imageUrl !== failedImage ? imageUrl : null);
 	const resolvedHref = $derived(href || (tipo && adId ? `/anuncio/${tipo}/${adId}` : ''));

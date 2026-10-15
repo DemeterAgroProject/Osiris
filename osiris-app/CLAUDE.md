@@ -32,6 +32,8 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Cancelar operação: sempre pela RPC `cancel_booking` (componente `CancelBookingDialog.svelte`), nunca `update({ status: 'cancelado' })`.
 - Aceitar proposta: RPC `aceitar_negociacao` (cria o registro em `bookings`).
 - Status de anúncio em minúsculas: `'ativo'` / `'pausado'`.
+- Preço: use `listingPriceLabel()` de `src/lib/pricing.js`. Máquina tem `agricultural_machinery.offer_type` (`venda`: preço da máquina; `aluguel`: preço por hora); serviço segue `pricing_model`.
+- Termos e privacidade (`/termos`, `/privacidade`) leem o responsável e o contato de `src/lib/legal.js`.
 
 ## Regras de negócio (aplicadas por triggers)
 

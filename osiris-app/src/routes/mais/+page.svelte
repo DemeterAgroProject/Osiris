@@ -380,6 +380,10 @@
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
             </div>
+            <div class="mt-3 flex gap-4 text-xs">
+                <a href={resolve('/termos')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Termos de uso</a>
+                <a href={resolve('/privacidade')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Política de privacidade</a>
+            </div>
         </section>
     </main>
 

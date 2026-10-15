@@ -127,8 +127,11 @@
 				</button>
 
 				<p class="mt-5 text-center text-xs leading-relaxed text-surface-600-400">
-					Ao continuar, você concorda com os termos do marketplace e a criação da sua conta no
-					Osiris.
+					Ao continuar, você concorda com os
+					<a href={resolve('/termos')} class="font-medium text-primary-700 underline">Termos de uso</a>
+					e a
+					<a href={resolve('/privacidade')} class="font-medium text-primary-700 underline">Política de privacidade</a>
+					do Osiris.
 				</p>
 			</div>
 

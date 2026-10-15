@@ -61,7 +61,7 @@
 		if (row.product_id) {
 			const { data: product, error } = await supabase
 				.from('products')
-				.select('id, name, price, category')
+				.select('id, name, price, category, agricultural_machinery (offer_type)')
 				.eq('id', row.product_id)
 				.maybeSingle();
 
@@ -74,12 +74,15 @@
 			);
 
 			const tipo = resolveProductTipo(product?.category);
+			const machineryRaw = product?.agricultural_machinery;
+			const machinery = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
 			return {
 				id: row.id,
 				adId: row.product_id,
 				tipo,
 				title: product?.name || 'Anúncio favoritado',
 				price: product?.price ?? null,
+				pricingModel: machinery?.offer_type ?? null,
 				imageUrl: coverUrlFromMap(imagesByProductId, product?.id),
 				publishedAt: row.created_at,
 				href: `/anuncio/${tipo}/${row.product_id}`
@@ -89,7 +92,7 @@
 		if (row.service_id) {
 			const { data: service, error } = await supabase
 				.from('services')
-				.select('id, title, price')
+				.select('id, title, price, pricing_model')
 				.eq('id', row.service_id)
 				.maybeSingle();
 
@@ -103,6 +106,7 @@
 				tipo: 'servico',
 				title: service?.title || 'Serviço favoritado',
 				price: service?.price ?? null,
+				pricingModel: service?.pricing_model ?? null,
 				imageUrl: null,
 				publishedAt: row.created_at,
 				href: `/anuncio/servico/${row.service_id}`
@@ -213,6 +217,7 @@
 					<ProductCard
 						title={favorite.title}
 						price={favorite.price}
+						pricingModel={favorite.pricingModel}
 						imageUrl={favorite.imageUrl}
 						publishedAt={favorite.publishedAt}
 						tipo={favorite.tipo}

@@ -1,4 +1,5 @@
 <script>
+	import { onMount } from 'svelte';
 	import { onNavigate } from '$app/navigation';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
@@ -7,6 +8,15 @@
 	import OnboardingGate from '$lib/components/OnboardingGate.svelte';
 
 	let { children } = $props();
+
+	// o service worker (static/sw.js) recebe o push e deixa o app instalável na tela de início
+	onMount(() => {
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js').catch((error) => {
+				console.error('Erro ao registrar o service worker:', error);
+			});
+		}
+	});
 
 	onNavigate((navigation) => {
         if (!document.startViewTransition) return;
