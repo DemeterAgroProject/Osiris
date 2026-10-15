@@ -4,6 +4,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import AppToaster from '$lib/components/ui/AppToaster.svelte';
 	import PushPrompt from '$lib/components/PushPrompt.svelte';
+	import OnboardingGate from '$lib/components/OnboardingGate.svelte';
 
 	let { children } = $props();
 
@@ -23,5 +24,6 @@
 <div class="app-container">
     {@render children()}
 </div>
+<OnboardingGate />
 <PushPrompt />
 <AppToaster />

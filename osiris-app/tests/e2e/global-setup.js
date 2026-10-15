@@ -27,7 +27,9 @@ async function writeStorageState({ email, password, outputFile, origin }) {
 					{
 						name: supabaseAuthStorageKey(env.supabaseUrl),
 						value: JSON.stringify(data.session)
-					}
+					},
+					// pula a apresentação do primeiro acesso (src/lib/onboarding.js)
+					{ name: 'osiris-boas-vindas-visto', value: '1' }
 				]
 			}
 		]

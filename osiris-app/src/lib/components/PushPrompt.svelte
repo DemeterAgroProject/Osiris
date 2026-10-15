@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { Bell, X } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 	import { enablePush, pushPermission, syncPushSubscription } from '$lib/push';
@@ -15,7 +16,9 @@
 	let dismissed = $state(false);
 	let enabling = $state(false);
 
-	const visible = $derived(Boolean(userId) && permission === 'default' && !dismissed);
+	const visible = $derived(
+		Boolean(userId) && permission === 'default' && !dismissed && !page.url.pathname.startsWith('/boas-vindas')
+	);
 
 	function readDismissed() {
 		try {

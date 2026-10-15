@@ -66,7 +66,7 @@
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
     const isLoggedIn = $derived(Boolean(authUser));
-    const profileHref = $derived(authUser ? `/login/usuario/${authUser.id}` : '/login');
+    const profileHref = $derived(authUser ? `/perfil/${authUser.id}` : '/login');
 
     const shortcuts = [
         { icon: Home, label: 'Marketplace', href: '/' },

@@ -6,6 +6,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
+	import { onboardingSeen, safeRedirectPath } from '$lib/onboarding';
 
 	let loading = $state(true);
 	let signingIn = $state(false);
@@ -13,9 +14,11 @@
 
 	const redirectTo = $derived(page.url.searchParams.get('redirect') || '');
 
-	function safeRedirectPath(path) {
-		if (!path || !path.startsWith('/') || path.startsWith('//')) return null;
-		return path;
+	// depois de entrar: volta para onde estava (ou a página inicial), passando antes pela
+	// apresentação do app se for o primeiro acesso neste aparelho
+	function afterLoginTarget() {
+		const target = safeRedirectPath(redirectTo) || '/';
+		return onboardingSeen() ? target : `/boas-vindas?redirect=${encodeURIComponent(target)}`;
 	}
 
 	async function checkExistingSession() {
@@ -27,8 +30,7 @@
 		} = await supabase.auth.getSession();
 
 		if (session?.user) {
-			const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
-			await goto(resolve(target), { replaceState: true });
+			await goto(resolve(afterLoginTarget()), { replaceState: true });
 			return;
 		}
 
@@ -63,8 +65,7 @@
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			if (session?.user) {
-				const target = safeRedirectPath(redirectTo) || `/login/usuario/${session.user.id}`;
-				goto(resolve(target), { replaceState: true });
+				goto(resolve(afterLoginTarget()), { replaceState: true });
 			}
 		});
 
@@ -91,7 +92,7 @@
 		{:else}
 			<div class="text-center">
 				<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Marketplace Osiris</p>
-				<h1 class="mt-2 text-2xl font-bold">Bem-vindo de volta</h1>
+				<h1 class="mt-2 text-2xl font-bold">Entre no Osiris</h1>
 				<p class="mt-2 text-sm text-surface-600-400">
 					Entre para anunciar, negociar e gerenciar seu inventário no agro.
 				</p>
