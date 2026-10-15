@@ -147,7 +147,8 @@
 		model: '',
 		serial_number: '',
 		manufacture_year: '',
-		current_horimeter: ''
+		current_horimeter: '',
+		offer_type: 'aluguel'
 	});
 
 	const isMachinery = $derived(product ? isMachineryProduct(product) : false);
@@ -183,7 +184,8 @@
 			model: m?.model ?? '',
 			serial_number: m?.serial_number ?? '',
 			manufacture_year: m?.manufacture_year != null ? String(m.manufacture_year) : '',
-			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : ''
+			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : '',
+			offer_type: m?.offer_type ?? 'aluguel'
 		};
 		errorMessage = '';
 		void loadImages(product.id);
@@ -250,6 +252,7 @@
 
 		if (isMachinery && machinery?.id) {
 			const { error: machineryError } = await updateMachinery(machinery.id, {
+				offer_type: form.offer_type,
 				brand_id: form.brand_id,
 				type_id: form.type_id,
 				model: form.model.trim(),
@@ -319,9 +322,23 @@
 				></textarea>
 			</div>
 
+			{#if isMachinery}
+				<div>
+					<label for="edit-offer-type" class="mb-1 block text-sm font-medium text-surface-700-300">Tipo de negócio</label>
+					<select
+						id="edit-offer-type"
+						bind:value={form.offer_type}
+						class="select w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					>
+						<option value="aluguel">Aluguel (preço por hora)</option>
+						<option value="venda">Venda (preço da máquina)</option>
+					</select>
+				</div>
+			{/if}
+
 			<div>
 				<label for="edit-price" class="mb-1 block text-sm font-medium text-surface-700-300">
-					{isMachinery ? 'Preço por hora (R$)' : 'Preço (R$)'}
+					{isMachinery && form.offer_type === 'aluguel' ? 'Preço por hora (R$)' : 'Preço (R$)'}
 				</label>
 				<input
 					id="edit-price"

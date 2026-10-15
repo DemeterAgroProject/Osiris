@@ -116,6 +116,7 @@
 				serial_number,
 				manufacture_year,
 				current_horimeter,
+				offer_type,
 				machinery_types (name),
 				brands (name)
 			)
@@ -518,7 +519,9 @@
 										<h3 class="line-clamp-1 font-bold text-surface-950-50">{maq.name}</h3>
 										<p class="mt-0.5 text-sm font-medium text-primary-700">
 											{formatPrice(maq.price)}
-											<span class="text-xs font-normal text-surface-600-400">/hora</span>
+											{#if getMachineryFromProduct(maq)?.offer_type === 'aluguel'}
+												<span class="text-xs font-normal text-surface-600-400">/hora</span>
+											{/if}
 										</p>
 										<div class="mt-2 flex flex-wrap gap-2">
 											<span

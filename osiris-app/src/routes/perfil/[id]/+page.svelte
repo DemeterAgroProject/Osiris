@@ -11,6 +11,7 @@
 	import {
 		ArrowLeft,
 		Mail,
+		Check,
 		Phone,
 		SquarePen,
 		Camera,
@@ -183,7 +184,11 @@
 	const displayName = $derived(resolveDisplayName(profile, authUser));
 	const avatarUrl = $derived(resolveAvatarUrl(profile));
 	const initials = $derived(resolveInitials(displayName));
-	const email = $derived(profile?.email || '');
+	const email = $derived(profile?.email || (isOwner ? authUser?.email : '') || '');
+	// login pelo Google já confirma o e-mail
+	const emailVerified = $derived(
+		Boolean(isOwner && (authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google'))
+	);
 	const phone = $derived(profile?.phone_number || profile?.phone || '');
 	const role = $derived(roleLabel(profile?.role));
 
@@ -498,9 +503,19 @@
 
 					{#if isOwner}
 						<div class="mt-5 w-full space-y-3 border-t border-surface-200-800 pt-5">
-							<div class="flex items-start gap-2">
-								<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
-								<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
+							<div class="flex items-start justify-between gap-3">
+								<div class="flex min-w-0 items-start gap-2">
+									<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
+									<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
+								</div>
+								{#if emailVerified}
+									<span
+										class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+									>
+										<Check class="h-3 w-3" />
+										Verificado
+									</span>
+								{/if}
 							</div>
 							<div class="flex items-start gap-2">
 								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />

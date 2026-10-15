@@ -66,7 +66,7 @@
     const avatarUrl = $derived(resolveAvatarUrl(profile, authUser));
     const initials = $derived(resolveInitials(displayName));
     const isLoggedIn = $derived(Boolean(authUser));
-    const profileHref = $derived(authUser ? `/login/usuario/${authUser.id}` : '/login');
+    const profileHref = $derived(authUser ? `/perfil/${authUser.id}` : '/login');
 
     const shortcuts = [
         { icon: Home, label: 'Marketplace', href: '/' },
@@ -379,6 +379,10 @@
             <div class="flex items-center gap-2 text-xs text-surface-600-400">
                 <Shield class="h-3.5 w-3.5" />
                 <span>Osiris — compra e venda no campo</span>
+            </div>
+            <div class="mt-3 flex gap-4 text-xs">
+                <a href={resolve('/termos')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Termos de uso</a>
+                <a href={resolve('/privacidade')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Política de privacidade</a>
             </div>
         </section>
     </main>

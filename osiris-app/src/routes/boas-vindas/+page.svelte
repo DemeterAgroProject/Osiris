@@ -1,6 +1,9 @@
 <script>
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { markOnboardingSeen, safeRedirectPath } from '$lib/onboarding';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import OnboardingSlide from '$lib/components/OnboardingSlide.svelte';
@@ -40,13 +43,17 @@
 		showSplash = false;
 	}
 
-	function skip() {
-		goto(resolve('/login'));
+	// volta para onde a pessoa estava (ou a página inicial) e não mostra de novo neste aparelho
+	function finish() {
+		markOnboardingSeen();
+		const target = safeRedirectPath(page.url.searchParams.get('redirect')) || '/';
+		goto(resolve(target), { replaceState: true });
 	}
 
-	function finish() {
-		goto(resolve('/login'));
-	}
+	onMount(() => {
+		const timer = setTimeout(enterOnboarding, 1500);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
@@ -80,7 +87,7 @@
 			<span class="text-sm font-medium text-surface-600-400" aria-live="polite">{stepLabel}</span>
 			<button
 				type="button"
-				onclick={skip}
+				onclick={finish}
 				class="text-sm font-medium transition-colors hover:text-primary-700"
 			>
 				Pular

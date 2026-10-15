@@ -9,6 +9,7 @@
 	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
+	import { watchChanges } from '$lib/realtime';
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined || value === '') return 'Preço a combinar';
@@ -196,7 +197,8 @@
 		return { ...row, products, services, client, provider, coverUrl };
 	}
 
-	async function loadBooking(id) {
+	/** @param {{ silent?: boolean }} [options] silent: atualiza sem esconder a tela (mudança vinda do tempo real) */
+	async function loadBooking(id, { silent = false } = {}) {
 		if (!id) {
 			errorMessage = 'Identificador da operação inválido.';
 			booking = null;
@@ -204,10 +206,12 @@
 			return;
 		}
 
-		loading = true;
-		errorMessage = '';
-		booking = null;
-		reviews = [];
+		if (!silent) {
+			loading = true;
+			errorMessage = '';
+			booking = null;
+			reviews = [];
+		}
 
 		const {
 			data: { user }
@@ -258,6 +262,20 @@
 
 	$effect(() => {
 		loadBooking(bookingId);
+	});
+
+	// status mudado pela outra parte (iniciar, encerrar, cancelar) e avaliações novas
+	$effect(() => {
+		const id = bookingId;
+		if (!id) return;
+
+		return watchChanges(
+			`booking-${id}`,
+			[
+				{ event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` }
+			],
+			() => loadBooking(id, { silent: true })
+		);
 	});
 
 	async function updateBookingStatus(newStatus) {

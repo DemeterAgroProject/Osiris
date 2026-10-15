@@ -71,6 +71,7 @@
 			serial_number: '',
             manufacture_year: '',
             current_horimeter: '',
+            offer_type: 'aluguel', // venda | aluguel (preço por hora)
 
             // Campos específicos de Produto/Insumo
             quantity: 1,
@@ -191,7 +192,8 @@
                         model: form.model,
                         serial_number: form.serial_number?.trim() || null,
                         manufacture_year: parseInt(form.manufacture_year),
-                        current_horimeter: parseFloat(form.current_horimeter)
+                        current_horimeter: parseFloat(form.current_horimeter),
+                        offer_type: form.offer_type
                     });
 
                 if (machineryError) {
@@ -412,6 +414,25 @@
             <div class="flex flex-1 flex-col">
                 <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Qual é o valor cobrado?</h2>
 
+                {#if form.category === 'maquinario'}
+                    <fieldset class="mb-5">
+                        <legend class="mb-2 text-sm font-medium text-surface-700-300">Tipo de negócio</legend>
+                        <div class="grid grid-cols-2 gap-2">
+                            {#each [{ value: 'aluguel', label: 'Aluguel', hint: 'preço por hora' }, { value: 'venda', label: 'Venda', hint: 'preço da máquina' }] as option (option.value)}
+                                <label
+                                    class="flex cursor-pointer flex-col rounded-container border px-4 py-3 text-sm transition-colors {form.offer_type === option.value
+                                        ? 'border-primary-500 preset-tonal-primary'
+                                        : 'border-surface-200-800'}"
+                                >
+                                    <input type="radio" name="offer_type" value={option.value} bind:group={form.offer_type} class="sr-only" />
+                                    <span class="font-semibold">{option.label}</span>
+                                    <span class="text-xs text-surface-600-400">{option.hint}</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </fieldset>
+                {/if}
+
                 <div>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-600-400">R$</span>
@@ -422,13 +443,21 @@
                             class="w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
-                    <p class="mt-2 text-xs text-surface-600-400">Valor por hora de trabalho (se for aluguel) ou venda.</p>
+                    <p class="mt-2 text-xs text-surface-600-400">
+                        {form.category !== 'maquinario'
+                            ? 'Valor do produto anunciado.'
+                            : form.offer_type === 'aluguel'
+                              ? 'Valor do aluguel por hora de uso da máquina.'
+                              : 'Valor pedido pela máquina.'}
+                    </p>
                 </div>
 
                 {#if form.price && form.price > 0}
                     <div class="mt-6 rounded-container preset-tonal-primary p-4 border border-primary-500">
                         <p class="text-sm text-surface-600-400">Seu anúncio será publicado por:</p>
-                        <p class="mt-1 text-2xl font-bold text-primary-700">{formatPrice(form.price)}</p>
+                        <p class="mt-1 text-2xl font-bold text-primary-700">
+                            {formatPrice(form.price)}{form.category === 'maquinario' && form.offer_type === 'aluguel' ? ' / hora' : ''}
+                        </p>
                     </div>
                 {/if}
             </div>

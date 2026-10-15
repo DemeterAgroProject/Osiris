@@ -9,6 +9,7 @@
 	import AppRating from '$lib/components/ui/AppRating.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
+	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
 	import { ChevronLeft } from 'lucide-svelte';
 
 	function resolveDisplayName(profile, authUser) {
@@ -203,18 +204,6 @@
 
 	const productReviewStats = $derived(computeReviewStats(reviews));
 
-	function formatCurrency(value) {
-		if (value === null || value === undefined || value === '') return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
-	}
-
-	// valores aceitos por services_pricing_model_check
-	const PRICING_SUFFIX = { 'Por Hora': ' / hora', 'Por Hectare': ' / hectare', 'Empreitada/Fixo': ' (valor fechado)' };
-
-	function servicePriceLabel(price, pricingModel) {
-		if (pricingModel === 'A Combinar' || price === null || price === undefined || price === '') return 'Preço a combinar';
-		return formatCurrency(price) + (PRICING_SUFFIX[pricingModel] ?? '');
-	}
 
 	function resolveSellerName(profile) {
 		return (
@@ -326,7 +315,7 @@
 				type: 'produto',
 				productId: data.id,
 				title: data.name,
-				priceLabel: formatCurrency(data.price),
+				priceLabel: listingPriceLabel('produto', data.price),
 				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Categoria', value: data.category || 'Não informado' },
@@ -358,6 +347,7 @@
 						serial_number,
 						manufacture_year,
 						current_horimeter,
+						offer_type,
 						brands (name),
 						machinery_types (name)
 					)
@@ -385,9 +375,10 @@
 				type: 'maquinario',
 				productId: data.id,
 				title: data.name,
-				priceLabel: `${formatCurrency(data.price)} / hora`,
+				priceLabel: listingPriceLabel('maquinario', data.price, machinery.offer_type),
 				description: data.description?.trim() || '',
 				details: [
+					{ label: 'Negócio', value: MACHINE_OFFER_LABEL[machinery.offer_type] ?? 'Não informado' },
 					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
 					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
 					{ label: 'Modelo', value: machinery.model || 'Não informado' },
@@ -404,7 +395,7 @@
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
-				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at')
+				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url')
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -418,7 +409,7 @@
 				type: 'servico',
 				serviceId: data.id,
 				title: data.title,
-				priceLabel: servicePriceLabel(data.price, data.pricing_model),
+				priceLabel: listingPriceLabel('servico', data.price, data.pricing_model),
 				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Tipo', value: data.service_type || 'Não informado' },
@@ -426,6 +417,7 @@
 				]
 			};
 
+			galleryImages = data.image_url ? [data.image_url] : [];
 			await loadSeller(data.owner_id);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';

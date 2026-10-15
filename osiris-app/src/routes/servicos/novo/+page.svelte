@@ -25,12 +25,15 @@
         description: '',
         location: 'Alegrete e Região, RS', // Padrão regional do Osíris
         pricing_model: 'Por Hora', // 'Por Hora', 'Por Hectare', 'Empreitada/Fixo', 'A Combinar'
-        price: null
+        price: null,
+        image_url: '' // foto de capa (opcional)
     });
+
+    const imageUrlInvalid = $derived(form.image_url.trim() !== '' && !/^https?:\/\/\S+$/i.test(form.image_url.trim()));
 
     function canProceed() {
         if (currentStep === 0) return form.service_type !== '';
-        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && form.location.trim().length > 0;
+        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && form.location.trim().length > 0 && !imageUrlInvalid;
         if (currentStep === 2) {
             if (form.pricing_model === 'A Combinar') return true;
             return form.price !== null && form.price > 0;
@@ -70,6 +73,7 @@
             pricing_model: form.pricing_model,
             price: finalPrice,
             location: form.location,
+            image_url: form.image_url.trim() || null,
             status: 'ativo'
         });
 
@@ -183,6 +187,22 @@
                                 class="input w-full rounded-container border border-surface-200-800 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="image_url">Foto do serviço (opcional)</label>
+                        <input
+                            type="url"
+                            id="image_url"
+                            bind:value={form.image_url}
+                            placeholder="https://..."
+                            class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                        />
+                        {#if imageUrlInvalid}
+                            <p class="mt-1 text-xs text-error-600">Cole um link de imagem começando com http:// ou https://.</p>
+                        {:else if form.image_url.trim()}
+                            <img src={form.image_url.trim()} alt="Prévia da foto do serviço" class="mt-2 h-32 w-full rounded-container object-cover" />
+                        {/if}
                     </div>
                 </div>
             </div>
