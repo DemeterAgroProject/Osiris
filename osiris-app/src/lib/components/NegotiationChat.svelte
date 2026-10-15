@@ -2,6 +2,7 @@
     import { onMount, tick } from 'svelte';
     import { Send } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
+    import { watchChanges } from '$lib/realtime';
 
     let {
         negotiationId,
@@ -118,26 +119,16 @@
     onMount(() => {
         loadMessages();
 
-        const channel = supabase
-            .channel(`negotiation-${negotiationId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'negotiation_messages',
-                    filter: `negotiation_id=eq.${negotiationId}`
-                },
-                (payload) => {
-                    // appendMessage já ignora duplicatas (própria mensagem otimista)
-                    appendMessage(payload.new);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return watchChanges(
+            `negotiation-${negotiationId}`,
+            [{ event: 'INSERT', schema: 'public', table: 'negotiation_messages', filter: `negotiation_id=eq.${negotiationId}` }],
+            (payload) => {
+                // sem payload: a conexão caiu ou o app voltou do segundo plano, recarrega tudo
+                if (!payload) loadMessages();
+                // appendMessage já ignora duplicatas (própria mensagem otimista)
+                else appendMessage(payload.new);
+            }
+        );
     });
 </script>
 

@@ -52,7 +52,11 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 ## Push
 
-`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`. Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
+`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`; para gerar um novo par VAPID: `scripts/gerar-vapid.ps1`. No app, a permissão é pedida pelo aviso `PushPrompt.svelte` (no layout raiz, só com um toque: celulares bloqueiam o pedido automático), que também refaz a inscrição se a chave VAPID mudou. No iPhone o push só funciona com o app adicionado à tela de início.
+
+## Tempo real
+
+Tabelas na publicação `supabase_realtime`: `notifications`, `negotiation_messages`, `negotiations` e `bookings` (o Realtime aplica as policies de SELECT). Nas telas, use `watchChanges()` de `src/lib/realtime.js`: ele também chama o callback sem payload quando o app volta do segundo plano ou o canal reconecta, e a tela deve recarregar nesse caso (eventos com o celular bloqueado se perdem). Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
 
 ## Segredos
 

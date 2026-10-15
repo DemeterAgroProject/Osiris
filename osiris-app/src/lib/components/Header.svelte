@@ -4,6 +4,7 @@
     import { onMount } from 'svelte';
     import { Bell, User } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
+    import { watchChanges } from '$lib/realtime';
     import UserMenu from '$lib/components/UserMenu.svelte';
     import AppPopover from '$lib/components/ui/AppPopover.svelte';
     
@@ -42,8 +43,8 @@
     let profile = $state(null);
     let menuOpen = $state(false);
     let imgError = $state(false);
-    /** @type {import('@supabase/supabase-js').RealtimeChannel | null} */
-    let notificationsChannel = null;
+    /** @type {(() => void) | null} */
+    let stopWatchingNotifications = null;
     let notificationsUserId = null;
 
     // notificações
@@ -93,25 +94,25 @@
     }
 
     function unsubscribeFromNotifications() {
-        if (!notificationsChannel) return;
-        supabase.removeChannel(notificationsChannel);
-        notificationsChannel = null;
+        if (!stopWatchingNotifications) return;
+        stopWatchingNotifications();
+        stopWatchingNotifications = null;
     }
 
     function subscribeToNotifications(userId) {
         unsubscribeFromNotifications();
 
-        notificationsChannel = supabase
-            .channel(`notifications:${userId}:${Date.now()}`)
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'notifications',
-                filter: `user_id=eq.${userId}`
-            }, (payload) => {
-                notifications = [payload.new, ...notifications];
-            })
-            .subscribe();
+        stopWatchingNotifications = watchChanges(
+            `notifications:${userId}:${Date.now()}`,
+            [{ event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }],
+            (payload) => {
+                if (!payload) {
+                    loadNotifications(userId);
+                } else if (!notifications.some((n) => n.id === payload.new.id)) {
+                    notifications = [payload.new, ...notifications];
+                }
+            }
+        );
     }
 
     async function markAsRead(notification) {
