@@ -1,6 +1,6 @@
 <script>
 	import { resolve } from '$app/paths';
-	import { MapPin, Clock } from 'lucide-svelte';
+	import { MapPin, Clock, Briefcase } from 'lucide-svelte';
 	import { listingPriceLabel } from '$lib/pricing';
 
 	function formatPublishedDate(value) {
@@ -22,10 +22,18 @@
 
 	const resolvedTitle = $derived(title || 'Anúncio');
 	const resolvedPrice = $derived(listingPriceLabel(tipo, price, pricingModel));
+	// "R$ 280,00 / ha": valor em destaque, unidade menor (cabe numa linha no card)
+	const priceParts = $derived(resolvedPrice.match(/^(R$s[d.,]+)s*(.*)$/u) ?? [resolvedPrice, resolvedPrice, '']);
 	const resolvedPublishedAt = $derived(formatPublishedDate(publishedAt));
 	const resolvedImage = $derived(imageUrl && imageUrl !== failedImage ? imageUrl : null);
 	const resolvedHref = $derived(href || (tipo && adId ? `/anuncio/${tipo}/${adId}` : ''));
 </script>
+
+{#snippet priceLine()}
+	<p class="mt-1 truncate text-base font-bold text-primary-600">
+		{priceParts[1]}{#if priceParts[2]}<span class="ml-1 text-xs font-medium text-surface-600-400">{priceParts[2]}</span>{/if}
+	</p>
+{/snippet}
 
 {#snippet cover()}
 	<div class="relative aspect-[4/3] overflow-hidden">
@@ -36,6 +44,11 @@
 				class="h-full w-full object-cover"
 				onerror={() => (failedImage = imageUrl)}
 			/>
+		{:else if tipo === 'servico'}
+			<div class="flex h-full w-full flex-col items-center justify-center gap-1 preset-tonal-primary text-xs font-medium text-primary-700">
+				<Briefcase class="h-7 w-7" strokeWidth={1.5} />
+				Serviço
+			</div>
 		{:else}
 			<div class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-medium text-primary-700">
 				Sem imagem
@@ -51,7 +64,7 @@
 
 			<div class="p-3">
 				<h3 class="truncate text-sm font-medium text-surface-950-50">{resolvedTitle}</h3>
-				<p class="mt-1 text-base font-bold text-primary-600">{resolvedPrice}</p>
+				{@render priceLine()}
 
 				<div class="mt-2 flex items-center justify-between gap-2 text-xs text-surface-600-400">
 					{#if location}
@@ -71,7 +84,7 @@
 		{@render cover()}
 		<div class="p-3">
 			<h3 class="truncate text-sm font-medium text-surface-950-50">{resolvedTitle}</h3>
-			<p class="mt-1 text-base font-bold text-primary-600">{resolvedPrice}</p>
+			{@render priceLine()}
 		</div>
 	{/if}
 </article>

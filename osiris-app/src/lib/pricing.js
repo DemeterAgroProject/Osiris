@@ -9,7 +9,7 @@ export function formatCurrency(value) {
 	return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
 }
 
-const SERVICE_SUFFIX = { 'Por Hora': ' / hora', 'Por Hectare': ' / hectare', 'Empreitada/Fixo': ' (valor fechado)' };
+const SERVICE_SUFFIX = { 'Por Hora': ' / hora', 'Por Hectare': ' / ha', 'Empreitada/Fixo': ' (valor fechado)' };
 
 /**
  * @param {'maquinario' | 'produto' | 'servico' | string} tipo

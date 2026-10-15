@@ -50,6 +50,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Armadilha: em função `SECURITY DEFINER`, `current_user` é sempre o dono (`postgres`). Checagens baseadas em `current_user` precisam de `SECURITY INVOKER`.
 - O dump completo (`supabase db dump`) e o `db diff` precisam do Docker Desktop rodando.
 - Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados pela suíte E2E: não apague. Eles ficam ocultos do público pelas policies de SELECT de `products`/`services` (`is_test_listing`: dono com `profiles.is_test_account` ou nome começando por `[E2E`); só as contas de teste os veem.
+- Catálogo de demonstração (vitrine para apresentações): `scripts/demo-catalogo.sql` cria 4 anunciantes fictícios sem senha (ids `d0000000-…`, e-mail `@demo.invalid`) com máquinas, insumos e serviços; rodar de novo recria, e `scripts/remover-demo-catalogo.sql` apaga. Fotos são URLs do Unsplash.
 - A migração planejada para um Supabase self-hosted tem sua lista de verificação em `docs/migracao-self-hosted.md`.
 
 ## Push
