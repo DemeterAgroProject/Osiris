@@ -7,9 +7,25 @@
     import { supabase } from '$lib/supabase';
     import { requireUser } from '$lib/auth';
     import { onMount } from 'svelte';
-    import { ChevronRight, Users, Briefcase, MapPin } from 'lucide-svelte';
+    import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Users, Briefcase, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
+
+    const SERVICE_TYPE_OPTIONS = [
+        { value: 'Mão de Obra', label: 'Mão de obra', hint: 'Apenas o operador ou trabalhador (ex: tratorista, capataz)', icon: Users, tone: 'preset-tonal-primary' },
+        { value: 'Pacote Completo', label: 'Pacote completo', hint: 'Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)', icon: Briefcase, tone: 'preset-tonal-secondary' }
+    ];
+
+    // valores aceitos por services_pricing_model_check
+    const PRICING_OPTIONS = [
+        { value: 'Por Hora', label: 'Por hora', hint: 'valor de cada hora' },
+        { value: 'Por Hectare', label: 'Por hectare', hint: 'valor por área' },
+        { value: 'Empreitada/Fixo', label: 'Empreitada', hint: 'valor fechado' },
+        { value: 'A Combinar', label: 'A combinar', hint: 'avaliação prévia' }
+    ];
+
+    const labelClass = 'mb-1.5 block text-sm font-semibold text-surface-950-50';
+    const fieldClass = 'input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
 
     // pede o login antes de a pessoa preencher as etapas, não só no envio
     onMount(() => requireUser('/servicos/novo'));
@@ -92,116 +108,112 @@
 	<title>Novo serviço — Osiris</title>
 </svelte:head>
 
-<div class="flex min-h-screen flex-col bg-surface-50-950 pb-20 lg:pb-0">
-    <Header />
+<div class="flex min-h-screen flex-col pb-24 lg:pb-0">
+    <Header title="Oferecer serviço" backHref="/servicos" />
 
-    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <h1 class="mb-6 text-center text-xl font-bold text-surface-950-50">Oferecer Serviço</h1>
+    <main class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
+        <div class="mb-5 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+            <AppSteps
+                bind:step={currentStep}
+                labels={['Tipo', 'Detalhes', 'Cobrança']}
+                label="Etapas do novo serviço"
+            />
+        </div>
 
         {#if message.text}
-            <div class="p-4 mb-4 rounded-container {message.type === 'error' ? 'preset-tonal-error' : 'preset-tonal-primary'}">
+            <div class="mb-4 flex items-start gap-2 rounded-container p-4 text-sm font-medium {message.type === 'error' ? 'preset-tonal-error' : 'preset-tonal-success'}" role="status">
+                <CircleAlert class="h-5 w-5 shrink-0" />
                 {message.text}
             </div>
         {/if}
 
-        <AppSteps
-            bind:step={currentStep}
-            labels={['Tipo', 'Detalhes', 'Cobrança']}
-            label="Etapas do novo serviço"
-            class="mb-7"
-        />
-
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <h2 class="mb-4 text-base text-surface-700-300">Como você vai atuar?</h2>
+                <h1 class="preset-typo-headline">Como você vai atuar?</h1>
+                <p class="mt-1 preset-typo-subtitle">Toque em uma das opções.</p>
 
                 <ToggleGroup
                     value={form.service_type ? [form.service_type] : []}
                     deselectable={false}
                     onValueChange={(details) => (form.service_type = details.value[0] ?? form.service_type)}
-                    class="grid! w-full! grid-cols-1 gap-3 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
+                    class="mt-5 grid! w-full! grid-cols-1 gap-3 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
                 >
-                    <ToggleGroup.Item
-                        value="Mão de Obra"
-                        class="flex! min-h-28 w-full! min-w-0 aspect-auto! items-center justify-start! gap-4 rounded-container border-2! border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500! data-[state=on]:preset-tonal-primary"
-                    >
-                        <div class="flex size-12 shrink-0 items-center justify-center rounded-container preset-tonal-primary">
-                            <Users class="size-6" />
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <h3 class="text-sm font-semibold leading-5 text-surface-950-50">Mão de Obra</h3>
-                            <p class="mt-1 text-xs leading-5 text-surface-700-300">Apenas o operador ou trabalhador (ex: tratorista, capataz)</p>
-                        </div>
-                    </ToggleGroup.Item>
-
-                    <ToggleGroup.Item
-                        value="Pacote Completo"
-                        class="flex! min-h-28 w-full! min-w-0 aspect-auto! items-center justify-start! gap-4 rounded-container border-2! border-surface-200-800 bg-surface-50-950 p-4 text-left transition-colors data-[state=on]:border-primary-500! data-[state=on]:preset-tonal-primary"
-                    >
-                        <div class="flex size-12 shrink-0 items-center justify-center rounded-container preset-tonal-secondary">
-                            <Briefcase class="size-6" />
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <h3 class="text-sm font-semibold leading-5 text-surface-950-50">Pacote Completo</h3>
-                            <p class="mt-1 text-xs leading-5 text-surface-700-300">Serviço com maquinário/insumos inclusos (ex: plantio de eucalipto)</p>
-                        </div>
-                    </ToggleGroup.Item>
+                    {#each SERVICE_TYPE_OPTIONS as option (option.value)}
+                        {@const selected = form.service_type === option.value}
+                        <ToggleGroup.Item
+                            value={option.value}
+                            class="flex! min-h-28 w-full! min-w-0 aspect-auto! items-center justify-start! gap-4 rounded-container border-2! border-surface-200-800 bg-surface-50-950 p-4 text-left shadow-sm transition-colors hover:border-primary-500! data-[state=on]:border-primary-500! data-[state=on]:preset-tonal-primary"
+                        >
+                            <span class="flex size-14 shrink-0 items-center justify-center rounded-container {option.tone}">
+                                <option.icon class="size-7" />
+                            </span>
+                            <span class="min-w-0 flex-1 whitespace-normal">
+                                <span class="block text-lg font-bold leading-6 text-surface-950-50">{option.label}</span>
+                                <span class="mt-0.5 block text-sm leading-5 text-surface-800-200">{option.hint}</span>
+                            </span>
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 {selected ? 'border-primary-500 preset-filled-primary-500' : 'border-surface-300-700'}">
+                                {#if selected}<Check class="h-4 w-4" />{/if}
+                            </span>
+                        </ToggleGroup.Item>
+                    {/each}
                 </ToggleGroup>
             </div>
 
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
-                <h2 class="mb-4 text-lg font-semibold text-surface-950-50">Detalhes do Serviço</h2>
+                <h1 class="preset-typo-headline">Detalhes do serviço</h1>
+                <p class="mt-1 preset-typo-subtitle">Conte o que você faz e onde atende.</p>
 
-                <div class="space-y-4">
+                <div class="mt-5 space-y-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
                     <div>
-                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="title">Título do Serviço</label>
+                        <label class={labelClass} for="title">Título do serviço</label>
                         <input
                             type="text"
                             id="title"
                             bind:value={form.title}
-                            placeholder={form.service_type === 'Mão de Obra' ? "Ex: Tratorista com experiência" : "Ex: Serviço completo de Reflorestamento"}
-                            class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                            placeholder={form.service_type === 'Mão de Obra' ? "Ex: Tratorista com experiência" : "Ex: Serviço completo de reflorestamento"}
+                            class={fieldClass}
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="description">O que está incluso?</label>
+                        <label class={labelClass} for="description">O que está incluso?</label>
                         <textarea
                             id="description"
                             bind:value={form.description}
                             rows="4"
                             placeholder="Descreva a sua experiência, quais máquinas você opera ou o que o seu pacote cobre..."
-                            class="textarea w-full rounded-container border border-surface-200-800 p-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                            class="textarea w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-base outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         ></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="location">Raio de Atendimento</label>
+                        <label class={labelClass} for="location">Onde você atende</label>
                         <div class="relative">
-                            <MapPin class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
+                            <MapPin class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
                             <input
                                 type="text"
                                 id="location"
                                 bind:value={form.location}
-                                class="input w-full rounded-container border border-surface-200-800 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                                placeholder="Ex: Alegrete e região, RS"
+                                class="{fieldClass} pl-11"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="image_url">Foto do serviço (opcional)</label>
+                        <label class={labelClass} for="image_url">Foto do serviço <span class="font-normal text-surface-700-300">(opcional)</span></label>
                         <input
                             type="url"
                             id="image_url"
                             bind:value={form.image_url}
-                            placeholder="https://..."
-                            class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                            placeholder="Cole o link da foto (https://...)"
+                            class={fieldClass}
                         />
                         {#if imageUrlInvalid}
-                            <p class="mt-1 text-xs text-error-600">Cole um link de imagem começando com http:// ou https://.</p>
+                            <p class="mt-1 text-sm font-medium text-error-600-400">Cole um link de imagem começando com http:// ou https://.</p>
                         {:else if form.image_url.trim()}
-                            <img src={form.image_url.trim()} alt="Prévia da foto do serviço" class="mt-2 h-32 w-full rounded-container object-cover" />
+                            <img src={form.image_url.trim()} alt="Prévia da foto do serviço" class="mt-2 h-36 w-full rounded-container object-cover" />
                         {/if}
                     </div>
                 </div>
@@ -209,60 +221,74 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <h2 class="mb-6 text-lg font-semibold text-surface-950-50">Como você cobra?</h2>
+                <h1 class="preset-typo-headline">Como você cobra?</h1>
+                <p class="mt-1 preset-typo-subtitle">Escolha o formato e informe o valor.</p>
 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-surface-700-300 mb-1" for="pricing_model">Formato de Cobrança</label>
-                        <select id="pricing_model" bind:value={form.pricing_model} class="select w-full rounded-container border border-surface-200-800 p-3 bg-surface-50-950 text-sm outline-none focus:border-primary-500">
-                            <option value="Por Hora">Por Hora</option>
-                            <option value="Por Hectare">Por Hectare</option>
-                            <option value="Empreitada/Fixo">Empreitada / Fixo</option>
-                            <option value="A Combinar">A Combinar (Avaliação prévia)</option>
-                        </select>
+                <fieldset class="mt-5">
+                    <legend class="mb-2 text-sm font-semibold text-surface-950-50">Formato de cobrança</legend>
+                    <div class="grid grid-cols-2 gap-3">
+                        {#each PRICING_OPTIONS as option (option.value)}
+                            {@const selected = form.pricing_model === option.value}
+                            <label
+                                class="flex cursor-pointer flex-col gap-0.5 rounded-container border-2 p-3.5 shadow-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-500 {selected
+                                    ? 'border-primary-500 preset-tonal-primary'
+                                    : 'border-surface-200-800 bg-surface-50-950'}"
+                            >
+                                <input type="radio" name="pricing_model" value={option.value} bind:group={form.pricing_model} class="sr-only" />
+                                <span class="text-base font-bold">{option.label}</span>
+                                <span class="text-xs text-surface-800-200">{option.hint}</span>
+                            </label>
+                        {/each}
                     </div>
+                </fieldset>
 
-                    {#if form.pricing_model !== 'A Combinar'}
-                        <div class="pt-2">
-                            <label class="block text-sm font-medium text-surface-700-300 mb-1" for="price">Valor Base (R$)</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-surface-700-300">R$</span>
-                                <input
-                                    type="number"
-                                    id="price"
-                                    bind:value={form.price}
-                                    placeholder="0,00"
-                                    class="input w-full rounded-container border border-surface-200-800 py-3 pl-12 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-                                />
-                            </div>
+                {#if form.pricing_model !== 'A Combinar'}
+                    <div class="mt-5">
+                        <label class={labelClass} for="price">Valor</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-surface-800-200">R$</span>
+                            <input
+                                type="number"
+                                inputmode="decimal"
+                                id="price"
+                                bind:value={form.price}
+                                placeholder="Ex: 150,00"
+                                class="input h-16 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-14 pr-4 text-2xl font-bold shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                            />
                         </div>
-                    {/if}
-                </div>
+                    </div>
+                {/if}
             </div>
         {/if}
 
         <div class="mt-8 space-y-3">
             {#if currentStep === totalSteps - 1}
                 <button
+                    type="button"
                     onclick={handleSubmit}
                     disabled={!canProceed() || loading}
-                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
+                    class="btn btn-lg preset-filled-primary-500 w-full"
                 >
-                    {loading ? 'Salvando...' : 'Publicar Serviço'}
+                    <CircleCheck size={18} />
+                    <span>{loading ? 'Salvando...' : 'Publicar serviço'}</span>
                 </button>
-                <button onclick={prevStep} disabled={loading} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50">
-                    Voltar e Revisar
+                <button type="button" onclick={prevStep} disabled={loading} class="btn btn-lg preset-tonal w-full">
+                    <ArrowLeft size={18} />
+                    <span>Voltar e revisar</span>
                 </button>
             {:else}
                 <button
+                    type="button"
                     onclick={nextStep}
                     disabled={!canProceed()}
-                    class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 font-medium transition-colors disabled:opacity-50"
+                    class="btn btn-lg preset-filled-primary-500 w-full"
                 >
-                    Próximo <ChevronRight class="h-5 w-5" />
+                    <span>Próximo</span>
+                    <ArrowRight size={18} />
                 </button>
-                <button onclick={prevStep} class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3.5 font-medium text-surface-700-300 hover:preset-tonal">
-                    {currentStep === 0 ? 'Cancelar' : 'Voltar'}
+                <button type="button" onclick={prevStep} class="btn btn-lg preset-tonal w-full">
+                    {#if currentStep > 0}<ArrowLeft size={18} />{/if}
+                    <span>{currentStep === 0 ? 'Cancelar' : 'Voltar'}</span>
                 </button>
             {/if}
         </div>
