@@ -179,7 +179,7 @@
 				<div>
 					<label
 						for="startDate"
-						class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+						class="mb-1 block preset-typo-label"
 					>
 						Início
 					</label>
@@ -193,7 +193,7 @@
 				<div>
 					<label
 						for="endDate"
-						class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+						class="mb-1 block preset-typo-label"
 					>
 						Fim
 					</label>
@@ -210,7 +210,7 @@
 		<div>
 			<label
 				for="proposalValue"
-				class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+				class="mb-1 block preset-typo-label"
 			>
 				Valor proposto
 			</label>
@@ -218,7 +218,7 @@
 				id="proposalValue"
 				type="text"
 				bind:value={proposalValue}
-				placeholder="R$ 0,00"
+				placeholder="Ex: 1.500,00"
 				class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
 			/>
@@ -228,7 +228,7 @@
 			<div>
 				<label
 					for="quantity"
-					class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+					class="mb-1 block preset-typo-label"
 				>
 					Quantidade
 				</label>
@@ -246,7 +246,7 @@
 		<div>
 			<label
 				for="message"
-				class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-600-400"
+				class="mb-1 block preset-typo-label"
 			>
 				Mensagem
 			</label>
@@ -254,7 +254,7 @@
 				id="message"
 				rows="4"
 				bind:value={message}
-				placeholder="Detalhes da proposta, logística, frete..."
+				placeholder="Ex: preciso para a colheita, entrega na fazenda..."
 				class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			></textarea>
 		</div>
@@ -270,22 +270,18 @@
 				type="button"
 				onclick={closeModal}
 				disabled={sending}
-				class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+				class="btn btn-lg preset-tonal w-full"
 			>
-				Cancelar
+				<span>Cancelar</span>
 			</button>
 			<button
 				type="submit"
 				form="negotiation-propose-form"
 				disabled={sending}
-				class="inline-flex items-center justify-center gap-2 rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold disabled:opacity-60"
+				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
-				{#if sending}
-					Enviando...
-				{:else}
-					<Send class="h-4 w-4" />
-					Enviar proposta
-				{/if}
+				<Send size={18} />
+				<span>{sending ? 'Enviando...' : 'Enviar proposta'}</span>
 			</button>
 		</div>
 	{/snippet}
