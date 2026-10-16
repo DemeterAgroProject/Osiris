@@ -49,7 +49,7 @@
 				: 'p-4 sm:items-center'}"
 		>
 			<Dialog.Content
-				class="flex w-full flex-col overflow-hidden bg-surface-50-950 outline-none {sizeClass} {variant ===
+				class="flex w-full flex-col overflow-hidden bg-surface-50-950 outline-none {sizeClass}  {variant ===
 				'sheet'
 					? 'max-h-[92dvh] rounded-t-3xl sm:rounded-container sm:border sm:border-surface-200-800'
 					: 'max-h-[calc(100dvh-2rem)] max-w-sm rounded-container border border-surface-200-800 shadow-2xl'}"
@@ -65,8 +65,8 @@
 							{#if description}
 								<Dialog.Description
 									class={variant === 'sheet'
-										? 'text-xs text-surface-600-400'
-										: 'mt-2 text-sm leading-relaxed text-surface-700-300'}
+										? 'text-xs text-surface-800-200'
+										: 'mt-2 text-sm leading-relaxed text-surface-900-100'}
 								>
 									{description}
 								</Dialog.Description>
@@ -74,18 +74,17 @@
 						</div>
 						<Dialog.CloseTrigger
 							disabled={!dismissible}
-							class="btn-icon shrink-0 rounded-full text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+							class="btn-icon btn-icon-lg preset-tonal shrink-0"
+							title={closeLabel}
 							aria-label={closeLabel}
 						>
-							<X class="h-5 w-5" />
+							<X size={18} />
 						</Dialog.CloseTrigger>
 					</div>
 
 					{#if children}
 						<div
-							class="min-h-0 flex-1 overflow-y-auto overscroll-contain {variant === 'sheet'
-								? 'px-4 py-4'
-								: `px-5 pt-4 ${footer ? '' : 'pb-5'}`}"
+							class="min-h-0 flex-1 overflow-y-auto overscroll-contain {variant === 'sheet' ? 'px-4 py-4' : `px-5 pt-4 ${footer ? '' : 'pb-5'}`}"
 						>
 							{@render children()}
 						</div>
@@ -93,9 +92,7 @@
 
 					{#if footer}
 						<div
-							class="shrink-0 {variant === 'sheet'
-								? 'border-t border-surface-200-800 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]'
-								: `px-5 pb-5 ${children ? 'pt-5' : 'pt-4'}`}"
+							class="shrink-0 {variant === 'sheet' ? 'border-t border-surface-200-800 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]' : `px-5 pb-5 ${children ? 'pt-5' : 'pt-4'}`}"
 						>
 							{@render footer()}
 						</div>

@@ -33,7 +33,7 @@
 			? 'font-medium text-error-500 data-[highlighted]:preset-tonal-error'
 			: variant === 'nav'
 				? 'text-surface-950-50 data-[highlighted]:preset-tonal'
-				: 'text-surface-700-300 data-[highlighted]:preset-tonal';
+				: 'text-surface-900-100 data-[highlighted]:preset-tonal';
 		return `justify-start rounded-none px-4 py-3 text-sm ${layout} ${tone}`;
 	}
 </script>
@@ -41,14 +41,14 @@
 {#snippet itemBody(item)}
 	{#if item.icon}
 		<item.icon
-			class="shrink-0 {variant === 'nav' ? 'h-5 w-5' : 'h-4 w-4'} {variant === 'nav' && !item.danger
-				? 'text-surface-600-400'
+			class="shrink-0 {variant === 'nav' ? 'h-5 w-5' : 'h-4 w-4'}  {variant === 'nav' && !item.danger
+				? 'text-surface-800-200'
 				: ''}"
 		/>
 	{/if}
 	<span class="flex-1 {variant === 'nav' ? 'font-medium' : ''}">{item.label}</span>
 	{#if variant === 'nav' && item.href}
-		<ChevronRight class="h-4 w-4 text-surface-400-600" />
+		<ChevronRight class="h-4 w-4 text-surface-700-300" />
 	{/if}
 {/snippet}
 
