@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ChevronLeft, Play, Flag, Star, CheckCircle2 } from 'lucide-svelte';
+	import { Check, CheckCircle2, CircleAlert, Clock, Flag, Play, Send, Star, Tractor, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
@@ -10,6 +10,18 @@
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
 	import { watchChanges } from '$lib/realtime';
+
+	// etapas mostradas no topo (fluxo de bookings.status aplicado pelos triggers)
+	const OPERATION_STAGES = [
+		{ status: 'pendente', label: 'Aguardando', icon: Clock },
+		{ status: 'em_operacao', label: 'Em campo', icon: Tractor },
+		{ status: 'em_avaliacao', label: 'Avaliação', icon: Star },
+		{ status: 'finalizada', label: 'Finalizada', icon: Flag }
+	];
+
+	function stageIndex(status) {
+		return OPERATION_STAGES.findIndex((stage) => stage.status === status);
+	}
 
 	function formatCurrency(value) {
 		if (value === null || value === undefined || value === '') return 'Preço a combinar';
@@ -336,59 +348,68 @@
 	<title>Operação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
-	<Header />
+<div class="min-h-screen pb-24">
+	<Header title="Operação" backHref="/negociacoes" />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
-		<a
-			href={resolve('/negociacoes')}
-			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
-		>
-			<ChevronLeft class="h-4 w-4" />
-			Negociações
-		</a>
-
+	<main class="mx-auto w-full max-w-3xl space-y-4 px-4 py-4">
 		{#if loading}
-			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
+			<div class="space-y-4" role="status" aria-live="polite">
+				<span class="sr-only">Carregando operação...</span>
+				<div class="placeholder h-24 w-full animate-pulse rounded-container"></div>
+				<div class="placeholder h-56 w-full animate-pulse rounded-container"></div>
 			</div>
 		{:else if errorMessage && !booking}
-			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+			<div class="flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
+				<CircleAlert class="h-5 w-5 shrink-0" />
+				{errorMessage}
+			</div>
 		{:else if booking}
-			<div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<!-- etapas da operação (bookings.status) -->
+			{#if stageIndex(booking.status) >= 0}
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm" aria-label="Etapas da operação">
+					<ol class="flex items-start">
+						{#each OPERATION_STAGES as stage, index (stage.status)}
+							{@const current = stageIndex(booking.status)}
+							{@const done = index < current || booking.status === 'finalizada'}
+							{@const active = index === current && booking.status !== 'finalizada'}
+							<li class="flex flex-1 flex-col items-center gap-1.5 text-center" aria-current={active ? 'step' : undefined}>
+								<div class="flex w-full items-center">
+									<span class="h-0.5 flex-1 {index === 0 ? 'opacity-0' : done || active ? 'bg-primary-500' : 'bg-surface-300-700'}"></span>
+									<span
+										class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 {done
+											? 'border-primary-500 preset-filled-primary-500'
+											: active
+												? 'border-primary-500 preset-tonal-primary'
+												: 'border-surface-300-700 bg-surface-50-950 text-surface-700-300'}"
+									>
+										{#if done}
+											<Check class="h-5 w-5" />
+										{:else}
+											<stage.icon class="h-4 w-4" />
+										{/if}
+									</span>
+									<span class="h-0.5 flex-1 {index === OPERATION_STAGES.length - 1 ? 'opacity-0' : done ? 'bg-primary-500' : 'bg-surface-300-700'}"></span>
+								</div>
+								<span class="text-xs leading-tight {active || done ? 'font-bold text-surface-950-50' : 'font-medium text-surface-800-200'}">{stage.label}</span>
+							</li>
+						{/each}
+					</ol>
+				</section>
+			{/if}
+
+			<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				{#if booking.coverUrl}
 					<img
 						src={booking.coverUrl}
 						alt={listingTitle()}
-						class="mb-4 aspect-[16/10] w-full rounded-container object-cover"
+						class="mb-4 aspect-[16/9] w-full rounded-container object-cover"
 					/>
 				{/if}
-				<div class="flex items-start justify-between gap-3">
-					<div class="flex min-w-0 items-start gap-3">
-						{#if counterpartyPhoto()}
-							<img
-								src={counterpartyPhoto()}
-								alt={counterpartyName()}
-								class="h-10 w-10 shrink-0 rounded-full object-cover"
-							/>
-						{/if}
-						<div class="min-w-0">
-							{#if listingHref()}
-								<a href={resolve(listingHref())} class="text-xl font-bold text-surface-950-50 hover:text-primary-700">
-									{listingTitle()}
-								</a>
-							{:else}
-								<h1 class="text-xl font-bold text-surface-950-50">{listingTitle()}</h1>
-							{/if}
-							<p class="mt-1 text-sm text-surface-600-400">
-								{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
-							</p>
-						</div>
-					</div>
+
+				<div class="flex items-center justify-between gap-2">
+					<span class="preset-typo-label">Operação</span>
 					<span
-						class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {statusBadgeClass(
+						class="badge rounded-full px-2.5 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(
 							bookingStatusTone(booking.status)
 						)}"
 					>
@@ -396,35 +417,65 @@
 					</span>
 				</div>
 
-				<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-					<div>
-						<dt class="text-xs text-surface-600-400">Valor acordado</dt>
-						<dd class="font-semibold text-primary-700">{formatCurrency(booking.total_price)}</dd>
+				<div class="mt-2 flex items-center gap-3">
+					{#if counterpartyPhoto()}
+						<img
+							src={counterpartyPhoto()}
+							alt={counterpartyName()}
+							class="h-12 w-12 shrink-0 rounded-full object-cover"
+						/>
+					{:else}
+						<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full preset-tonal-primary text-lg font-bold">
+							{counterpartyName().slice(0, 1).toUpperCase()}
+						</span>
+					{/if}
+					<div class="min-w-0">
+						{#if listingHref()}
+							<a href={resolve(listingHref())} class="line-clamp-2 text-xl font-bold leading-tight text-surface-950-50 hover:text-primary-700-300">
+								{listingTitle()}
+							</a>
+						{:else}
+							<h1 class="line-clamp-2 preset-typo-title">{listingTitle()}</h1>
+						{/if}
+						<p class="mt-0.5 text-sm text-surface-800-200">
+							{isProvider ? 'Cliente' : 'Anunciante'}: <span class="font-semibold text-surface-950-50">{counterpartyName()}</span>
+						</p>
 					</div>
-					<div class="col-span-2">
-						<dt class="text-xs text-surface-600-400">Período</dt>
-						<dd class="font-medium text-surface-950-50">
-							{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
+				</div>
+
+				<dl class="mt-4 grid grid-cols-2 gap-2">
+					<div class="rounded-container bg-surface-100-900 p-3">
+						<dt class="preset-typo-label">Valor acordado</dt>
+						<dd class="mt-0.5 text-xl font-bold text-primary-700-300">{formatCurrency(booking.total_price)}</dd>
+					</div>
+					<div class="rounded-container bg-surface-100-900 p-3">
+						<dt class="preset-typo-label">Período</dt>
+						<dd class="mt-0.5 text-sm font-semibold text-surface-950-50">
+							{formatDbDate(booking.start_date)}
+							<span class="block text-surface-800-200">até {formatDbDate(booking.end_date)}</span>
 						</dd>
 					</div>
 				</dl>
-			</div>
+			</section>
 
 			{#if errorMessage}
-				<p class="mt-3 text-sm text-error-500">{errorMessage}</p>
+				<div class="flex items-start gap-2 rounded-container preset-tonal-error p-3 text-sm">
+					<CircleAlert class="h-5 w-5 shrink-0" />
+					{errorMessage}
+				</div>
 			{/if}
 
 			{#if isProvider}
-				<div class="mt-4 space-y-2">
+				<div class="space-y-3">
 					{#if booking.status === 'pendente'}
 						<button
 							type="button"
 							onclick={() => updateBookingStatus('em_operacao')}
 							disabled={actionLoading}
-							class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3.5 text-sm font-semibold disabled:opacity-60"
+							class="btn btn-lg preset-filled-primary-500 w-full"
 						>
-							<Play class="h-4 w-4" />
-							Iniciar operação em campo
+							<Play size={18} />
+							<span>Iniciar operação em campo</span>
 						</button>
 					{/if}
 
@@ -433,10 +484,10 @@
 							type="button"
 							onclick={() => updateBookingStatus('em_avaliacao')}
 							disabled={actionLoading}
-							class="flex w-full items-center justify-center gap-2 rounded-container preset-filled-secondary-500 py-3.5 text-sm font-semibold disabled:opacity-60"
+							class="btn btn-lg preset-filled-secondary-500 w-full"
 						>
-							<Flag class="h-4 w-4" />
-							Encerrar operação
+							<Flag size={18} />
+							<span>Encerrar operação</span>
 						</button>
 					{/if}
 
@@ -446,33 +497,37 @@
 						<button
 							type="button"
 							onclick={() => (showCancelDialog = true)}
-							class="w-full rounded-container border border-error-500 py-2.5 text-sm font-semibold text-error-500 hover:preset-tonal-error"
+							class="btn btn-lg preset-tonal-error w-full"
 						>
-							Cancelar operação
+							<XCircle size={18} />
+							<span>Cancelar operação</span>
 						</button>
 					{/if}
 				</div>
 			{:else if booking.status === 'pendente'}
-				<p class="mt-4 rounded-container preset-tonal-warning p-3 text-sm">
+				<div class="flex items-start gap-3 rounded-container preset-tonal-warning p-4 text-sm font-medium">
+					<Clock class="h-5 w-5 shrink-0" />
 					Aguardando o anunciante iniciar a operação em campo.
-				</p>
+				</div>
 			{:else if booking.status === 'em_operacao'}
-				<p class="mt-4 rounded-container preset-tonal-primary p-3 text-sm">
+				<div class="flex items-start gap-3 rounded-container preset-tonal-primary p-4 text-sm font-medium">
+					<Tractor class="h-5 w-5 shrink-0" />
 					Operação em andamento no campo.
-				</p>
+				</div>
 			{/if}
 
 			{#if booking.status === 'em_avaliacao'}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-					<h2 class="flex items-center gap-2 text-sm font-bold text-surface-950-50">
-						<Star class="h-4 w-4 text-warning-500" />
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+					<h2 class="flex items-center gap-2 preset-typo-title">
+						<Star class="h-5 w-5 fill-current text-warning-500" />
 						Avaliar experiência
 					</h2>
 
 					{#if myReview}
-						<p class="mt-3 text-sm text-surface-600-400">
+						<div class="mt-3 flex items-center gap-2 rounded-container preset-tonal-success p-3 text-sm font-medium">
+							<CheckCircle2 class="h-5 w-5 shrink-0" />
 							Você já enviou sua avaliação ({myReview.rating}/5).
-						</p>
+						</div>
 					{:else if canReview}
 						<div class="mt-3">
 							<AppRating bind:value={rating} readOnly={false} label="Sua nota" />
@@ -480,20 +535,22 @@
 						<textarea
 							rows="3"
 							bind:value={comment}
-							placeholder="Comentário opcional..."
-							class="mt-3 w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
+							placeholder="Comentário (opcional)"
+							aria-label="Comentário"
+							class="textarea mt-3 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-base"
 						></textarea>
 						<button
 							type="button"
 							onclick={submitReview}
 							disabled={reviewSubmitting}
-							class="mt-3 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold disabled:opacity-60"
+							class="btn btn-lg preset-filled-primary-500 mt-3 w-full"
 						>
-							{reviewSubmitting ? 'Enviando...' : 'Enviar avaliação'}
+							<Send size={18} />
+							<span>{reviewSubmitting ? 'Enviando...' : 'Enviar avaliação'}</span>
 						</button>
 					{/if}
 
-					<p class="mt-3 text-xs text-surface-600-400">
+					<p class="mt-3 text-sm text-surface-800-200">
 						A operação será finalizada automaticamente quando cliente e anunciante avaliarem.
 					</p>
 
@@ -502,17 +559,18 @@
 							type="button"
 							onclick={() => updateBookingStatus('finalizada')}
 							disabled={actionLoading}
-							class="mt-4 flex w-full items-center justify-center gap-2 rounded-container border border-surface-200-800 py-2.5 text-sm font-semibold text-surface-700-300 hover:preset-tonal disabled:opacity-60"
+							class="btn btn-lg preset-tonal mt-4 w-full"
 						>
-							<CheckCircle2 class="h-4 w-4" />
-							Encerrar operação manualmente
+							<CheckCircle2 size={18} />
+							<span>Encerrar operação manualmente</span>
 						</button>
 					{/if}
 				</section>
 			{/if}
 
 			{#if booking.status === 'finalizada'}
-				<div class="mt-4 rounded-container preset-tonal-primary p-4 text-sm">
+				<div class="flex items-center gap-3 rounded-container preset-tonal-success p-4 text-sm font-medium">
+					<CheckCircle2 class="h-6 w-6 shrink-0" />
 					{#if bothReviewed}
 						Operação finalizada. Obrigado por usar o Osiris.
 					{:else}
@@ -522,26 +580,33 @@
 			{/if}
 
 			{#if reviews.length}
-				<section class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-					<h2 class="text-sm font-bold text-surface-950-50">Avaliações desta operação</h2>
-					<ul class="mt-3 space-y-3">
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+					<div class="flex items-center justify-between gap-2">
+						<h2 class="preset-typo-title">Avaliações desta operação</h2>
+						<span class="badge rounded-full preset-tonal-surface px-2 py-0.5 text-xs font-semibold">{reviews.length}</span>
+					</div>
+					<ul class="mt-3 space-y-2">
 						{#each reviews as review (review.id)}
-							<li class="rounded-container bg-surface-50-950 p-3">
-								<div class="flex items-center gap-2">
+							<li class="rounded-container bg-surface-100-900 p-3">
+								<div class="flex items-center gap-3">
 									{#if review.reviewerPhoto}
 										<img
 											src={review.reviewerPhoto}
 											alt={review.reviewerName}
-											class="h-8 w-8 rounded-full object-cover"
+											class="h-10 w-10 rounded-full object-cover"
 										/>
+									{:else}
+										<span class="flex h-10 w-10 items-center justify-center rounded-full preset-tonal-primary font-bold">
+											{review.reviewerName?.slice(0, 1).toUpperCase()}
+										</span>
 									{/if}
-									<div>
-										<p class="text-sm font-medium text-surface-950-50">{review.reviewerName}</p>
-										<p class="text-xs text-warning-600">{review.rating}/5</p>
+									<div class="min-w-0 flex-1">
+										<p class="truncate text-sm font-bold text-surface-950-50">{review.reviewerName}</p>
+										<AppRating value={review.rating} size="sm" showCount={false} />
 									</div>
 								</div>
 								{#if review.comment}
-									<p class="mt-2 text-sm text-surface-600-400">{review.comment}</p>
+									<p class="mt-2 text-sm italic text-surface-900-100">"{review.comment}"</p>
 								{/if}
 							</li>
 						{/each}
