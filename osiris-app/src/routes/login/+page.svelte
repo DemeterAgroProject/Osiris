@@ -7,6 +7,13 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
 	import { onboardingSeen, safeRedirectPath } from '$lib/onboarding';
+	import { ArrowRight, Archive, CircleAlert, Handshake, Tractor } from 'lucide-svelte';
+
+	const LOGIN_BENEFITS = [
+		{ label: 'Publique maquinário e insumos', icon: Tractor },
+		{ label: 'Gerencie anúncios no inventário', icon: Archive },
+		{ label: 'Negocie com outros produtores', icon: Handshake }
+	];
 
 	let loading = $state(true);
 	let signingIn = $state(false);
@@ -78,75 +85,87 @@
 	<meta name="description" content="Faça login no marketplace Osiris com sua conta Google." />
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
-	<Header />
+<div class="min-h-screen pb-24">
+	<Header title="Entrar" />
 
-	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-8">
+	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-6">
 		{#if loading}
 			<div class="flex flex-1 flex-col items-center justify-center py-20">
 				<div
 					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
-				<p class="mt-4 text-sm text-surface-600-400">Verificando sessão...</p>
+				<p class="mt-4 text-sm text-surface-800-200">Verificando sessão...</p>
 			</div>
 		{:else}
-			<div class="text-center">
-				<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Marketplace Osiris</p>
-				<h1 class="mt-2 text-2xl font-bold">Entre no Osiris</h1>
-				<p class="mt-2 text-sm text-surface-600-400">
+			<div class="flex flex-col items-center text-center">
+				<span class="flex h-24 w-24 items-center justify-center rounded-container border border-surface-200-800 bg-surface-50-950 shadow-md">
+					<img src="/logo_black.png" alt="Logo Osiris" class="h-16 w-16 object-contain" />
+				</span>
+				<p class="mt-4 text-primary-700-300 preset-typo-label">Marketplace Osiris</p>
+				<h1 class="mt-1 preset-typo-headline">Entre no Osiris</h1>
+				<p class="mt-2 preset-typo-subtitle">
 					Entre para anunciar, negociar e gerenciar seu inventário no agro.
 				</p>
 			</div>
 
-			<div class="mt-8 rounded-container border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm">
+			<div class="mt-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-5 shadow-sm">
 				{#if errorMessage}
-					<div class="mb-4 rounded-container preset-tonal-error p-3 text-sm">{errorMessage}</div>
+					<div class="mb-4 flex items-start gap-2 rounded-container preset-tonal-error p-3 text-sm">
+						<CircleAlert class="h-5 w-5 shrink-0" />
+						{errorMessage}
+					</div>
 				{/if}
 
 				<button
 					type="button"
 					onclick={handleGoogleLogin}
 					disabled={signingIn}
-					class="flex w-full items-center justify-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3.5 text-sm font-semibold transition-all hover:preset-tonal disabled:cursor-not-allowed disabled:opacity-60"
+					class="btn btn-lg preset-outlined-surface-200-800 w-full"
 				>
 					{#if signingIn}
 						<span
 							class="h-5 w-5 animate-spin rounded-full border-2 border-surface-200-800 border-t-primary-500"
 						></span>
-						Conectando...
+						<span>Conectando...</span>
 					{:else}
 						<img
 							src="https://www.google.com/favicon.ico"
 							alt=""
-							class="h-5 w-5"
-							width="20"
-							height="20"
+							class="h-6 w-6"
+							width="24"
+							height="24"
 						/>
-						Continuar com Google
+						<span>Continuar com Google</span>
 					{/if}
 				</button>
 
-				<p class="mt-5 text-center text-xs leading-relaxed text-surface-600-400">
+				<p class="mt-4 text-center text-sm leading-relaxed text-surface-800-200">
 					Ao continuar, você concorda com os
-					<a href={resolve('/termos')} class="font-medium text-primary-700 underline">Termos de uso</a>
+					<a href={resolve('/termos')} class="font-semibold text-primary-700-300 underline">Termos de uso</a>
 					e a
-					<a href={resolve('/privacidade')} class="font-medium text-primary-700 underline">Política de privacidade</a>
+					<a href={resolve('/privacidade')} class="font-semibold text-primary-700-300 underline">Política de privacidade</a>
 					do Osiris.
 				</p>
 			</div>
 
-			<div class="mt-6 rounded-container preset-filled-primary-500 p-4">
-				<p class="text-sm font-semibold">Por que entrar?</p>
-				<ul class="mt-2 space-y-1.5 text-xs opacity-90">
-					<li>• Publique maquinário e insumos</li>
-					<li>• Gerencie anúncios no inventário</li>
-					<li>• Negocie com outros produtores</li>
+			<div class="mt-5 rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md">
+				<p class="opacity-90 preset-typo-label text-inherit">Por que entrar?</p>
+				<ul class="mt-3 space-y-3">
+					{#each LOGIN_BENEFITS as benefit (benefit.label)}
+						<li class="flex items-center gap-3 text-sm font-medium">
+							<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container bg-white/15">
+								<benefit.icon class="h-5 w-5" />
+							</span>
+							{benefit.label}
+						</li>
+					{/each}
 				</ul>
 			</div>
 
-			<p class="mt-6 text-center text-sm text-surface-600-400">
-				<a href={resolve('/')} class="font-medium text-primary-600 hover:text-primary-700">Continuar sem login</a>
-			</p>
+			<a href={resolve('/')} class="btn preset-tonal-primary mx-auto mt-5">
+				<span>Continuar sem entrar</span>
+				<ArrowRight size={18} />
+			</a>
 		{/if}
 	</main>
 

@@ -7,7 +7,8 @@
     import BottomNav from '$lib/components/BottomNav.svelte';
     import { 
         TrendingUp, Package, Tractor, Briefcase,
-        MessageCircle, PlusCircle, ArrowRight, Leaf, MessageSquare, Calendar
+        MessageCircle, PlusCircle, ArrowRight, Leaf, MessageSquare, Calendar,
+        ChevronRight, Store
     } from 'lucide-svelte';
 
     let loading = $state(true);
@@ -69,134 +70,112 @@
 	<title>Painel — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-20">
-    <Header />
+{#snippet quickAction(href, Icon, tone, title, hint, TrailIcon)}
+    <a
+        href={resolve(href)}
+        class="flex min-h-18 items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-3 shadow-sm transition-colors hover:border-primary-500"
+    >
+        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {tone}">
+            <Icon class="h-6 w-6" />
+        </span>
+        <span class="min-w-0 flex-1">
+            <span class="block text-base font-bold text-surface-950-50">{title}</span>
+            <span class="block truncate text-sm text-surface-800-200">{hint}</span>
+        </span>
+        <TrailIcon class="h-5 w-5 shrink-0 text-surface-700-300" />
+    </a>
+{/snippet}
 
-    <main class="px-4 py-6 max-w-3xl mx-auto w-full space-y-6">
-        
+<div class="min-h-screen pb-24">
+    <Header title="Painel" />
+
+    <main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-5">
         <div>
-            <h1 class="text-2xl font-bold">Olá, {userName}!</h1>
-            <p class="text-sm text-surface-600-400 mt-1">Aqui está o resumo dos seus negócios no Osiris.</p>
+            <h1 class="preset-typo-headline">Olá, {userName}!</h1>
+            <p class="mt-1 preset-typo-subtitle">Aqui está o resumo dos seus negócios no Osiris.</p>
         </div>
 
         {#if loading}
-            <div class="flex justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+            <div class="space-y-3" role="status" aria-live="polite">
+                <span class="sr-only">Carregando painel...</span>
+                <div class="placeholder h-28 w-full animate-pulse rounded-container"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="placeholder h-28 animate-pulse rounded-container"></div>
+                    <div class="placeholder h-28 animate-pulse rounded-container"></div>
+                </div>
             </div>
         {:else}
-            <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2 flex items-center justify-between rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 p-5 shadow-md">
-                    <div>
-                        <p class="text-surface-600-400 text-sm font-medium">Total de Anúncios Ativos</p>
-                        <p class="text-3xl font-bold mt-1">{totalAds}</p>
+            <div class="grid grid-cols-2 gap-3">
+                <a
+                    href={resolve('/inventario')}
+                    class="relative col-span-2 overflow-hidden rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md"
+                >
+                    <TrendingUp class="pointer-events-none absolute -bottom-4 -right-4 h-28 w-28 opacity-10" aria-hidden="true" />
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-container bg-white/15">
+                            <Store class="h-6 w-6" />
+                        </span>
+                        <p class="text-base font-bold">Anúncios ativos</p>
                     </div>
-                    <div class="h-12 w-12 rounded-full bg-surface-100-900 flex items-center justify-center backdrop-blur-sm">
-                        <TrendingUp class="h-6 w-6 text-surface-950-50" />
-                    </div>
-                </div>
+                    <p class="mt-3 text-5xl font-bold leading-none">{totalAds}</p>
+                    <p class="mt-3 flex items-center gap-1 text-sm font-semibold underline underline-offset-2">
+                        Gerenciar
+                        <ChevronRight class="h-4 w-4" />
+                    </p>
+                </a>
 
-                <a href={resolve('/negociacoes')} class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between hover:border-primary-500 transition-colors">
-                    <div class="flex justify-between items-start">
-                        <div class="h-8 w-8 rounded-full preset-tonal-warning flex items-center justify-center">
-                            <MessageCircle class="h-4 w-4" />
-                        </div>
-                    </div>
+                <a href={resolve('/negociacoes')} class="flex flex-col justify-between rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-container preset-tonal-warning">
+                        <MessageCircle class="h-5 w-5" />
+                    </span>
                     <div class="mt-3">
-                        <p class="text-2xl font-bold">{stats.propostas}</p>
-                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Propostas aguardando resposta</p>
+                        <p class="text-3xl font-bold text-surface-950-50">{stats.propostas}</p>
+                        <p class="mt-0.5 text-sm font-medium text-surface-800-200">Propostas aguardando resposta</p>
                     </div>
                 </a>
 
-                <a href={resolve('/negociacoes')} class="rounded-container bg-surface-50-950 p-4 shadow-sm border border-surface-200-800 flex flex-col justify-between hover:border-primary-500 transition-colors">
-                    <div class="flex justify-between items-start">
-                        <div class="h-8 w-8 rounded-full preset-tonal-secondary flex items-center justify-center">
-                            <Calendar class="h-4 w-4" />
-                        </div>
-                    </div>
+                <a href={resolve('/negociacoes')} class="flex flex-col justify-between rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-container preset-tonal-secondary">
+                        <Calendar class="h-5 w-5" />
+                    </span>
                     <div class="mt-3">
-                        <p class="text-2xl font-bold">{stats.operacoes}</p>
-                        <p class="text-xs text-surface-600-400 font-medium mt-0.5">Operações em andamento</p>
+                        <p class="text-3xl font-bold text-surface-950-50">{stats.operacoes}</p>
+                        <p class="mt-0.5 text-sm font-medium text-surface-800-200">Operações em andamento</p>
                     </div>
                 </a>
             </div>
 
-            <div>
-                <h2 class="text-base font-bold mb-3">Seu Portfólio</h2>
+            <section>
+                <h2 class="mb-3 preset-typo-title">Seu portfólio</h2>
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
-                        <Tractor class="h-5 w-5 mx-auto text-primary-600 mb-2" />
-                        <p class="text-xl font-bold">{stats.maquinarios}</p>
-                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Máquinas</p>
-                    </div>
-                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
-                        <Leaf class="h-5 w-5 mx-auto mb-2 text-warning-500" />
-                        <p class="text-xl font-bold">{stats.produtos}</p>
-                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Insumos</p>
-                    </div>
-                    <div class="rounded-container bg-surface-50-950 p-3 border border-surface-200-800 text-center shadow-sm">
-                        <Briefcase class="h-5 w-5 mx-auto mb-2 text-secondary-500" />
-                        <p class="text-xl font-bold">{stats.servicos}</p>
-                        <p class="text-[10px] font-semibold text-surface-600-400 uppercase tracking-wider mt-1">Serviços</p>
-                    </div>
+                    {#each [
+                        { label: 'Máquinas', value: stats.maquinarios, icon: Tractor, tone: 'preset-tonal-primary', href: '/inventario' },
+                        { label: 'Insumos', value: stats.produtos, icon: Leaf, tone: 'preset-tonal-tertiary', href: '/inventario' },
+                        { label: 'Serviços', value: stats.servicos, icon: Briefcase, tone: 'preset-tonal-secondary', href: '/servicos' }
+                    ] as item (item.label)}
+                        <a
+                            href={resolve(item.href)}
+                            class="flex flex-col items-center rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-center shadow-sm transition-colors hover:border-primary-500"
+                        >
+                            <span class="flex h-11 w-11 items-center justify-center rounded-container {item.tone}">
+                                <item.icon class="h-5 w-5" />
+                            </span>
+                            <span class="mt-2 text-2xl font-bold text-surface-950-50">{item.value}</span>
+                            <span class="text-xs font-semibold text-surface-800-200">{item.label}</span>
+                        </a>
+                    {/each}
                 </div>
-            </div>
+            </section>
 
-            <div>
-                <h2 class="text-base font-bold mb-3">Ações Rápidas</h2>
+            <section>
+                <h2 class="mb-3 preset-typo-title">Ações rápidas</h2>
                 <div class="space-y-3">
-                    <a href={resolve('/painel-de-controle/agenda')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
-                                <Calendar class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Agenda</p>
-                                <p class="text-xs text-surface-600-400">Propostas, negociações e operações</p>
-                            </div>
-                        </div>
-                        <ArrowRight class="h-5 w-5 text-surface-600-400" />
-                    </a>
-
-                    <a href={resolve('/negociacoes')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-container preset-tonal-warning flex items-center justify-center">
-                                <MessageSquare class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Negociações</p>
-                                <p class="text-xs text-surface-600-400">Propostas, chat e operações</p>
-                            </div>
-                        </div>
-                        <ArrowRight class="h-5 w-5 text-surface-600-400" />
-                    </a>
-
-                    <a href={resolve('/anunciar')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:border-primary-500 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-container preset-tonal-primary flex items-center justify-center">
-                                <Package class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Anunciar Produto/Máquina</p>
-                                <p class="text-xs text-surface-600-400">Adicionar item ao inventário</p>
-                            </div>
-                        </div>
-                        <PlusCircle class="h-5 w-5 text-surface-600-400" />
-                    </a>
-
-                    <a href={resolve('/servicos/novo')} class="flex items-center justify-between rounded-container bg-surface-50-950 p-4 border border-surface-200-800 shadow-sm hover:preset-tonal transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-container preset-tonal-secondary flex items-center justify-center">
-                                <Briefcase class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p class="font-semibold">Oferecer Serviço</p>
-                                <p class="text-xs text-surface-600-400">Mão de obra ou pacote completo</p>
-                            </div>
-                        </div>
-                        <PlusCircle class="h-5 w-5 text-surface-600-400" />
-                    </a>
+                    {@render quickAction('/painel-de-controle/agenda', Calendar, 'preset-tonal-secondary', 'Agenda', 'Propostas, negociações e operações', ArrowRight)}
+                    {@render quickAction('/negociacoes', MessageSquare, 'preset-tonal-warning', 'Negociações', 'Propostas, chat e operações', ArrowRight)}
+                    {@render quickAction('/anunciar', Package, 'preset-tonal-primary', 'Anunciar produto ou máquina', 'Adicionar item ao inventário', PlusCircle)}
+                    {@render quickAction('/servicos/novo', Briefcase, 'preset-tonal-secondary', 'Oferecer serviço', 'Mão de obra ou pacote completo', PlusCircle)}
                 </div>
-            </div>
+            </section>
         {/if}
     </main>
 

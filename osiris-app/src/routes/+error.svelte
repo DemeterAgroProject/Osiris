@@ -1,7 +1,7 @@
 <script>
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
-	import { AlertTriangle, Tractor } from 'lucide-svelte';
+	import { AlertTriangle, ArrowLeft, Tractor } from 'lucide-svelte';
 
 	const status = $derived($page.status);
 	const errorMessage = $derived($page.error?.message);
@@ -36,26 +36,27 @@
 			{/if}
 		</div>
 
-		<p class="text-xs font-semibold uppercase tracking-wider text-primary-700">Osiris</p>
+		<p class="text-primary-700 preset-typo-label">Osiris</p>
 
 		{#if status}
-			<p class="mt-2 text-sm font-medium text-surface-600-400">Erro {status}</p>
+			<p class="mt-2 text-sm font-medium text-surface-800-200">Erro {status}</p>
 		{/if}
 
-		<h1 class="mt-3 text-2xl font-bold tracking-tight">{headline}</h1>
-		<p class="mt-3 text-sm leading-relaxed text-surface-600-400">{description}</p>
+		<h1 class="mt-3 preset-typo-headline">{headline}</h1>
+		<p class="mt-3 preset-typo-subtitle">{description}</p>
 
 		{#if errorMessage && !isNotFound}
-			<p class="mt-4 rounded-container bg-surface-50-950 px-4 py-3 text-left text-xs text-surface-600-400 ring-1 ring-surface-200-800">
+			<p class="mt-4 rounded-container bg-surface-50-950 px-4 py-3 text-left text-xs text-surface-800-200 ring-1 ring-surface-200-800">
 				{errorMessage}
 			</p>
 		{/if}
 
 		<a
 			href={resolve('/')}
-			class="btn preset-filled-primary-500 mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-container px-6 text-sm font-semibold shadow-sm transition-colors sm:w-auto"
+			class="btn btn-lg preset-filled-primary-500 mt-8 w-full sm:w-auto"
 		>
-			Voltar para o Início
+			<ArrowLeft size={18} />
+			<span>Voltar para o Início</span>
 		</a>
 	</div>
 </div>
