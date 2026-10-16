@@ -1,4 +1,5 @@
 <script>
+	import { Check } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
@@ -300,9 +301,10 @@
 			{/if}
 
 			<div>
-				<label for="edit-name" class="mb-1 block text-sm font-medium text-surface-700-300">Título</label>
+				<label for="edit-name" class="mb-1 block text-sm font-medium text-surface-900-100">Título</label>
 				<input
 					id="edit-name"
+					placeholder="Ex: Trator JD 6100J"
 					type="text"
 					bind:value={form.name}
 					required
@@ -311,11 +313,12 @@
 			</div>
 
 			<div>
-				<label for="edit-description" class="mb-1 block text-sm font-medium text-surface-700-300"
+				<label for="edit-description" class="mb-1 block text-sm font-medium text-surface-900-100"
 					>Descrição</label
 				>
 				<textarea
 					id="edit-description"
+					placeholder="Ex: estado de conservação, revisões, observações..."
 					rows="3"
 					bind:value={form.description}
 					class="textarea w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
@@ -324,7 +327,7 @@
 
 			{#if isMachinery}
 				<div>
-					<label for="edit-offer-type" class="mb-1 block text-sm font-medium text-surface-700-300">Tipo de negócio</label>
+					<label for="edit-offer-type" class="mb-1 block text-sm font-medium text-surface-900-100">Tipo de negócio</label>
 					<select
 						id="edit-offer-type"
 						bind:value={form.offer_type}
@@ -337,11 +340,12 @@
 			{/if}
 
 			<div>
-				<label for="edit-price" class="mb-1 block text-sm font-medium text-surface-700-300">
+				<label for="edit-price" class="mb-1 block text-sm font-medium text-surface-900-100">
 					{isMachinery && form.offer_type === 'aluguel' ? 'Preço por hora (R$)' : 'Preço (R$)'}
 				</label>
 				<input
 					id="edit-price"
+					placeholder="Ex: 500,00"
 					type="number"
 					min="0"
 					step="0.01"
@@ -354,7 +358,7 @@
 			{#if isMachinery}
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-type" class="mb-1 block text-sm font-medium text-surface-700-300">Tipo</label>
+						<label for="edit-type" class="mb-1 block text-sm font-medium text-surface-900-100">Tipo</label>
 						<select
 							id="edit-type"
 							bind:value={form.type_id}
@@ -367,7 +371,7 @@
 						</select>
 					</div>
 					<div>
-						<label for="edit-brand" class="mb-1 block text-sm font-medium text-surface-700-300">Marca</label>
+						<label for="edit-brand" class="mb-1 block text-sm font-medium text-surface-900-100">Marca</label>
 						<select
 							id="edit-brand"
 							bind:value={form.brand_id}
@@ -382,9 +386,10 @@
 				</div>
 
 				<div>
-					<label for="edit-model" class="mb-1 block text-sm font-medium text-surface-700-300">Modelo</label>
+					<label for="edit-model" class="mb-1 block text-sm font-medium text-surface-900-100">Modelo</label>
 					<input
 						id="edit-model"
+						placeholder="Ex: 6100J"
 						type="text"
 						bind:value={form.model}
 						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -392,11 +397,12 @@
 				</div>
 
 				<div>
-					<label for="edit-serial" class="mb-1 block text-sm font-medium text-surface-700-300"
+					<label for="edit-serial" class="mb-1 block text-sm font-medium text-surface-900-100"
 						>Número de série</label
 					>
 					<input
 						id="edit-serial"
+						placeholder="Ex: 123456789ABC"
 						type="text"
 						bind:value={form.serial_number}
 						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -405,9 +411,10 @@
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-700-300">Ano</label>
+						<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-900-100">Ano</label>
 						<input
 							id="edit-year"
+							placeholder="Ex: 2018"
 							type="number"
 							min="1950"
 							bind:value={form.manufacture_year}
@@ -415,11 +422,12 @@
 						/>
 					</div>
 					<div>
-						<label for="edit-horimeter" class="mb-1 block text-sm font-medium text-surface-700-300"
+						<label for="edit-horimeter" class="mb-1 block text-sm font-medium text-surface-900-100"
 							>Horímetro</label
 						>
 						<input
 							id="edit-horimeter"
+							placeholder="Ex: 2500"
 							type="number"
 							bind:value={form.current_horimeter}
 							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -428,7 +436,7 @@
 				</div>
 			{:else}
 				<div>
-					<label for="edit-category" class="mb-1 block text-sm font-medium text-surface-700-300"
+					<label for="edit-category" class="mb-1 block text-sm font-medium text-surface-900-100"
 						>Categoria</label
 					>
 					<select
@@ -448,11 +456,12 @@
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-qty" class="mb-1 block text-sm font-medium text-surface-700-300"
+						<label for="edit-qty" class="mb-1 block text-sm font-medium text-surface-900-100"
 							>Quantidade</label
 						>
 						<input
 							id="edit-qty"
+							placeholder="Ex: 100"
 							type="number"
 							min="1"
 							bind:value={form.quantity}
@@ -460,7 +469,7 @@
 						/>
 					</div>
 					<div>
-						<label for="edit-unit" class="mb-1 block text-sm font-medium text-surface-700-300">Unidade</label>
+						<label for="edit-unit" class="mb-1 block text-sm font-medium text-surface-900-100">Unidade</label>
 						<select
 							id="edit-unit"
 							bind:value={form.stock_unit}
@@ -486,17 +495,18 @@
 				type="button"
 				onclick={closeSheet}
 				disabled={saving}
-				class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 hover:preset-tonal disabled:opacity-50"
+				class="btn btn-lg preset-tonal w-full"
 			>
-				Cancelar
+				<span>Cancelar</span>
 			</button>
 			<button
 				type="submit"
 				form="inventory-edit-form"
 				disabled={saving}
-				class="rounded-container preset-filled-primary-500 py-3 text-sm font-semibold disabled:opacity-60"
+				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
-				{saving ? 'Salvando...' : 'Salvar alterações'}
+				<Check size={18} />
+				<span>{saving ? 'Salvando...' : 'Salvar'}</span>
 			</button>
 		</div>
 	{/snippet}

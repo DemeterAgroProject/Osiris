@@ -1,4 +1,5 @@
 <script>
+	import { Check } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 
@@ -101,11 +102,12 @@
 			{/if}
 
 			<div>
-				<label for="edit-service-title-input" class="mb-1 block text-sm font-medium text-surface-700-300"
+				<label for="edit-service-title-input" class="mb-1 block text-sm font-medium text-surface-900-100"
 					>Título</label
 				>
 				<input
 					id="edit-service-title-input"
+					placeholder="Ex: Tratorista com experiência"
 					type="text"
 					bind:value={form.title}
 					required
@@ -114,11 +116,12 @@
 			</div>
 
 			<div>
-				<label for="edit-service-description" class="mb-1 block text-sm font-medium text-surface-700-300"
+				<label for="edit-service-description" class="mb-1 block text-sm font-medium text-surface-900-100"
 					>Descrição</label
 				>
 				<textarea
 					id="edit-service-description"
+					placeholder="Ex: máquinas que opera, o que o pacote cobre..."
 					rows="3"
 					bind:value={form.description}
 					required
@@ -127,11 +130,12 @@
 			</div>
 
 			<div>
-				<label for="edit-service-location" class="mb-1 block text-sm font-medium text-surface-700-300"
+				<label for="edit-service-location" class="mb-1 block text-sm font-medium text-surface-900-100"
 					>Localização / raio</label
 				>
 				<input
 					id="edit-service-location"
+					placeholder="Ex: Alegrete e região, RS"
 					type="text"
 					bind:value={form.location}
 					required
@@ -140,7 +144,7 @@
 			</div>
 
 			<div>
-				<label for="edit-service-pricing" class="mb-1 block text-sm font-medium text-surface-700-300"
+				<label for="edit-service-pricing" class="mb-1 block text-sm font-medium text-surface-900-100"
 					>Formato de cobrança</label
 				>
 				<select
@@ -157,11 +161,12 @@
 
 			{#if form.pricing_model !== 'A Combinar'}
 				<div>
-					<label for="edit-service-price" class="mb-1 block text-sm font-medium text-surface-700-300"
+					<label for="edit-service-price" class="mb-1 block text-sm font-medium text-surface-900-100"
 						>Valor (R$)</label
 					>
 					<input
 						id="edit-service-price"
+						placeholder="Ex: 150,00"
 						type="number"
 						min="0"
 						step="0.01"
@@ -179,9 +184,10 @@
 			type="submit"
 			form="service-edit-form"
 			disabled={saving}
-			class="w-full rounded-container preset-filled-primary-500 py-3.5 text-sm font-semibold disabled:opacity-60"
+			class="btn btn-lg preset-filled-primary-500 w-full"
 		>
-			{saving ? 'Salvando...' : 'Salvar alterações'}
+			<Check size={18} />
+			<span>{saving ? 'Salvando...' : 'Salvar alterações'}</span>
 		</button>
 	{/snippet}
 </AppDialog>

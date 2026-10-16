@@ -34,7 +34,7 @@
 </script>
 
 {#snippet emptyStar()}
-	<Star class="{iconClass} text-surface-400-600" />
+	<Star class="{iconClass} text-surface-700-300" />
 {/snippet}
 
 {#snippet halfStar()}
@@ -42,7 +42,7 @@
 {/snippet}
 
 {#snippet fullStar()}
-	<Star class="{iconClass} {readOnly ? 'fill-warning-400 text-warning-400' : 'fill-current text-warning-500'}" />
+	<Star class="{iconClass}  {readOnly ? 'fill-warning-400 text-warning-400' : 'fill-current text-warning-500'}" />
 {/snippet}
 
 <div class="inline-flex flex-wrap items-center gap-1.5">
@@ -82,7 +82,7 @@
 	{/if}
 
 	{#if readOnly && showCount}
-		<span class="{textClass} text-surface-600-400">
+		<span class="{textClass} text-surface-800-200">
 			{#if count > 0}
 				({count} {count === 1 ? 'avaliação' : 'avaliações'})
 			{:else}

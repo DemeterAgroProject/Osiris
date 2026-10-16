@@ -1,16 +1,35 @@
 <script>
     import { onMount, tick } from 'svelte';
-    import { Send } from 'lucide-svelte';
+    import { Lock, MessageCircle, Send } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
     import { watchChanges } from '$lib/realtime';
+
+    // hora da mensagem; de outro dia, mostra também a data
+    function formatMessageTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        if (date.toDateString() === new Date().toDateString()) return time;
+        return `${date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${time}`;
+    }
 
     let {
         negotiationId,
         currentUserId,
         providerId = null,
         disabled = false,
-        onProviderMessage = () => {}
+        onProviderMessage = () => {},
+        // celular: o chat ocupa toda a altura do contêiner pai; a partir de md volta ao cartão com altura limitada
+        fillOnMobile = false
     } = $props();
+
+    const frameClass = $derived(
+        fillOnMobile
+            ? 'min-h-0 flex-1 md:min-h-[280px] md:flex-none md:rounded-container md:border md:border-surface-200-800'
+            : 'min-h-[280px] rounded-container border border-surface-200-800'
+    );
+    const listClass = $derived(fillOnMobile ? 'min-h-0 p-4 md:max-h-[60vh] md:p-3' : 'max-h-[50vh] p-3');
 
     let messages = $state([]);
     let draft = $state('');
@@ -132,51 +151,64 @@
     });
 </script>
 
-<div class="flex min-h-[280px] flex-col rounded-container border border-surface-200-800 bg-surface-50-950">
-    <div bind:this={chatContainer} class="flex-1 space-y-3 overflow-y-auto p-4 max-h-[50vh] scroll-smooth">
+<div class="flex flex-col overflow-hidden bg-surface-100-900 {frameClass}">
+    <div bind:this={chatContainer} class="flex-1 space-y-3 overflow-y-auto overscroll-contain scroll-smooth {listClass}">
         {#if loading}
-            <p class="text-center text-sm text-surface-700-300">Carregando mensagens...</p>
+            <p class="py-8 text-center text-sm text-surface-900-100">Carregando mensagens...</p>
         {:else if messages.length === 0}
-            <p class="text-center text-sm text-surface-700-300">Nenhuma mensagem ainda. Inicie o alinhamento.</p>
+            <div class="flex flex-col items-center py-8 text-center text-surface-800-200">
+                <MessageCircle class="h-8 w-8 opacity-60" />
+                <p class="mt-2 text-sm">Nenhuma mensagem ainda. Envie a primeira!</p>
+            </div>
         {:else}
             {#each messages as msg (msg.id)}
-                <div class="flex {isOwnMessage(msg) ? 'justify-end' : 'justify-start'}">
+                {@const own = isOwnMessage(msg)}
+                <div class="flex flex-col {own ? 'items-end' : 'items-start'}">
+                    {#if !own}
+                        <p class="mb-1 px-1 preset-typo-label">
+                            {resolveSenderName(msg)}
+                        </p>
+                    {/if}
                     <div
-                        class="max-w-[85%] rounded-container px-3 py-2 text-sm {isOwnMessage(msg)
-                            ? 'rounded-br-md preset-filled-primary-500'
-                            : 'rounded-bl-md bg-surface-100-900 text-surface-950-50'}"
+                        class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-base shadow-sm {own
+                            ? 'rounded-br-sm preset-filled-primary-500'
+                            : 'rounded-bl-sm bg-surface-50-950 text-surface-950-50'}"
                     >
-                        {#if !isOwnMessage(msg)}
-                            <p class="mb-0.5 text-[10px] font-semibold uppercase opacity-70">
-                                {resolveSenderName(msg)}
-                            </p>
-                        {/if}
-                        <p class="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                        <p class="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{msg.content}</p>
                     </div>
+                    {#if formatMessageTime(msg.created_at)}
+                        <p class="mt-0.5 px-1 text-xs text-surface-800-200">{formatMessageTime(msg.created_at)}</p>
+                    {/if}
                 </div>
             {/each}
         {/if}
     </div>
 
     {#if !disabled}
-        <form class="flex gap-2 border-t border-surface-200-800 p-3" onsubmit={sendMessage}>
+        <form
+            class="flex shrink-0 items-center gap-2 border-t border-surface-200-800 bg-surface-50-950 p-2.5 {fillOnMobile ? 'pb-[calc(0.625rem+env(safe-area-inset-bottom))] md:pb-2.5' : ''}"
+            onsubmit={sendMessage}
+        >
             <input
                 type="text"
                 bind:value={draft}
                 placeholder="Digite sua mensagem..."
-                class="input min-w-0 flex-1 rounded-container border border-surface-200-800 px-3 py-2.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                aria-label="Mensagem"
+                class="input h-12 min-w-0 flex-1 rounded-full border border-surface-200-800 bg-surface-100-900 px-4 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             />
             <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-container preset-filled-primary-500 disabled:opacity-50"
+                class="btn-icon btn-icon-lg preset-filled-primary-500 shrink-0"
+                title="Enviar mensagem"
                 aria-label="Enviar mensagem"
             >
-                <Send class="h-4 w-4" />
+                <Send size={18} />
             </button>
         </form>
     {:else}
-        <p class="border-t border-surface-200-800 p-3 text-center text-xs text-surface-700-300">
+        <p class="flex shrink-0 items-center justify-center gap-2 border-t border-surface-200-800 bg-surface-50-950 p-3 text-center text-sm text-surface-900-100 {fillOnMobile ? 'pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3' : ''}">
+            <Lock class="h-4 w-4" />
             Chat encerrado para esta negociação.
         </p>
     {/if}

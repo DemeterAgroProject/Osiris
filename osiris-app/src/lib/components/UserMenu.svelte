@@ -132,7 +132,7 @@
 >
     {#snippet header()}
         {#if !authUser && !loading}
-            <div class="px-4 py-6 text-center text-sm text-surface-600-400">Sessão encerrada.</div>
+            <div class="px-4 py-6 text-center text-sm text-surface-800-200">Sessão encerrada.</div>
         {:else}
             <div class="mb-1 flex items-center gap-3 border-b border-surface-200-800 px-4 py-4">
                 {#if avatarUrl && !imgError}
@@ -156,14 +156,14 @@
                         <div class="mt-2 h-3 w-40 animate-pulse rounded bg-surface-200-800"></div>
                     {:else}
                         <p class="truncate text-sm font-bold text-surface-950-50">{displayName}</p>
-                        <p class="truncate text-xs text-surface-600-400">{email}</p>
+                        <p class="truncate text-xs text-surface-800-200">{email}</p>
                     {/if}
                 </div>
 
                 <a
                     href={resolve(profileHref)}
                     onclick={closeMenu}
-                    class="shrink-0 rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal hover:text-surface-700-300"
+                    class="shrink-0 rounded-full p-2 text-surface-800-200 transition-colors hover:preset-tonal hover:text-surface-900-100"
                     aria-label="Configurações do perfil"
                 >
                     <Settings class="h-5 w-5" />

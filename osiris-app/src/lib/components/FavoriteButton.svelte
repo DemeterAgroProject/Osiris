@@ -97,11 +97,13 @@
 	type="button"
 	onclick={toggleFavorite}
 	disabled={loading || toggling || (!productId && !serviceId)}
-	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-surface-200-800 bg-surface-50-950 text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-700 disabled:opacity-50 {className}"
+	class="btn-icon btn-icon-lg shrink-0 {isFavorited ? 'preset-tonal-error' : 'preset-tonal'}  {className}"
+	title={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
 	aria-label={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
 	aria-pressed={isFavorited}
 >
 	<Heart
-		class="h-5 w-5 {isFavorited ? 'fill-error-500 text-error-500' : ''} {toggling ? 'animate-pulse' : ''}"
+		size={18}
+		class="{isFavorited ? 'fill-current' : ''}  {toggling ? 'animate-pulse' : ''}"
 	/>
 </button>

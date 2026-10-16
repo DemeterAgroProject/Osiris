@@ -5,6 +5,8 @@
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import { resolve } from '$app/paths';
+	import { ArrowRight, CircleAlert, SearchX, Sprout } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
@@ -403,29 +405,43 @@
 	/>
 </svelte:head>
 
-<div class="min-h-screen pb-24 lg:pb-0">
-	<Header />
+<div class="min-h-screen w-full pb-24 lg:pb-0">
+	<Header title="Início" />
 
-	<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
-		<div class="rounded-container preset-filled-primary-500 p-4 ">
-			<p class="text-xs font-medium uppercase tracking-wider opacity-90">Marketplace Osiris</p>
-			<h1 class="mt-1 text-xl font-bold sm:text-2xl lg:text-3xl">Máquinas, produtos e serviços em um só lugar</h1>
-			<p class="mt-1 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
+	{#if !hasDiscoveryMode}
+		<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
+			<div class="relative overflow-hidden rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md">
+				<Sprout class="pointer-events-none absolute -bottom-6 -right-6 h-36 w-36 opacity-10" aria-hidden="true" />
+				<span class="badge rounded-full bg-white/15 px-2.5 py-1 uppercase text-xs font-bold tracking-wide">Marketplace Osiris</span>
+				<h1 class="mt-3 preset-typo-headline">Máquinas, produtos e serviços em um só lugar</h1>
+				<p class="mt-2 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
+				<a
+					href={resolve('/buscar')}
+					class="btn btn-lg preset-filled-surface-50-950 mt-4"
+				>
+					<span>Ver todos os anúncios</span>
+					<ArrowRight size={18} />
+				</a>
+			</div>
 		</div>
-	</div>
+	{/if}
 
 	{#if loading}
 		<ListingSkeleton variant="carousel" count={3} sections={3} label="Carregando destaques..." />
 	{:else if errorMessage}
-		<div class="mx-4 my-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+		<div class="mx-4 my-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
+			<CircleAlert class="h-5 w-5 shrink-0" />
+			{errorMessage}
+		</div>
 	{:else if hasDiscoveryMode}
 		{#if visibleListings.length === 0}
 			<div
-				class="mx-4 my-8 rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
+				class="mx-4 my-8 flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-12 text-center"
 			>
-				<p class="text-sm font-semibold">Nenhum anúncio encontrado</p>
-				<p class="mt-1 text-xs text-surface-700-300">
-					Ajuste a busca ou os filtros para ver mais resultados.
+				<SearchX class="h-10 w-10 text-surface-700-300" />
+				<p class="mt-3 text-base font-semibold">Nenhum anúncio encontrado</p>
+				<p class="mt-1 text-sm text-surface-900-100">
+					Tente outra palavra ou limpe a busca.
 				</p>
 			</div>
 		{:else}
@@ -447,18 +463,21 @@
 		<CategorySection />
 		<ProductSection
 			title="Máquinas"
+			subtitle="Tratores, colheitadeiras e implementos"
 			products={machineryHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'maquinario' })}
 		/>
 		<ProductSection
 			title="Produtos e insumos"
+			subtitle="Sementes, fertilizantes e defensivos"
 			products={productHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'produto' })}
 		/>
 		<ProductSection
 			title="Serviços"
+			subtitle="Mão de obra e serviços no campo"
 			products={serviceHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'servico' })}

@@ -4,7 +4,7 @@
 
 	let {
 		value = $bindable(''),
-		placeholder = 'Buscar máquinas, produtos e serviços...',
+		placeholder = 'O que você procura?',
 		loading = false,
 		inputId = 'marketplace-search'
 	} = $props();
@@ -14,7 +14,7 @@
 	}
 </script>
 
-<div class="px-4 py-3 sm:px-6 lg:px-8">
+<div class="px-4 pb-2 pt-3 sm:px-6 lg:px-8">
 	<div class="relative mx-auto max-w-7xl">
 		{#if loading}
 			<LoadingIndicator
@@ -24,7 +24,7 @@
 				className="absolute left-3 top-1/2 -translate-y-1/2"
 			/>
 		{:else}
-			<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" aria-hidden="true" />
+			<Search class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" aria-hidden="true" />
 		{/if}
 
 		<input
@@ -34,7 +34,7 @@
 			{placeholder}
 			autocomplete="off"
 			aria-label={placeholder}
-			class="input h-12 w-full rounded-full border-surface-200-800 bg-surface-50-950 pl-10 pr-10 text-sm  placeholder:text-surface-700-300 transition-all hover:border-surface-300-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:cursor-wait disabled:opacity-70"
+			class="input h-13 w-full rounded-container border-surface-200-800 bg-surface-50-950 pl-11 pr-12 text-base shadow-sm placeholder:text-surface-800-200 transition-all hover:border-surface-300-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:cursor-wait disabled:opacity-70"
 			disabled={loading}
 		/>
 
@@ -42,10 +42,11 @@
 			<button
 				type="button"
 				onclick={clearSearch}
-				class="btn-icon absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full preset-tonal-surface focus-visible:ring-2 focus-visible:ring-primary-500"
+				class="btn-icon preset-tonal absolute right-2 top-1/2 -translate-y-1/2"
+				title="Limpar busca"
 				aria-label="Limpar busca"
 			>
-				<X class="h-4 w-4" />
+				<X size={18} />
 			</button>
 		{/if}
 	</div>

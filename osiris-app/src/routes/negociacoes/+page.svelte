@@ -2,9 +2,10 @@
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { MessageSquare, ChevronRight, Tractor, Briefcase, Package } from 'lucide-svelte';
+	import { CalendarDays, ChevronRight, CircleAlert, Inbox, MessageSquare, Tractor, Briefcase, Package } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import { supabase } from '$lib/supabase';
@@ -302,190 +303,161 @@
 	<title>Negociações — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
-	<Header />
+{#snippet dealCard(card)}
+	<a
+		href={resolve(card.href)}
+		class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-3 shadow-sm transition-colors hover:border-primary-500 {card.muted ? 'opacity-90' : ''}"
+	>
+		<div
+			class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-container {card.muted ? 'bg-surface-100-900 text-surface-800-200' : 'preset-tonal-primary'}"
+		>
+			{#if card.coverUrl}
+				<img src={card.coverUrl} alt="" class="h-full w-full object-cover {card.muted ? 'grayscale' : ''}" />
+			{:else}
+				<card.icon class="h-7 w-7" />
+			{/if}
+		</div>
+		<div class="min-w-0 flex-1">
+			<span class="badge mb-1 rounded-full px-2 py-0.5 uppercase text-xs font-bold tracking-wide {statusBadgeClass(card.tone)}">
+				{card.statusLabel}
+			</span>
+			<p class="line-clamp-2 preset-typo-card-title">{card.title}</p>
+			<p class="truncate text-sm text-surface-800-200">{card.subtitle}</p>
+			{#if card.price || card.dates}
+				<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+					{#if card.price}
+						<span class="text-base font-bold text-primary-700-300">{card.price}</span>
+					{/if}
+					{#if card.dates}
+						<span class="flex items-center gap-1 text-xs text-surface-800-200">
+							<CalendarDays class="h-3.5 w-3.5" />
+							{card.dates}
+						</span>
+					{/if}
+				</div>
+			{/if}
+		</div>
+		<ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300" />
+	</a>
+{/snippet}
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-6">
+{#snippet emptyCard(title, hint)}
+	<div class="flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-10 text-center">
+		<Inbox class="h-9 w-9 text-surface-700-300" />
+		<p class="mt-2 text-base font-semibold text-surface-950-50">{title}</p>
+		{#if hint}
+			<p class="mt-1 text-sm text-surface-800-200">{hint}</p>
+		{/if}
+	</div>
+{/snippet}
+
+<div class="min-h-screen pb-24">
+	<Header title="Negociações" />
+
+	<main class="mx-auto w-full max-w-3xl px-4 py-4">
 		<div>
-			<h1 class="text-2xl font-bold text-surface-950-50">Negociações</h1>
-			<p class="mt-1 text-sm text-surface-600-400">Propostas, chat e contratos ativos no campo.</p>
+			<h1 class="preset-typo-headline">Negociações</h1>
+			<p class="mt-1 preset-typo-subtitle">Propostas, conversas e operações no campo.</p>
 		</div>
 
 		<AppTabs bind:value={activeTab} items={negotiationTabs} label="Negociações" class="mt-4">
 			{#if loading}
-				<div class="flex justify-center py-16">
-					<div
-						class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-					></div>
+				<div class="mt-5">
+					<ListingSkeleton variant="list" count={3} label="Carregando negociações..." />
 				</div>
 			{:else if errorMessage}
-				<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+				<div class="mt-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
+					<CircleAlert class="h-5 w-5 shrink-0" />
+					{errorMessage}
+				</div>
 			{:else}
 				<AppTabsPanel value="propostas">
-					<section class="mt-6 space-y-6">
+					<section class="mt-5 space-y-6">
 						<div>
-							<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Em andamento</h2>
-							<div class="mt-3 space-y-2">
+							<h2 class="preset-typo-label">Em andamento</h2>
+							<div class="mt-2 space-y-2">
 								{#each openNegotiations as row (row.id)}
-									{@const Icon = listingIcon(row)}
-									<a
-										href={resolve(`/negociacoes/${row.id}`)}
-										class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500"
-									>
-										<div
-											class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
-										>
-											{#if row.coverUrl}
-												<img src={row.coverUrl} alt="" class="h-full w-full object-cover" />
-											{:else}
-												<Icon class="h-5 w-5 text-primary-700" />
-											{/if}
-										</div>
-										<div class="min-w-0 flex-1">
-											<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
-											<p class="text-xs text-surface-600-400">
-												{authUserId === row.provider_id ? 'Cliente' : 'Anunciante'}:
-												{resolveCounterpartyName(row)}
-											</p>
-											<p class="mt-0.5 text-sm font-medium text-primary-700">
-												{formatCurrency(row.proposed_price)}
-											</p>
-											{#if row.proposed_start_date}
-												<p class="mt-0.5 text-xs text-surface-600-400">
-													{formatDbDate(row.proposed_start_date)} — {formatDbDate(row.proposed_end_date)}
-												</p>
-											{/if}
-										</div>
-										<div class="flex shrink-0 flex-col items-end gap-1">
-											<span
-												class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
-													negotiationStatusTone(row.status)
-												)}"
-											>
-												{negotiationStatusLabel(row.status)}
-											</span>
-											<ChevronRight class="h-4 w-4 text-surface-400-600" />
-										</div>
-									</a>
+									{@render dealCard({
+										href: `/negociacoes/${row.id}`,
+										coverUrl: row.coverUrl,
+										icon: listingIcon(row),
+										title: resolveListingTitle(row),
+										subtitle: `${authUserId === row.provider_id ? 'Cliente' : 'Anunciante'}: ${resolveCounterpartyName(row)}`,
+										price: formatCurrency(row.proposed_price),
+										dates: row.proposed_start_date
+											? `${formatDbDate(row.proposed_start_date)} — ${formatDbDate(row.proposed_end_date)}`
+											: '',
+										statusLabel: negotiationStatusLabel(row.status),
+										tone: negotiationStatusTone(row.status)
+									})}
 								{:else}
-									<div
-										class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center text-sm text-surface-600-400"
-									>
-										Nenhuma proposta em andamento.
-									</div>
+									{@render emptyCard('Nenhuma proposta em andamento', 'Abra um anúncio e toque em "Negociar".')}
 								{/each}
 							</div>
 						</div>
 
-						<div>
-							<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
-							<div class="mt-3 space-y-2">
-								{#each closedNegotiations as row (row.id)}
-									<a
-										href={resolve(`/negociacoes/${row.id}`)}
-										class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
-									>
-										<div
-											class="flex h-11 w-11 shrink-0 items-center justify-center rounded-container bg-surface-50-950"
-										>
-											<MessageSquare class="h-5 w-5 text-surface-600-400" />
-										</div>
-										<div class="min-w-0 flex-1">
-											<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(row)}</p>
-											<p class="text-xs text-surface-600-400">{resolveCounterpartyName(row)}</p>
-										</div>
-										<span
-											class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
-												negotiationStatusTone(row.status)
-											)}"
-										>
-											{negotiationStatusLabel(row.status)}
-										</span>
-									</a>
-								{:else}
-									<p class="text-center text-sm text-surface-600-400 py-4">Nenhuma negociação encerrada.</p>
-								{/each}
+						{#if closedNegotiations.length}
+							<div>
+								<h2 class="preset-typo-label">Encerradas</h2>
+								<div class="mt-2 space-y-2">
+									{#each closedNegotiations as row (row.id)}
+										{@render dealCard({
+											href: `/negociacoes/${row.id}`,
+											coverUrl: null,
+											icon: MessageSquare,
+											title: resolveListingTitle(row),
+											subtitle: resolveCounterpartyName(row),
+											statusLabel: negotiationStatusLabel(row.status),
+											tone: negotiationStatusTone(row.status),
+											muted: true
+										})}
+									{/each}
+								</div>
 							</div>
-						</div>
+						{/if}
 					</section>
 				</AppTabsPanel>
 				<AppTabsPanel value="operacoes">
-					<section class="mt-6 space-y-6">
-						<div class="space-y-2">
-							<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Ativas</h2>
-						{#each activeBookings as booking (booking.id)}
-							{@const Icon = listingIcon(booking)}
-							<a
-								href={resolve(`/operacoes/${booking.id}`)}
-								class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm hover:border-primary-500"
-							>
-								<div
-									class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary"
-								>
-									{#if booking.coverUrl}
-										<img src={booking.coverUrl} alt="" class="h-full w-full object-cover" />
-									{:else}
-										<Icon class="h-5 w-5 text-primary-700" />
-									{/if}
-								</div>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-semibold text-surface-950-50">
-										{resolveListingTitle(booking)}
-									</p>
-									<p class="text-xs text-surface-600-400">
-										{resolveBookingCounterparty(booking)}
-									</p>
-									<p class="text-xs text-surface-600-400">
-										{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
-									</p>
-									<p class="mt-0.5 text-sm font-medium text-primary-700">
-										{formatCurrency(booking.total_price)}
-									</p>
-								</div>
-								<span
-									class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
-										bookingStatusTone(booking.status)
-									)}"
-								>
-									{bookingStatusLabel(booking.status)}
-								</span>
-							</a>
-						{:else}
-							<div
-								class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-12 text-center"
-							>
-								<p class="text-sm font-semibold text-surface-950-50">Nenhuma operação ativa</p>
-								<p class="mt-1 text-xs text-surface-600-400">
-									Quando uma proposta for aceita, o contrato aparecerá aqui.
-								</p>
+					<section class="mt-5 space-y-6">
+						<div>
+							<h2 class="preset-typo-label">Ativas</h2>
+							<div class="mt-2 space-y-2">
+								{#each activeBookings as booking (booking.id)}
+									{@render dealCard({
+										href: `/operacoes/${booking.id}`,
+										coverUrl: booking.coverUrl,
+										icon: listingIcon(booking),
+										title: resolveListingTitle(booking),
+										subtitle: resolveBookingCounterparty(booking),
+										price: formatCurrency(booking.total_price),
+										dates: `${formatDbDate(booking.start_date)} — ${formatDbDate(booking.end_date)}`,
+										statusLabel: bookingStatusLabel(booking.status),
+										tone: bookingStatusTone(booking.status)
+									})}
+								{:else}
+									{@render emptyCard('Nenhuma operação ativa', 'Quando uma proposta for aceita, a operação aparece aqui.')}
+								{/each}
 							</div>
-						{/each}
 						</div>
 
 						{#if closedBookings.length}
-							<div class="space-y-2">
-								<h2 class="text-sm font-semibold uppercase tracking-wider text-surface-600-400">Encerradas</h2>
-								{#each closedBookings as booking (booking.id)}
-									<a
-										href={resolve(`/operacoes/${booking.id}`)}
-										class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 opacity-90 shadow-sm"
-									>
-										<div class="min-w-0 flex-1">
-											<p class="truncate font-semibold text-surface-950-50">{resolveListingTitle(booking)}</p>
-											<p class="text-xs text-surface-600-400">{resolveBookingCounterparty(booking)}</p>
-											<p class="text-xs text-surface-600-400">
-												{formatDbDate(booking.start_date)} — {formatDbDate(booking.end_date)}
-											</p>
-										</div>
-										<span
-											class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase {statusBadgeClass(
-												bookingStatusTone(booking.status)
-											)}"
-										>
-											{bookingStatusLabel(booking.status)}
-										</span>
-									</a>
-								{/each}
+							<div>
+								<h2 class="preset-typo-label">Encerradas</h2>
+								<div class="mt-2 space-y-2">
+									{#each closedBookings as booking (booking.id)}
+										{@render dealCard({
+											href: `/operacoes/${booking.id}`,
+											coverUrl: booking.coverUrl,
+											icon: listingIcon(booking),
+											title: resolveListingTitle(booking),
+											subtitle: resolveBookingCounterparty(booking),
+											dates: `${formatDbDate(booking.start_date)} — ${formatDbDate(booking.end_date)}`,
+											statusLabel: bookingStatusLabel(booking.status),
+											tone: bookingStatusTone(booking.status),
+											muted: true
+										})}
+									{/each}
+								</div>
 							</div>
 						{/if}
 					</section>

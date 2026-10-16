@@ -40,9 +40,9 @@
 	</div>
 {:else if reviews.length === 0}
 	<div class="rounded-container border border-dashed border-surface-200-800 bg-surface-50-950 px-4 py-10 text-center">
-		<MessageSquare class="mx-auto h-8 w-8 text-surface-400-600" />
-		<p class="mt-3 text-sm font-semibold text-surface-700-300">{emptyTitle}</p>
-		<p class="mt-1 text-xs text-surface-600-400">{emptyDescription}</p>
+		<MessageSquare class="mx-auto h-8 w-8 text-surface-700-300" />
+		<p class="mt-3 text-sm font-semibold text-surface-900-100">{emptyTitle}</p>
+		<p class="mt-1 text-xs text-surface-800-200">{emptyDescription}</p>
 	</div>
 {:else}
 	<div class="space-y-3">
@@ -71,7 +71,7 @@
 									<p class="mt-0.5 truncate text-xs text-primary-700">{review.productName}</p>
 								{/if}
 							</div>
-							<time class="shrink-0 text-[11px] text-surface-600-400">
+							<time class="shrink-0 text-xs text-surface-800-200">
 								{formatReviewDate(review.createdAt)}
 							</time>
 						</div>
@@ -81,7 +81,7 @@
 						</div>
 
 						{#if review.comment}
-							<p class="mt-2 text-sm leading-relaxed text-surface-600-400">{review.comment}</p>
+							<p class="mt-2 preset-typo-body-2 text-surface-900-100">{review.comment}</p>
 						{/if}
 					</div>
 				</div>

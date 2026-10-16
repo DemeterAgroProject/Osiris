@@ -29,14 +29,14 @@
 		<a
 			href={resolve('/mais')}
 			onclick={goBack}
-			class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-surface-700-300 hover:text-primary-700"
+			class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-surface-900-100 hover:text-primary-700"
 		>
 			<ChevronLeft class="h-4 w-4" />
 			Voltar
 		</a>
 
-		<h1 class="text-2xl font-bold text-surface-950-50">{title}</h1>
-		<p class="mt-1 text-xs text-surface-600-400">Atualizado em {LEGAL.atualizadoEm}</p>
+		<h1 class="preset-typo-headline">{title}</h1>
+		<p class="mt-1 preset-typo-caption">Atualizado em {LEGAL.atualizadoEm}</p>
 
 		<div class="legal mt-6 space-y-6 text-sm leading-relaxed text-surface-800-200">
 			{@render children()}

@@ -14,10 +14,13 @@
 		Trash2,
 		Pause,
 		Play,
-		ExternalLink
+		ExternalLink,
+		CircleAlert,
+		CircleCheck
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import AppMenu from '$lib/components/ui/AppMenu.svelte';
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
@@ -33,10 +36,7 @@
 	let searchQuery = $state('');
 	let loading = $state(true);
 	let allServices = $state([]);
-	let ownerProfile = $state(null);
 	let statusMessage = $state({ text: '', type: '' });
-
-	let imgErrors = $state({});
 
 	let editOpen = $state(false);
 	let editingService = $state(null);
@@ -192,20 +192,13 @@
 		const user = await requireUser('/servicos');
 		if (!user) return;
 
-		const [{ data, error }, profileResult] = await Promise.all([
-			supabase
-				.from('services')
-				.select(
-					'id, title, description, service_type, pricing_model, price, location, status, created_at, owner_id, image_url'
-				)
-				.eq('owner_id', user.id)
-				.order('created_at', { ascending: false }),
-			supabase
-				.from('profiles')
-				.select('display_name, photo_url')
-				.eq('id', user.id)
-				.maybeSingle()
-		]);
+		const { data, error } = await supabase
+			.from('services')
+			.select(
+				'id, title, description, service_type, pricing_model, price, location, status, created_at, owner_id, image_url'
+			)
+			.eq('owner_id', user.id)
+			.order('created_at', { ascending: false });
 
 		if (error) {
 			console.error('Erro ao buscar serviços:', error);
@@ -215,7 +208,6 @@
 			allServices = data ?? [];
 		}
 
-		ownerProfile = profileResult.data ?? null;
 		loading = false;
 	}
 
@@ -354,147 +346,131 @@
 		{#each filteredServices as serv (serv.id)}
 			{@const Icon = serviceIcon(serv)}
 			<article
-				class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
-					serv.status
-				)
-					? 'opacity-80'
-					: ''}"
+				class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md"
 			>
-				<div class="flex gap-4 p-4">
+				<div class="flex gap-3 p-3">
 					{#if serv.image_url}
-						<img src={serv.image_url} alt={serv.title} class="h-16 w-16 shrink-0 rounded-container object-cover" />
-					{:else}
-					<div
-						class="flex h-16 w-16 shrink-0 items-center justify-center rounded-container {serv.service_type ===
-						'Pacote Completo'
-							? 'preset-tonal-secondary'
-							: 'preset-tonal-primary'}"
-					>
-						<Icon
-							class="h-8 w-8 {serv.service_type === 'Pacote Completo'
-								? 'text-secondary-600'
-								: 'text-primary-600'} opacity-80"
+						<img
+							src={serv.image_url}
+							alt={serv.title}
+							class="h-24 w-24 shrink-0 rounded-container object-cover {isPausedStatus(serv.status) ? 'grayscale' : ''}"
 						/>
-					</div>
+					{:else}
+						<div
+							class="flex h-24 w-24 shrink-0 items-center justify-center rounded-container {serv.service_type ===
+							'Pacote Completo'
+								? 'preset-tonal-secondary'
+								: 'preset-tonal-primary'}"
+						>
+							<Icon class="h-10 w-10 opacity-80" />
+						</div>
 					{/if}
 
-					<div class="flex min-w-0 flex-1 flex-col justify-center">
-						<h3 class="line-clamp-1 font-bold text-surface-950-50">{serv.title}</h3>
-						<p class="mt-0.5 text-sm font-medium text-primary-700">
+					<div class="flex min-w-0 flex-1 flex-col">
+						<div class="flex items-start gap-1">
+							<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title">{serv.title}</h3>
+							<AppMenu
+								items={serviceMenuItems(serv)}
+								label="Ações do serviço"
+								triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
+							>
+								{#snippet trigger()}
+									<MoreVertical size={18} />
+								{/snippet}
+							</AppMenu>
+						</div>
+						<p class="text-lg font-bold leading-tight text-primary-700-300">
 							{formatPrice(serv.price, serv.pricing_model)}
 						</p>
-						<p class="mt-1 line-clamp-2 text-xs text-surface-600-400">{serv.description}</p>
+						{#if serv.description}
+							<p class="mt-1 line-clamp-2 text-sm text-surface-800-200">{serv.description}</p>
+						{/if}
 						<div class="mt-2 flex flex-wrap items-center gap-2">
-							<span
-								class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
-									serv.status
-								)}"
-							>
+							<span class="badge gap-1 rounded-full px-2 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(serv.status)}">
+								<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
 								{getStatusLabel(serv.status)}
 							</span>
-							<span class="flex items-center gap-1 text-xs text-surface-600-400">
-								<MapPin class="h-3 w-3" />
-								{serv.location}
-							</span>
+							{#if serv.location}
+								<span class="flex min-w-0 items-center gap-1 text-sm text-surface-900-100">
+									<MapPin class="h-4 w-4 shrink-0 text-primary-600-400" />
+									<span class="truncate">{serv.location}</span>
+								</span>
+							{/if}
 						</div>
-						{#if ownerProfile}
-							<div class="mt-2 flex items-center gap-2">
-								<div class="h-6 w-6 overflow-hidden rounded-full bg-surface-200-800">
-									{#if ownerProfile.photo_url && !imgErrors[serv.id]}
-										<img
-											src={ownerProfile.photo_url}
-											alt={ownerProfile.display_name}
-											class="h-full w-full object-cover"
-											onerror={() => (imgErrors[serv.id] = true)}
-										/>
-									{:else}
-										<div
-											class="flex h-full w-full items-center justify-center preset-tonal-primary text-xs font-bold"
-										>
-											{ownerProfile.display_name?.charAt(0) || '?'}
-										</div>
-									{/if}
-								</div>
-								<span class="text-xs font-medium text-surface-700-300"
-									>{ownerProfile.display_name || 'Usuário'}</span
-								>
-							</div>
-						{/if}
-					</div>
-
-					<div class="shrink-0 self-start">
-						<AppMenu
-							items={serviceMenuItems(serv)}
-							label="Ações do serviço"
-							triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-						>
-							{#snippet trigger()}
-								<MoreVertical class="h-5 w-5" />
-							{/snippet}
-						</AppMenu>
 					</div>
 				</div>
 			</article>
 		{:else}
-			<div class="px-4 py-16 text-center">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-100-900"
-				>
+			<div class="flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-10 text-center">
+				<span class="flex h-16 w-16 items-center justify-center rounded-full preset-tonal-primary">
 					{#if activeTab === 'mao_de_obra'}
-						<Users class="h-8 w-8 text-surface-600-400" />
+						<Users class="h-8 w-8" />
 					{:else}
-						<Briefcase class="h-8 w-8 text-surface-600-400" />
+						<Briefcase class="h-8 w-8" />
 					{/if}
-				</div>
-				<h3 class="mb-1 text-lg font-medium text-surface-950-50">Nenhum serviço encontrado</h3>
-				<p class="text-sm text-surface-600-400">
+				</span>
+				<h3 class="mt-3 text-base font-semibold text-surface-950-50">Nenhum serviço encontrado</h3>
+				<p class="mt-1 text-sm text-surface-800-200">
 					Você ainda não possui serviços cadastrados nesta categoria.
 				</p>
+				{#if !searchQuery.trim()}
+					<a href={resolve('/servicos/novo')} class="btn preset-filled-primary-500 mt-4">
+						<Plus size={18} />
+						<span>Oferecer serviço</span>
+					</a>
+				{/if}
 			</div>
 		{/each}
 	</div>
 {/snippet}
 
-<div class="min-h-screen bg-surface-50-950 pb-20">
-	<Header />
+<div class="min-h-screen pb-24">
+	<Header title="Meus serviços" />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
-		<div class="mb-6 flex items-center justify-between">
-			<h1 class="text-xl font-bold text-surface-950-50">Meus Serviços</h1>
+		<div class="mb-4 flex items-center justify-between gap-3">
+			<div class="min-w-0">
+				<h1 class="preset-typo-headline">Meus serviços</h1>
+				<p class="preset-typo-subtitle">Mão de obra e pacotes que você oferece</p>
+			</div>
 			<a
 				href={resolve('/servicos/novo')}
-				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm transition-colors"
+				class="btn btn-lg preset-filled-primary-500 shrink-0"
 			>
-				<Plus class="h-4 w-4" />
-				Oferecer Serviço
+				<Plus size={18} />
+				<span>Oferecer</span>
 			</a>
 		</div>
 
 		{#if statusMessage.text}
 			<div
-				class="mb-4 rounded-container p-3 text-sm {statusMessage.type === 'error'
+				class="mb-4 flex items-start gap-2 rounded-container p-3 text-sm font-medium {statusMessage.type === 'error'
 					? 'preset-tonal-error'
-					: 'preset-tonal-primary'}"
+					: 'preset-tonal-success'}"
+				role="status"
 			>
+				{#if statusMessage.type === 'error'}
+					<CircleAlert class="h-5 w-5 shrink-0" />
+				{:else}
+					<CircleCheck class="h-5 w-5 shrink-0" />
+				{/if}
 				{statusMessage.text}
 			</div>
 		{/if}
 
-		<AppTabs bind:value={activeTab} items={serviceTabs} label="Tipo de serviço" variant="segmented" class="gap-6">
-			<div class="relative shadow-sm rounded-container">
-				<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+		<AppTabs bind:value={activeTab} items={serviceTabs} label="Tipo de serviço" variant="segmented" class="gap-4">
+			<div class="relative">
+				<Search class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
 				<input
 					type="search"
 					placeholder="Buscar nos meus serviços..."
 					bind:value={searchQuery}
-					class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-11 pr-4 text-base shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
 
 			{#if loading}
-				<div class="flex justify-center py-12">
-					<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-				</div>
+				<ListingSkeleton variant="list" count={3} label="Carregando seus serviços..." />
 			{:else}
 				<AppTabsPanel value="mao_de_obra">
 					{@render serviceList()}

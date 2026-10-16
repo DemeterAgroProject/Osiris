@@ -1,5 +1,5 @@
 <script>
-	import { SlidersHorizontal, Check, ChevronDown } from 'lucide-svelte';
+	import { SlidersHorizontal, Check, ChevronDown, Eraser } from 'lucide-svelte';
 	import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 
@@ -115,6 +115,17 @@
 		isOpen = false;
 	}
 
+	const quickTypeOptions = [{ id: '', label: 'Todos' }, ...listingTypeOptions];
+
+	function isQuickTypeSelected(id) {
+		if (!id) return filters.listingTypes.length === 0;
+		return filters.listingTypes.length === 1 && filters.listingTypes[0] === id;
+	}
+
+	function selectQuickType(id) {
+		filters = { ...cloneFilters(filters), listingTypes: id ? [id] : [] };
+	}
+
 	function updateDraftArray(key, values) {
 		draft = { ...draft, [key]: values };
 	}
@@ -124,37 +135,53 @@
 	}
 </script>
 
-<div class="mx-auto mt-4 w-full max-w-7xl space-y-2 px-4 pb-3 sm:px-6 lg:px-8">
+<div class="mx-auto w-full max-w-7xl space-y-3 px-4 pb-3 pt-1 sm:px-6 lg:px-8">
 	<div class="flex items-center gap-2">
 		<button
 			type="button"
 			onclick={openFilters}
-			class="relative flex flex-1 items-center justify-center gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-700-300  transition-colors hover:border-primary-500 hover:text-primary-600"
+			class="btn preset-outlined-surface-200-800 bg-surface-50-950"
 		>
-			<SlidersHorizontal class="h-4 w-4 shrink-0" />
+			<SlidersHorizontal size={18} />
 			<span>Filtros</span>
 			{#if activeCount > 0}
-				<span
-					class="rounded-full preset-filled-primary-500 px-2 py-0.5 text-[10px] font-semibold"
-				>
+				<span class="flex h-5 min-w-5 items-center justify-center rounded-full preset-filled-primary-500 px-1 text-xs font-bold">
 					{activeCount}
 				</span>
 			{/if}
 		</button>
 
 		{#if resultCount !== null}
-			<p class="shrink-0 text-xs font-medium text-surface-700-300">
-				{resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
+			<p class="ml-auto shrink-0 text-sm font-medium text-surface-900-100">
+				<strong class="text-surface-950-50">{resultCount}</strong> {resultCount === 1 ? 'resultado' : 'resultados'}
 			</p>
 		{/if}
+	</div>
+
+	<!-- atalho para o filtro "Tipo de anúncio": um toque troca o tipo mostrado -->
+	<div class="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Tipo de anúncio">
+		{#each quickTypeOptions as option (option.id)}
+			{@const selected = isQuickTypeSelected(option.id)}
+			<button
+				type="button"
+				onclick={() => selectQuickType(option.id)}
+				aria-pressed={selected}
+				class="btn shrink-0 rounded-full {selected
+					? 'preset-filled-primary-500'
+					: 'preset-outlined-surface-200-800 bg-surface-50-950'}"
+			>
+				{#if selected}
+					<Check size={18} />
+				{/if}
+				<span>{option.label}</span>
+			</button>
+		{/each}
 	</div>
 
 	{#if activeLabels.length > 0}
 		<div class="flex flex-wrap gap-1.5">
 			{#each activeLabels as label (label)}
-				<span
-					class="rounded-full border border-primary-500 preset-tonal-primary px-2.5 py-1 text-[10px] font-semibold text-primary-700"
-				>
+				<span class="badge rounded-full preset-tonal-primary px-2.5 py-1 text-xs font-semibold">
 					{label}
 				</span>
 			{/each}
@@ -172,7 +199,7 @@
 >
 	<div class="space-y-5">
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+			<p class="preset-typo-label">
 				Tipo de anúncio
 			</p>
 			<ToggleGroup
@@ -184,7 +211,7 @@
 				{#each listingTypeOptions as option (option.id)}
 					<ToggleGroup.Item
 						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
 					>
 						{#if isSelected('listingTypes', option.id)}
 							<Check class="h-3.5 w-3.5 shrink-0" />
@@ -196,7 +223,7 @@
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Produtos</p>
+			<p class="preset-typo-label">Produtos</p>
 			<ToggleGroup
 				multiple
 				value={draft.productKinds}
@@ -206,7 +233,7 @@
 				{#each productKindOptions as option (option.id)}
 					<ToggleGroup.Item
 						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 					>
 						{#if isSelected('productKinds', option.id)}
 							<Check class="h-3.5 w-3.5 shrink-0" />
@@ -218,7 +245,7 @@
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Serviços</p>
+			<p class="preset-typo-label">Serviços</p>
 			<ToggleGroup
 				multiple
 				value={draft.serviceKinds}
@@ -228,7 +255,7 @@
 				{#each serviceKindOptions as option (option.id)}
 					<ToggleGroup.Item
 						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 					>
 						{#if isSelected('serviceKinds', option.id)}
 							<Check class="h-3.5 w-3.5 shrink-0" />
@@ -240,7 +267,7 @@
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Mão de obra</p>
+			<p class="preset-typo-label">Mão de obra</p>
 			<ToggleGroup
 				multiple
 				value={draft.laborKinds}
@@ -250,7 +277,7 @@
 				{#each laborKindOptions as option (option.id)}
 					<ToggleGroup.Item
 						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-700-300 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
 					>
 						{#if isSelected('laborKinds', option.id)}
 							<Check class="h-3.5 w-3.5 shrink-0" />
@@ -262,11 +289,11 @@
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Localidade</p>
+			<p class="preset-typo-label">Localidade</p>
 			<div class="relative">
 				<select
 					bind:value={draft.location}
-					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				>
 					<option value="">Todas as regiões</option>
 					{#each locationOptions as option (option.id)}
@@ -274,30 +301,30 @@
 					{/each}
 				</select>
 				<ChevronDown
-					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
+					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
 				/>
 			</div>
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">Ordenação</p>
+			<p class="preset-typo-label">Ordenação</p>
 			<div class="relative">
 				<select
 					bind:value={draft.sort}
-					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-700-300 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				>
 					{#each sortOptions as option (option.id)}
 						<option value={option.id}>{option.label}</option>
 					{/each}
 				</select>
 				<ChevronDown
-					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-700-300"
+					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
 				/>
 			</div>
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+			<p class="preset-typo-label">
 				Faixa de preço (R$)
 			</p>
 			<div class="grid grid-cols-2 gap-2">
@@ -306,7 +333,7 @@
 					min="0"
 					inputmode="numeric"
 					bind:value={draft.minPrice}
-					placeholder="Mínimo"
+					placeholder="Mínimo (R$)"
 					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 				<input
@@ -314,7 +341,7 @@
 					min="0"
 					inputmode="numeric"
 					bind:value={draft.maxPrice}
-					placeholder="Máximo"
+					placeholder="Máximo (R$)"
 					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
@@ -326,16 +353,18 @@
 			<button
 				type="button"
 				onclick={clearDraft}
-				class="rounded-container border border-surface-200-800 px-4 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal"
+				class="btn btn-lg preset-tonal w-full"
 			>
-				Limpar
+				<Eraser size={18} />
+				<span>Limpar</span>
 			</button>
 			<button
 				type="button"
 				onclick={applyFilters}
-				class="rounded-container preset-filled-primary-500 px-4 py-3 text-sm font-semibold transition-colors"
+				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
-				Aplicar filtros
+				<Check size={18} />
+				<span>Aplicar</span>
 			</button>
 		</div>
 	{/snippet}

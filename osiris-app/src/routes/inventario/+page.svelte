@@ -10,10 +10,14 @@
 		Leaf,
 		Pause,
 		Play,
-		ExternalLink
+		ExternalLink,
+		PackageOpen,
+		CircleAlert,
+		CircleCheck
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import InventoryEditSheet from '$lib/components/InventoryEditSheet.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import AppMenu from '$lib/components/ui/AppMenu.svelte';
@@ -133,10 +137,10 @@
 			.eq('id', productId);
 	}
 
-	const inventoryTabs = [
-		{ value: 'maquinarios', label: 'Maquinários', icon: Tractor },
-		{ value: 'produtos', label: 'Produtos', icon: Leaf }
-	];
+	const inventoryTabs = $derived([
+		{ value: 'maquinarios', label: `Máquinas (${maquinarios.length})`, icon: Tractor },
+		{ value: 'produtos', label: `Produtos (${produtos.length})`, icon: Leaf }
+	]);
 
 	let activeTab = $state('maquinarios');
 	let searchQuery = $state('');
@@ -456,157 +460,138 @@
 	<title>Meu inventário — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen  pb-20">
-	<Header />
+{#snippet adCard(item, kind)}
+	<article
+		class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md"
+	>
+		<div class="flex gap-3 p-3">
+			<div
+				class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-container {kind === 'maquinario'
+					? 'preset-tonal-primary'
+					: 'preset-tonal-tertiary'}  {isPausedStatus(item.status) ? 'grayscale' : ''}"
+			>
+				{#if getAdCoverUrl(item)}
+					<img src={getAdCoverUrl(item)} alt={item.name} class="h-full w-full object-cover" />
+				{:else if kind === 'maquinario'}
+					<Tractor class="h-10 w-10 opacity-80" />
+				{:else}
+					<Leaf class="h-10 w-10 opacity-80" />
+				{/if}
+			</div>
+			<div class="flex min-w-0 flex-1 flex-col">
+				<div class="flex items-start gap-1">
+					<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title">{item.name}</h3>
+					<AppMenu
+						items={adMenuItems(item)}
+						label="Ações do anúncio"
+						triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
+					>
+						{#snippet trigger()}
+							<MoreVertical size={18} />
+						{/snippet}
+					</AppMenu>
+				</div>
+				<p class="text-lg font-bold leading-tight text-primary-700-300">
+					{formatPrice(item.price)}
+					{#if kind === 'maquinario' && getMachineryFromProduct(item)?.offer_type === 'aluguel'}
+						<span class="text-xs font-medium text-surface-800-200">/ hora</span>
+					{/if}
+				</p>
+				<div class="mt-2 flex flex-wrap gap-1.5">
+					<span class="badge rounded-full bg-surface-100-900 px-2 py-1 uppercase text-surface-900-100 text-xs font-bold tracking-wide">
+						{kind === 'maquinario' ? getMachineryTypeName(item) : item.category}
+					</span>
+					<span class="badge gap-1 rounded-full px-2 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(item.status)}">
+						<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+						{getStatusLabel(item.status)}
+					</span>
+				</div>
+			</div>
+		</div>
+	</article>
+{/snippet}
+
+{#snippet emptyState(message)}
+	<div class="flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-10 text-center">
+		<PackageOpen class="h-10 w-10 text-surface-700-300" />
+		<p class="mt-3 text-base font-semibold text-surface-950-50">{message}</p>
+		{#if !searchQuery.trim()}
+			<a href={resolve('/anunciar')} class="btn preset-filled-primary-500 mt-4">
+				<Plus size={18} />
+				<span>Criar anúncio</span>
+			</a>
+		{/if}
+	</div>
+{/snippet}
+
+<div class="min-h-screen pb-24">
+	<Header title="Meu inventário" />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4">
-		<div class="mb-4 flex items-center justify-between">
-			<h1 class="text-xl font-bold text-surface-950-50">Meu Inventário</h1>
+		<div class="mb-4 flex items-center justify-between gap-3">
+			<div class="min-w-0">
+				<h1 class="preset-typo-headline">Meus anúncios</h1>
+				{#if !loading}
+					<p class="preset-typo-subtitle">
+						{maquinarios.length + produtos.length}
+						{maquinarios.length + produtos.length === 1 ? 'anúncio cadastrado' : 'anúncios cadastrados'}
+					</p>
+				{/if}
+			</div>
 			<a
 				href={resolve('/anunciar')}
-				class="flex items-center gap-2 rounded-container preset-filled-primary-500 px-4 py-2 text-sm font-medium shadow-sm"
+				class="btn btn-lg preset-filled-primary-500 shrink-0"
 			>
-				<Plus class="h-4 w-4" />
-				Novo Anúncio
+				<Plus size={18} />
+				<span>Novo</span>
 			</a>
 		</div>
 
 		{#if statusMessage.text}
 			<div
-				class="mb-4 rounded-container p-3 text-sm {statusMessage.type === 'error'
+				class="mb-4 flex items-start gap-2 rounded-container p-3 text-sm font-medium {statusMessage.type === 'error'
 					? 'preset-tonal-error'
-					: 'preset-tonal-primary'}"
+					: 'preset-tonal-success'}"
+				role="status"
 			>
+				{#if statusMessage.type === 'error'}
+					<CircleAlert class="h-5 w-5 shrink-0" />
+				{:else}
+					<CircleCheck class="h-5 w-5 shrink-0" />
+				{/if}
 				{statusMessage.text}
 			</div>
 		{/if}
 
-		<AppTabs bind:value={activeTab} items={inventoryTabs} label="Tipo de anúncio" variant="cards" class="gap-6">
-			<div class="relative shadow-sm rounded-container">
-				<Search class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-600-400" />
+		<AppTabs bind:value={activeTab} items={inventoryTabs} label="Tipo de anúncio" variant="segmented" class="gap-4">
+			<div class="relative">
+				<Search class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
 				<input
 					type="search"
 					placeholder="Buscar nos meus anúncios..."
 					bind:value={searchQuery}
-					class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-11 pr-4 text-base shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
 
 			{#if loading}
-				<div class="flex justify-center py-12">
-					<div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-				</div>
+				<ListingSkeleton variant="list" count={3} label="Carregando seus anúncios..." />
 			{:else}
 				<AppTabsPanel value="maquinarios">
 					<div class="space-y-3">
 						{#each filteredMaquinarios as maq (maq.id)}
-							<article
-								class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
-									maq.status
-								)
-									? 'opacity-80'
-									: ''}"
-							>
-								<div class="flex gap-4 p-4">
-									<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary">
-										{#if getAdCoverUrl(maq)}
-											<img src={getAdCoverUrl(maq)} alt={maq.name} class="h-full w-full object-cover" />
-										{:else}
-											<Tractor class="h-10 w-10 text-primary-600 opacity-80" />
-										{/if}
-									</div>
-									<div class="flex min-w-0 flex-1 flex-col justify-center">
-										<h3 class="line-clamp-1 font-bold text-surface-950-50">{maq.name}</h3>
-										<p class="mt-0.5 text-sm font-medium text-primary-700">
-											{formatPrice(maq.price)}
-											{#if getMachineryFromProduct(maq)?.offer_type === 'aluguel'}
-												<span class="text-xs font-normal text-surface-600-400">/hora</span>
-											{/if}
-										</p>
-										<div class="mt-2 flex flex-wrap gap-2">
-											<span
-												class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
-											>
-												{getMachineryTypeName(maq)}
-											</span>
-											<span
-												class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
-													maq.status
-												)}"
-											>
-												{getStatusLabel(maq.status)}
-											</span>
-										</div>
-									</div>
-									<div class="shrink-0 self-start">
-										<AppMenu
-											items={adMenuItems(maq)}
-											label="Ações do anúncio"
-											triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-										>
-											{#snippet trigger()}
-												<MoreVertical class="h-5 w-5" />
-											{/snippet}
-										</AppMenu>
-									</div>
-								</div>
-							</article>
+							{@render adCard(maq, 'maquinario')}
 						{:else}
-							<div class="py-12 text-center text-surface-600-400">Nenhum maquinário encontrado.</div>
+							{@render emptyState('Nenhuma máquina encontrada.')}
 						{/each}
 					</div>
 				</AppTabsPanel>
 				<AppTabsPanel value="produtos">
 					<div class="space-y-3">
 						{#each filteredProdutos as prod (prod.id)}
-							<article
-								class="relative rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-all hover:shadow-md {isPausedStatus(
-									prod.status
-								)
-									? 'opacity-80'
-									: ''}"
-							>
-								<div class="flex gap-4 p-4">
-									<div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-warning">
-										{#if getAdCoverUrl(prod)}
-											<img src={getAdCoverUrl(prod)} alt={prod.name} class="h-full w-full object-cover" />
-										{:else}
-											<Leaf class="h-10 w-10 text-warning-600 opacity-80" />
-										{/if}
-									</div>
-									<div class="flex min-w-0 flex-1 flex-col justify-center">
-										<h3 class="line-clamp-1 font-bold text-surface-950-50">{prod.name}</h3>
-										<p class="mt-0.5 text-sm font-extrabold text-warning-700">{formatPrice(prod.price)}</p>
-										<div class="mt-2 flex flex-wrap gap-2">
-											<span
-												class="rounded-full bg-surface-100-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-surface-600-400"
-											>
-												{prod.category}
-											</span>
-											<span
-												class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase {statusBadgeClass(
-													prod.status
-												)}"
-											>
-												{getStatusLabel(prod.status)}
-											</span>
-										</div>
-									</div>
-									<div class="shrink-0 self-start">
-										<AppMenu
-											items={adMenuItems(prod)}
-											label="Ações do anúncio"
-											triggerClass="rounded-container p-2 text-surface-600-400 hover:bg-surface-100-900 hover:text-surface-700-300"
-										>
-											{#snippet trigger()}
-												<MoreVertical class="h-5 w-5" />
-											{/snippet}
-										</AppMenu>
-									</div>
-								</div>
-							</article>
+							{@render adCard(prod, 'produto')}
 						{:else}
-							<div class="py-12 text-center text-surface-600-400">Nenhum produto/insumo encontrado.</div>
+							{@render emptyState('Nenhum produto ou insumo encontrado.')}
 						{/each}
 					</div>
 				</AppTabsPanel>
