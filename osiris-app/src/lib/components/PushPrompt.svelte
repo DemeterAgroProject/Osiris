@@ -89,15 +89,16 @@
 				<p class="text-sm opacity-70">Saiba na hora quando chegar uma proposta, mensagem ou mudança na operação.</p>
 				<button
 					type="button"
-					class="btn btn-sm preset-filled-primary-500 mt-3"
+					class="btn preset-filled-primary-500 mt-3"
 					onclick={handleEnable}
 					disabled={enabling}
 				>
-					{enabling ? 'Ativando...' : 'Ativar notificações'}
+					<Bell size={18} />
+					<span>{enabling ? 'Ativando...' : 'Ativar notificações'}</span>
 				</button>
 			</div>
-			<button type="button" class="btn-icon btn-icon-sm" aria-label="Agora não" onclick={dismiss}>
-				<X class="h-4 w-4" />
+			<button type="button" class="btn-icon btn-icon-lg preset-tonal" title="Agora não" aria-label="Agora não" onclick={dismiss}>
+				<X size={18} />
 			</button>
 		</div>
 	</div>
