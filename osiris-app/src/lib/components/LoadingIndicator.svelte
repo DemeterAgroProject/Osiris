@@ -11,7 +11,7 @@
 </script>
 
 <div
-	class="flex items-center justify-center {compact ? 'gap-2' : 'flex-col gap-3'} {className}"
+	class="flex items-center justify-center {compact ? 'gap-2' : 'flex-col gap-3'}  {className}"
 	role="status"
 	aria-live="polite"
 >
@@ -22,7 +22,7 @@
 		</Progress.Circle>
 	</Progress>
 	{#if showLabel}
-		<span class="text-sm font-medium text-surface-700-300">{label}</span>
+		<span class="text-sm font-medium text-surface-900-100">{label}</span>
 	{:else}
 		<span class="sr-only">{label}</span>
 	{/if}

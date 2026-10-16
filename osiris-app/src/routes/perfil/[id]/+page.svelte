@@ -16,7 +16,8 @@
 		SquarePen,
 		Camera,
 		User,
-		Star
+		Star,
+		CircleAlert
 	} from 'lucide-svelte';
 
 	function resolveDisplayName(profile, authUser = null) {
@@ -347,8 +348,8 @@
 	<title>{pageTitle} — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
-	<Header />
+<div class="min-h-screen pb-24 lg:pb-0">
+	<Header title="Perfil" />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
 		<div class="mb-4 flex items-center gap-3">
@@ -356,13 +357,14 @@
 				<button
 					type="button"
 					onclick={goBack}
-					class="btn-icon preset-outlined-surface-500 text-surface-800-200"
+					class="btn-icon btn-icon-lg preset-tonal"
+					title="Voltar"
 					aria-label="Voltar"
 				>
-					<ArrowLeft class="h-5 w-5" aria-hidden="true" />
+					<ArrowLeft size={18} />
 				</button>
 			{/if}
-			<h1 class="flex-1 text-center text-xl font-bold text-surface-950-50 {view === 'profile' ? '' : 'pr-10'}">
+			<h1 class="flex-1 text-center preset-typo-headline {view === 'profile' ? '' : 'pr-11'}">
 				{pageTitle}
 			</h1>
 		</div>
@@ -372,9 +374,9 @@
 				<LoadingIndicator label="Carregando perfil..." />
 			</div>
 		{:else if errorMessage && !profile}
-			<div class="rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+			<div class="flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm"><CircleAlert class="h-5 w-5 shrink-0" />{errorMessage}</div>
 		{:else if view === 'edit' && isOwner}
-			<form class="space-y-4" onsubmit={handleSaveProfile}>
+			<form class="space-y-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm" onsubmit={handleSaveProfile}>
 				{#if saveMessage.text}
 					<div
 						class="rounded-container p-3 text-sm {saveMessage.type === 'error'
@@ -391,12 +393,12 @@
 							<img
 								src={form.photoUrl || avatarUrl}
 								alt={displayName}
-								class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover  ring-2 ring-primary-500/20"
+								class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover ring-2 ring-primary-500/20"
 								onerror={() => (imgError = true)}
 							/>
 						{:else}
 							<div
-								class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold  ring-2 ring-primary-500/20"
+								class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold ring-2 ring-primary-500/20"
 							>
 								{initials}
 							</div>
@@ -411,20 +413,20 @@
 				</div>
 
 				<div>
-					<label for="photoUrl" class="mb-1 block text-sm font-medium text-surface-700-300">
+					<label for="photoUrl" class="mb-1.5 block text-sm font-semibold text-surface-950-50">
 						URL da foto
 					</label>
 					<input
 						id="photoUrl"
 						type="url"
 						bind:value={form.photoUrl}
-						placeholder="https://..."
-						class="input w-full rounded-container border border-surface-200-800 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						placeholder="Cole o link da foto (https://...)"
+						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
 				<div>
-					<label for="displayName" class="mb-1 block text-sm font-medium text-surface-700-300">
+					<label for="displayName" class="mb-1.5 block text-sm font-semibold text-surface-950-50">
 						Nome de exibição
 					</label>
 					<div class="relative">
@@ -433,32 +435,33 @@
 							type="text"
 							bind:value={form.displayName}
 							required
-							class="input w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-4 pr-11 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
-						<User class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
+						<User class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-900-100" />
 					</div>
 				</div>
 
 				<div>
-					<label for="phone" class="mb-1 block text-sm font-medium text-surface-700-300">Telefone</label>
+					<label for="phone" class="mb-1.5 block text-sm font-semibold text-surface-950-50">Telefone</label>
 					<div class="relative">
 						<input
 							id="phone"
 							type="tel"
 							bind:value={form.phone}
 							placeholder="(00) 00000-0000"
-							class="input w-full rounded-container border border-surface-200-800 py-3 pl-4 pr-11 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+							class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-4 pr-11 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 						/>
-						<Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-700-300" />
+						<Phone class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-900-100" />
 					</div>
 				</div>
 
 				<button
 					type="submit"
 					disabled={saving}
-					class="w-full rounded-container preset-filled-primary-500 py-3.5 text-sm font-semibold transition-colors disabled:opacity-60"
+					class="btn btn-lg preset-filled-primary-500 w-full"
 				>
-					{saving ? 'Salvando...' : 'Salvar alterações'}
+					<Check size={18} />
+					<span>{saving ? 'Salvando...' : 'Salvar alterações'}</span>
 				</button>
 			</form>
 		{:else if profile}
@@ -472,27 +475,28 @@
 				</div>
 			{/if}
 
-			<section class="overflow-hidden rounded-container bg-surface-50-950 ">
-				<div class="flex flex-col items-center px-5 pb-5 pt-6">
+			<section class="overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm">
+				<div class="h-20 bg-gradient-to-br from-primary-600 to-primary-800"></div>
+				<div class="-mt-12 flex flex-col items-center px-5 pb-5">
 					{#if avatarUrl && !imgError}
 						<img
 							src={avatarUrl}
 							alt={displayName}
-							class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover  ring-2 ring-primary-500/20"
+							class="h-24 w-24 rounded-full border-4 border-surface-50-950 object-cover ring-2 ring-primary-500/20"
 							onerror={() => (imgError = true)}
 						/>
 					{:else}
 						<div
-							class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold  ring-2 ring-primary-500/20"
+							class="flex h-24 w-24 items-center justify-center rounded-full preset-filled-primary-500 text-2xl font-bold ring-2 ring-primary-500/20"
 						>
 							{initials}
 						</div>
 					{/if}
 
-					<h2 class="mt-4 text-center text-lg font-bold text-surface-950-50">{displayName}</h2>
+					<h2 class="mt-3 text-center text-2xl font-bold text-surface-950-50">{displayName}</h2>
 
 					<span
-						class="mt-2 rounded-full preset-tonal-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide"
+						class="mt-2 rounded-full preset-tonal-primary px-3 py-1 uppercase text-xs font-bold tracking-wide"
 					>
 						{role}
 					</span>
@@ -505,12 +509,12 @@
 						<div class="mt-5 w-full space-y-3 border-t border-surface-200-800 pt-5">
 							<div class="flex items-start justify-between gap-3">
 								<div class="flex min-w-0 items-start gap-2">
-									<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
-									<span class="truncate text-sm text-surface-700-300">{email || '—'}</span>
+									<Mail class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
+									<span class="truncate text-sm text-surface-900-100">{email || '—'}</span>
 								</div>
 								{#if emailVerified}
 									<span
-										class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+										class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 uppercase text-xs font-bold tracking-wide"
 									>
 										<Check class="h-3 w-3" />
 										Verificado
@@ -518,8 +522,8 @@
 								{/if}
 							</div>
 							<div class="flex items-start gap-2">
-								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-700-300" />
-								<span class="truncate text-sm text-surface-700-300">{phone || 'Não informado'}</span>
+								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
+								<span class="truncate text-sm text-surface-900-100">{phone || 'Não informado'}</span>
 							</div>
 						</div>
 					{/if}
@@ -527,14 +531,14 @@
 			</section>
 
 			{#if isOwner}
-				<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+				<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 					<div class="flex items-start gap-3">
 						<div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-100-900">
-							<SquarePen class="h-5 w-5 text-surface-700-300" />
+							<SquarePen class="h-5 w-5 text-surface-900-100" />
 						</div>
 						<div class="flex-1">
 							<h3 class="font-semibold text-surface-950-50">Editar perfil</h3>
-							<p class="mt-0.5 text-sm text-surface-700-300">
+							<p class="mt-0.5 text-sm text-surface-900-100">
 								Atualize nome, telefone e foto do seu perfil público.
 							</p>
 						</div>
@@ -542,14 +546,15 @@
 					<button
 						type="button"
 						onclick={openEdit}
-						class="mt-4 w-full rounded-container preset-filled-primary-500 py-3 text-sm font-semibold transition-colors"
+						class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
 					>
-						Editar perfil
+						<SquarePen size={18} />
+						<span>Editar perfil</span>
 					</button>
 				</section>
 			{/if}
 
-			<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 ">
+			<section class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				<div class="mb-4 flex items-center justify-between gap-3">
 					<div class="flex items-start gap-3">
 						<div class="flex h-10 w-10 items-center justify-center rounded-container preset-tonal-warning">
@@ -557,7 +562,7 @@
 						</div>
 						<div>
 							<h2 class="text-base font-semibold text-surface-950-50">Avaliações recebidas</h2>
-							<p class="mt-0.5 text-xs text-surface-700-300">
+							<p class="mt-0.5 text-xs text-surface-900-100">
 								Feedback de outros usuários sobre {displayName}
 							</p>
 						</div>

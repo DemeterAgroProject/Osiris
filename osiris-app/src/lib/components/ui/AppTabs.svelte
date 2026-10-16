@@ -26,11 +26,11 @@
 
 	const triggerClass = {
 		cards:
-			'flex flex-1 items-center justify-center gap-2 rounded-container border-2 border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-600-400 transition-all hover:border-primary-500 data-[selected]:border-primary-500 data-[selected]:preset-tonal-primary data-[selected]:text-primary-700',
+			'flex flex-1 items-center justify-center gap-2 rounded-container border-2 border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium text-surface-800-200 transition-all hover:border-primary-500 data-[selected]:border-primary-500 data-[selected]:preset-tonal-primary data-[selected]:text-primary-700',
 		segmented:
-			'flex flex-1 items-center justify-center gap-2 rounded-container bg-transparent py-2.5 text-sm font-medium text-surface-600-400 transition-all hover:bg-transparent hover:text-surface-950-50 data-[selected]:bg-surface-50-950 data-[selected]:text-primary-700 data-[selected]:shadow-sm',
+			'flex flex-1 items-center justify-center gap-2 rounded-container bg-transparent py-2.5 text-sm font-medium text-surface-800-200 transition-all hover:bg-transparent hover:text-surface-950-50 data-[selected]:bg-surface-50-950 data-[selected]:text-primary-700 data-[selected]:shadow-sm',
 		filled:
-			'flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-semibold text-surface-600-400 transition-colors not-data-[selected]:hover:preset-tonal data-[selected]:preset-filled-primary-500'
+			'flex flex-1 items-center justify-center gap-2 rounded-container py-2.5 text-sm font-semibold text-surface-800-200 transition-colors not-data-[selected]:hover:preset-tonal data-[selected]:preset-filled-primary-500'
 	};
 </script>
 

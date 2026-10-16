@@ -154,235 +154,171 @@
     <meta name="description" content="Atalhos, conta e descoberta no marketplace agro Osiris." />
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
-    <Header />
+{#snippet badge(item)}
+    <span
+        class="badge rounded-full px-2 py-0.5 uppercase text-xs font-bold tracking-wide {item.badgeTone === 'accent'
+            ? 'preset-filled-primary-500'
+            : 'preset-tonal-surface'}"
+    >
+        {item.badge}
+    </span>
+{/snippet}
 
-    <section class="preset-filled-primary-500 px-4 pb-5 pt-2">
-        {#if loading}
-            <div class="flex items-center gap-3 py-4">
-                <div class="h-14 w-14 animate-pulse rounded-full bg-surface-50-950/20"></div>
-                <div class="flex-1 space-y-2">
-                    <div class="h-4 w-36 animate-pulse rounded bg-surface-50-950/20"></div>
-                    <div class="h-3 w-24 animate-pulse rounded bg-surface-50-950/15"></div>
-                </div>
-            </div>
-        {:else if isLoggedIn}
-            <a
-                href={resolve(profileHref)}
-                class="flex items-center gap-3 rounded-container py-3 transition-opacity hover:opacity-95"
-            >
-                {#if avatarUrl && !imgError}
-                    <img
-                        src={avatarUrl}
-                        alt={displayName}
-                        class="h-14 w-14 shrink-0 rounded-full border-2 border-surface-50-950/30 object-cover"
-                        onerror={() => imgError = true}
-                    />
-                {:else}
-                    <div
-                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-surface-50-950/30 bg-surface-50-950/15 text-lg font-bold"
-                    >
-                        {initials}
-                    </div>
-                {/if}
-                <div class="min-w-0 flex-1">
-                    <p class="truncate text-lg font-bold">{displayName}</p>
-                    <p class="mt-0.5 flex items-center gap-1 text-sm opacity-90">
-                        Meu perfil
-                        <ChevronRight class="h-4 w-4" />
-                    </p>
-                </div>
-            </a>
-        {:else}
-            <div class="py-3">
-                <p class="text-lg font-bold">Olá, visitante</p>
-                <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
-                <a
-                    href={resolve('/login')}
-                    class="mt-4 inline-flex items-center gap-2 rounded-container bg-surface-50-950 px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:preset-tonal"
-                >
-                    <LogIn class="h-4 w-4" />
-                    Entrar com Google
-                </a>
-            </div>
-        {/if}
-
-        <div class="mt-2 space-y-2">
-            <a
-                href={resolve('/anunciar')}
-                class="flex items-center justify-between rounded-container bg-surface-50-950/15 px-4 py-3.5 backdrop-blur-sm transition-colors hover:bg-surface-50-950/20"
-            >
-                <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-container bg-surface-50-950/20">
-                        <Megaphone class="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold">Anuncie no Osiris</p>
-                        <p class="text-xs opacity-90">Maquinário, insumos e mais</p>
-                    </div>
-                </div>
-                <ChevronRight class="h-5 w-5 shrink-0 opacity-90" />
-            </a>
-
-            {#if isLoggedIn}
-                <a
-                    href={resolve('/painel-de-controle')}
-                    class="flex items-center justify-between rounded-container preset-tonal-warning px-4 py-3.5 transition-colors"
-                >
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-container"
-                        >
-                            <LayoutDashboard class="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold ">Painel de controle</p>
-                            <p class="text-xs ">Resumo dos seus anúncios</p>
-                        </div>
-                    </div>
-                    <ChevronRight class="h-5 w-5 shrink-0" />
-                </a>
+{#snippet menuRow(item)}
+    {#if item.href}
+        <a
+            href={resolve(item.href)}
+            class="flex min-h-16 items-center gap-3 px-4 py-3 text-surface-950-50 transition-colors hover:preset-tonal"
+        >
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container preset-tonal-primary">
+                <item.icon class="h-5 w-5" strokeWidth={2} />
+            </span>
+            <span class="flex-1 text-base font-semibold">{item.label}</span>
+            {#if item.badge}
+                {@render badge(item)}
+            {:else}
+                <ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300" />
             {/if}
+        </a>
+    {:else}
+        <div
+            class="flex min-h-16 items-center gap-3 px-4 py-3 text-surface-800-200"
+            aria-disabled="true"
+        >
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container bg-surface-100-900">
+                <item.icon class="h-5 w-5" strokeWidth={2} />
+            </span>
+            <span class="flex-1 text-base font-medium">{item.label}</span>
+            {#if item.badge}
+                {@render badge(item)}
+            {/if}
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet menuGroup(id, title, items)}
+    <section aria-labelledby={id}>
+        <h2 id={id} class="px-1 pb-2 preset-typo-label">{title}</h2>
+        <nav
+            aria-label={title}
+            class="divide-y divide-surface-200-800 overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+        >
+            {#each items as item (item.label)}
+                {@render menuRow(item)}
+            {/each}
+        </nav>
+    </section>
+{/snippet}
+
+<div class="min-h-screen pb-24">
+    <Header title="Mais" />
+
+    <section class="bg-gradient-to-br from-primary-600 to-primary-800 px-4 pb-5 pt-3 text-primary-50">
+        <div class="mx-auto max-w-3xl">
+            {#if loading}
+                <div class="flex items-center gap-3 py-4">
+                    <div class="h-16 w-16 animate-pulse rounded-full bg-white/20"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 w-36 animate-pulse rounded bg-white/20"></div>
+                        <div class="h-3 w-24 animate-pulse rounded bg-white/15"></div>
+                    </div>
+                </div>
+            {:else if isLoggedIn}
+                <a
+                    href={resolve(profileHref)}
+                    class="flex items-center gap-3 rounded-container py-3 transition-opacity hover:opacity-95"
+                >
+                    {#if avatarUrl && !imgError}
+                        <img
+                            src={avatarUrl}
+                            alt={displayName}
+                            class="h-16 w-16 shrink-0 rounded-full border-2 border-white/40 object-cover"
+                            onerror={() => imgError = true}
+                        />
+                    {:else}
+                        <div
+                            class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-white/40 bg-white/15 text-xl font-bold"
+                        >
+                            {initials}
+                        </div>
+                    {/if}
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-xl font-bold">{displayName}</p>
+                        <p class="mt-0.5 flex items-center gap-1 text-sm font-medium opacity-90">
+                            Ver meu perfil
+                            <ChevronRight class="h-4 w-4" />
+                        </p>
+                    </div>
+                </a>
+            {:else}
+                <div class="py-3">
+                    <p class="text-xl font-bold">Olá, visitante</p>
+                    <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
+                    <a
+                        href={resolve('/login')}
+                        class="btn btn-lg preset-filled-surface-50-950 mt-4"
+                    >
+                        <LogIn size={18} />
+                        <span>Entrar com Google</span>
+                    </a>
+                </div>
+            {/if}
+
+            <div class="mt-2 grid gap-2 {isLoggedIn ? 'grid-cols-2' : 'grid-cols-1'}">
+                <a
+                    href={resolve('/anunciar')}
+                    class="flex min-h-20 flex-col justify-between gap-2 rounded-container bg-white/15 p-3 transition-colors hover:bg-white/20"
+                >
+                    <Megaphone class="h-6 w-6" />
+                    <span>
+                        <span class="block text-sm font-bold">Anunciar</span>
+                        <span class="block text-xs opacity-90">Máquinas e insumos</span>
+                    </span>
+                </a>
+
+                {#if isLoggedIn}
+                    <a
+                        href={resolve('/painel-de-controle')}
+                        class="flex min-h-20 flex-col justify-between gap-2 rounded-container bg-white p-3 text-primary-800 shadow-sm transition-colors hover:bg-primary-50"
+                    >
+                        <LayoutDashboard class="h-6 w-6" />
+                        <span>
+                            <span class="block text-sm font-bold">Painel</span>
+                            <span class="block text-xs opacity-80">Resumo dos anúncios</span>
+                        </span>
+                    </a>
+                {/if}
+            </div>
         </div>
     </section>
 
-    <main class="bg-surface-50-950">
-        <nav aria-label="Atalhos" class="border-b border-surface-200-800">
-            {#each shortcuts as item (item.label)}
-                {#if item.href}
-                    <a
-                        href={resolve(item.href)}
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
-                    >
-                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
-                        <span class="flex-1 text-sm font-medium">{item.label}</span>
-                    </a>
-                {:else}
-                    <div
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
-                        aria-disabled="true"
-                    >
-                        <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
-                        <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        {#if item.badge}
-                            <span
-                                class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
-                                'accent'
-                                    ? 'preset-filled-primary-500'
-                                    : 'preset-tonal-surface'}"
-                            >
-                                {item.badge}
-                            </span>
-                        {/if}
-                    </div>
-                {/if}
-            {/each}
-        </nav>
+    <main class="mx-auto max-w-3xl space-y-5 px-4 py-5">
+        {@render menuGroup('mais-atalhos', 'Atalhos', shortcuts)}
+        {@render menuGroup('mais-atividade', 'Minha atividade', activityItems)}
+        {@render menuGroup('mais-descubra', 'Descubra', discoverItems)}
+        {@render menuGroup('mais-vender', 'Vender e gerir', sellItems)}
 
-        <section aria-labelledby="mais-atividade">
-            <h2 id="mais-atividade" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
-                Minha atividade
-            </h2>
-            <nav aria-label="Minha atividade">
-                {#each activityItems as item (item.label)}
-                    {#if item.href}
-                        <a
-                            href={resolve(item.href)}
-                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
-                        >
-                            <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
-                            <span class="flex-1 text-sm font-medium">{item.label}</span>
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
-                        </a>
-                    {:else}
-                        <div
-                            class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-600-400 last:border-b-0"
-                            aria-disabled="true"
-                        >
-                            <item.icon class="h-6 w-6 shrink-0" strokeWidth={1.75} />
-                            <span class="flex-1 text-sm font-medium">{item.label}</span>
-                            {#if item.badge}
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
-                                    'accent'
-                                        ? 'preset-filled-primary-500'
-                                        : 'preset-tonal-surface'}"
-                                >
-                                    {item.badge}
-                                </span>
-                            {/if}
-                        </div>
-                    {/if}
-                {/each}
-            </nav>
-        </section>
+        {#if isLoggedIn}
+            <button
+                type="button"
+                onclick={handleSignOut}
+                disabled={signingOut}
+                class="btn btn-lg preset-tonal-error w-full"
+            >
+                <LogOut size={18} />
+                <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
+            </button>
+        {/if}
 
-        <section aria-labelledby="mais-descubra" class="border-t border-surface-200-800">
-            <h2 id="mais-descubra" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">Descubra</h2>
-            <nav aria-label="Descubra">
-                {#each discoverItems as item (item.label)}
-                    <a
-                        href={resolve(item.href)}
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
-                    >
-                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
-                        <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        {#if item.badge}
-                            <span
-                                class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {item.badgeTone ===
-                                'accent'
-                                    ? 'preset-filled-primary-500'
-                                    : 'preset-tonal-surface'}"
-                            >
-                                {item.badge}
-                            </span>
-                        {:else}
-                            <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
-                        {/if}
-                    </a>
-                {/each}
-            </nav>
-        </section>
-
-        <section aria-labelledby="mais-vender" class="border-t border-surface-200-800">
-            <h2 id="mais-vender" class="px-4 pt-5 pb-1 text-xs font-semibold text-surface-600-400">
-                Vender e gerir
-            </h2>
-            <nav aria-label="Vender e gerir">
-                {#each sellItems as item (item.label)}
-                    <a
-                        href={resolve(item.href)}
-                        class="flex items-center gap-4 border-b border-surface-200-800 px-4 py-4 text-surface-950-50 transition-colors last:border-b-0 hover:preset-tonal"
-                    >
-                        <item.icon class="h-6 w-6 shrink-0 text-surface-700-300" strokeWidth={1.75} />
-                        <span class="flex-1 text-sm font-medium">{item.label}</span>
-                        <ChevronRight class="h-4 w-4 shrink-0 text-surface-400-600" />
-                    </a>
-                {/each}
-
-                {#if isLoggedIn}
-                    <button
-                        type="button"
-                        onclick={handleSignOut}
-                        disabled={signingOut}
-                        class="flex w-full items-center gap-4 border-t border-surface-200-800 px-4 py-4 text-left text-sm font-medium text-error-500 transition-colors hover:preset-tonal-error disabled:opacity-60"
-                    >
-                        <LogOut class="h-6 w-6 shrink-0" strokeWidth={1.75} />
-                        <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
-                    </button>
-                {/if}
-            </nav>
-        </section>
-
-        <section aria-labelledby="mais-info" class="border-t border-surface-200-800 px-4 py-6">
+        <section aria-labelledby="mais-info" class="px-1 pb-2">
             <h2 id="mais-info" class="sr-only">Informações</h2>
-            <div class="flex items-center gap-2 text-xs text-surface-600-400">
-                <Shield class="h-3.5 w-3.5" />
+            <div class="flex items-center gap-2 text-sm text-surface-800-200">
+                <Shield class="h-4 w-4" />
                 <span>Osiris — compra e venda no campo</span>
             </div>
-            <div class="mt-3 flex gap-4 text-xs">
-                <a href={resolve('/termos')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Termos de uso</a>
-                <a href={resolve('/privacidade')} class="font-medium text-surface-700-300 underline hover:text-primary-700">Política de privacidade</a>
+            <div class="mt-3 flex gap-4 text-sm">
+                <a href={resolve('/termos')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">Termos de uso</a>
+                <a href={resolve('/privacidade')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">Política de privacidade</a>
             </div>
         </section>
     </main>

@@ -1,5 +1,6 @@
 <script>
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
+	import { ArrowLeft, XCircle } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
 
@@ -75,7 +76,7 @@
 	role="alertdialog"
 	dismissible={!loading}
 >
-	<label for="cancel-booking-reason" class="mb-1 block text-sm font-medium text-surface-700-300">
+	<label for="cancel-booking-reason" class="mb-1 block text-sm font-medium text-surface-900-100">
 		Motivo
 	</label>
 	<select
@@ -91,17 +92,18 @@
 	</select>
 
 	{#if needsDetails}
-		<label for="cancel-booking-details" class="mb-1 mt-3 block text-sm font-medium text-surface-700-300">
+		<label for="cancel-booking-details" class="mb-1 mt-3 block text-sm font-medium text-surface-900-100">
 			Descreva o motivo
 		</label>
 		<textarea
 			id="cancel-booking-details"
+			placeholder="Ex: a máquina quebrou e não há como atender nas datas"
 			bind:value={details}
 			disabled={loading}
 			rows="3"
 			class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
 		></textarea>
-		<p class="mt-1 text-xs text-surface-600-400">
+		<p class="mt-1 text-xs text-surface-800-200">
 			Mínimo de {MIN_DETAILS_LENGTH} caracteres ({details.trim().length}/{MIN_DETAILS_LENGTH}).
 		</p>
 	{/if}
@@ -116,17 +118,19 @@
 				type="button"
 				onclick={close}
 				disabled={loading}
-				class="rounded-container border border-surface-200-800 py-3 text-sm font-medium text-surface-700-300 transition-colors hover:preset-tonal disabled:opacity-50"
+				class="btn btn-lg preset-tonal w-full"
 			>
-				Voltar
+				<ArrowLeft size={18} />
+				<span>Voltar</span>
 			</button>
 			<button
 				type="button"
 				onclick={handleConfirm}
 				disabled={loading || !canSubmit}
-				class="rounded-container preset-filled-error-500 py-3 text-sm font-semibold transition-colors focus:ring-2 focus:ring-error-500/30 focus:ring-offset-1 disabled:opacity-60"
+				class="btn btn-lg preset-filled-error-500 w-full"
 			>
-				{loading ? 'Aguarde...' : 'Cancelar operação'}
+				<XCircle size={18} />
+				<span>{loading ? 'Aguarde...' : 'Cancelar operação'}</span>
 			</button>
 		</div>
 	{/snippet}

@@ -27,14 +27,14 @@
 					class="group flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center"
 				>
 					<Steps.Indicator
-						class="flex size-8 items-center justify-center rounded-full border border-surface-300-700 bg-surface-50-950 text-xs font-bold text-surface-700-300 data-[complete]:border-primary-500 data-[complete]:preset-filled-primary-500 data-[current]:border-primary-500 data-[current]:preset-filled-primary-500"
+						class="flex size-10 items-center justify-center rounded-full border-2 border-surface-300-700 bg-surface-50-950 text-sm font-bold text-surface-900-100 data-[complete]:border-primary-500 data-[complete]:preset-filled-primary-500 data-[current]:border-primary-500 data-[current]:preset-filled-primary-500"
 					>
 						{index + 1}
 					</Steps.Indicator>
-					<span class="text-[11px] font-medium text-surface-700-300">{stepLabel}</span>
+					<span class="text-xs font-semibold text-surface-900-100 group-data-[current]:text-primary-700-300">{stepLabel}</span>
 				</Steps.Trigger>
 				{#if index < labels.length - 1}
-					<Steps.Separator class="mt-4 h-px flex-1 bg-surface-300-700 data-[complete]:bg-primary-500" />
+					<Steps.Separator class="mt-5 h-0.5 flex-1 rounded-full bg-surface-300-700 data-[complete]:bg-primary-500" />
 				{/if}
 			</Steps.Item>
 		{/each}

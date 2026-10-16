@@ -1,8 +1,21 @@
 <script>
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
+    import { page } from '$app/state';
     import { onMount } from 'svelte';
-    import { Bell, User } from 'lucide-svelte';
+    import {
+        ArrowLeft,
+        Bell,
+        BellRing,
+        CheckCheck,
+        CircleCheck,
+        CircleX,
+        Handshake,
+        MessageCircle,
+        Star,
+        Tractor,
+        User
+    } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
     import { watchChanges } from '$lib/realtime';
     import UserMenu from '$lib/components/UserMenu.svelte';
@@ -38,6 +51,30 @@
                 .join('') || 'U'
         );
     }
+
+    // ícone e cor de cada tipo de notificação (os tipos vêm dos triggers do banco)
+    const NOTIFICATION_STYLES = {
+        nova_negociacao: { icon: Handshake, tone: 'preset-tonal-primary' },
+        negociacao_aceita: { icon: CircleCheck, tone: 'preset-tonal-success' },
+        negociacao_recusada: { icon: CircleX, tone: 'preset-tonal-error' },
+        negociacao_cancelada: { icon: CircleX, tone: 'preset-tonal-error' },
+        nova_mensagem: { icon: MessageCircle, tone: 'preset-tonal-secondary' },
+        status_reserva: { icon: Tractor, tone: 'preset-tonal-primary' },
+        operacao_cancelada: { icon: CircleX, tone: 'preset-tonal-error' },
+        nova_avaliacao: { icon: Star, tone: 'preset-tonal-warning' }
+    };
+    const DEFAULT_NOTIFICATION_STYLE = { icon: BellRing, tone: 'preset-tonal-surface' };
+
+    function notificationStyle(type) {
+        return NOTIFICATION_STYLES[type] ?? DEFAULT_NOTIFICATION_STYLE;
+    }
+
+    /**
+     * title: nome da tela, mostrado ao lado do logo.
+     * backHref: quando informado, mostra a seta de voltar no lugar do logo.
+     * backUsesHistory: a seta volta para a tela anterior (history.back); aberto direto por um link, vai para backHref.
+     */
+    let { title = '', backHref = '', backUsesHistory = false } = $props();
 
     let authUser = $state(null);
     let profile = $state(null);
@@ -165,22 +202,50 @@
     });
 </script>
 
-<header class="sticky top-0 z-50 bg-surface-50-950 px-4 py-3 shadow-sm">
-    <div class="flex items-center justify-between">
-        <a href={resolve('/')} class="flex h-10 w-10 items-center justify-center" aria-label="Início">
-            <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
-        </a>
+<header class="sticky top-0 z-50 border-b border-surface-200-800 bg-surface-50-950/95 px-4 py-2.5 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-2.5">
+            {#if backHref}
+                <a
+                    href={resolve(backHref)}
+                    onclick={(event) => {
+                        if (backUsesHistory && history.length > 1) {
+                            event.preventDefault();
+                            history.back();
+                        }
+                    }}
+                    class="btn-icon btn-icon-lg preset-tonal shrink-0"
+                    title="Voltar"
+                    aria-label="Voltar"
+                >
+                    <ArrowLeft size={18} />
+                </a>
+            {:else}
+                <a href={resolve('/')} class="flex h-11 w-11 shrink-0 items-center justify-center" aria-label="Início">
+                    <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
+                </a>
+            {/if}
 
-        <div class="flex items-center gap-3">
+            {#if title}
+                <div class="min-w-0 leading-tight">
+                    <p class="text-primary-600-400 preset-typo-label">Osiris</p>
+                    <p class="truncate text-lg font-bold leading-tight text-surface-950-50">{title}</p>
+                </div>
+            {/if}
+        </div>
+
+        <div class="flex shrink-0 items-center gap-1">
             <AppPopover
                 bind:open={notifOpen}
                 title="Notificações"
-                triggerClass="relative rounded-full p-2 text-surface-600-400 transition-colors hover:preset-tonal"
+                label={unreadCount > 0 ? `Notificações: ${unreadCount} não lidas` : 'Notificações'}
+                triggerClass="btn-icon btn-icon-lg rounded-full relative data-[state=open]:preset-tonal-primary"
+                contentClass="w-[22rem]"
             >
                 {#snippet trigger()}
-                    <Bell class="h-6 w-6" />
+                    <Bell size={18} />
                     {#if unreadCount > 0}
-                        <span class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full preset-filled-error-500 text-[10px] font-bold">
+                        <span class="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full preset-filled-error-500 px-1 text-xs font-bold ring-2 ring-surface-50-950">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     {/if}
@@ -191,39 +256,55 @@
                         <button
                             type="button"
                             onclick={markAllAsRead}
-                            class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                            class="btn btn-sm preset-tonal-primary"
                         >
-                            Marcar todas como lidas
+                            <CheckCheck size={18} />
+                            <span>Marcar todas como lidas</span>
                         </button>
                     {/if}
                 {/snippet}
 
-                <div class="max-h-96 overflow-y-auto overscroll-contain">
+                <div class="max-h-[min(28rem,70vh)] overflow-y-auto overscroll-contain">
                     {#if notifications.length === 0}
-                        <div class="flex flex-col items-center justify-center py-10 text-surface-600-400">
-                            <Bell class="mb-2 h-8 w-8 opacity-30" />
-                            <p class="text-sm">Nenhuma notificação</p>
+                        <div class="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center text-surface-800-200">
+                            <span class="flex h-14 w-14 items-center justify-center rounded-full preset-tonal-surface">
+                                <Bell class="h-7 w-7 opacity-60" />
+                            </span>
+                            <p class="text-sm font-semibold text-surface-950-50">Nenhuma notificação</p>
+                            <p class="text-xs">Avisos de propostas, mensagens e operações aparecem aqui.</p>
                         </div>
                     {:else}
-                        {#each notifications as notif (notif.id)}
-                            <button
-                                type="button"
-                                onclick={() => markAsRead(notif)}
-                                class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:preset-tonal {!notif.is_read ? 'preset-tonal-primary' : ''}"
-                            >
-                                <!-- Indicador de não lida -->
-                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {!notif.is_read ? 'bg-primary-500' : 'bg-transparent'}"></span>
+                        <ul class="divide-y divide-surface-200-800">
+                            {#each notifications as notif (notif.id)}
+                                {@const style = notificationStyle(notif.type)}
+                                <li>
+                                    <button
+                                        type="button"
+                                        onclick={() => markAsRead(notif)}
+                                        class="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:preset-tonal {!notif.is_read ? 'bg-primary-500/5' : ''}"
+                                    >
+                                        <span class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-container {style.tone}">
+                                            <style.icon class="h-5 w-5" />
+                                            {#if !notif.is_read}
+                                                <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-primary-500 ring-2 ring-surface-50-950">
+                                                    <span class="sr-only">Não lida</span>
+                                                </span>
+                                            {/if}
+                                        </span>
 
-                                <div class="flex-1 overflow-hidden">
-                                    <p class="truncate text-sm font-medium text-surface-950-50">{notif.title}</p>
-                                    {#if notif.body}
-                                        <p class="mt-0.5 truncate text-xs text-surface-600-400">{notif.body}</p>
-                                    {/if}
-                                </div>
-
-                                <span class="shrink-0 text-xs text-surface-600-400">{formatTime(notif.created_at)}</span>
-                            </button>
-                        {/each}
+                                        <span class="min-w-0 flex-1">
+                                            <span class="flex items-start justify-between gap-2">
+                                                <span class="line-clamp-2 text-sm text-surface-950-50 {!notif.is_read ? 'font-bold' : 'font-medium'}">{notif.title}</span>
+                                                <span class="shrink-0 pt-0.5 text-xs text-surface-800-200">{formatTime(notif.created_at)}</span>
+                                            </span>
+                                            {#if notif.body}
+                                                <span class="mt-0.5 line-clamp-2 block text-sm leading-snug text-surface-900-100">{notif.body}</span>
+                                            {/if}
+                                        </span>
+                                    </button>
+                                </li>
+                            {/each}
+                        </ul>
                     {/if}
                 </div>
             </AppPopover>
@@ -232,14 +313,14 @@
             {#if isLoggedIn}
                 <UserMenu
                     bind:open={menuOpen}
-                    triggerClass="rounded-full p-0.5 transition-colors hover:preset-tonal data-[state=open]:ring-2 data-[state=open]:ring-primary-500 data-[state=open]:ring-offset-1"
+                    triggerClass="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:preset-tonal data-[state=open]:ring-2 data-[state=open]:ring-primary-500"
                 >
                     {#snippet trigger()}
                         {#if avatarUrl && !imgError}
                             <img
                                 src={avatarUrl}
                                 alt={displayName}
-                                class="h-9 w-9 rounded-full border border-surface-200-800 object-cover"
+                                class="h-9 w-9 rounded-full border-2 border-primary-500/30 object-cover"
                                 onerror={() => imgError = true}
                             />
                         {:else}
@@ -249,16 +330,14 @@
                         {/if}
                     {/snippet}
                 </UserMenu>
-            {:else}
+            {:else if !page.url.pathname.startsWith('/login')}
                 <button
                     type="button"
                     onclick={() => goto(resolve('/login'))}
-                    class="rounded-full p-0.5 transition-colors hover:preset-tonal"
-                    aria-label="Fazer login"
+                    class="btn preset-filled-primary-500"
                 >
-                    <span class="flex h-10 w-10 items-center justify-center rounded-full text-surface-600-400">
-                        <User class="h-6 w-6" />
-                    </span>
+                    <User size={18} />
+                    <span>Entrar</span>
                 </button>
             {/if}
         </div>

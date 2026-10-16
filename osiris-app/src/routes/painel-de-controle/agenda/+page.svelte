@@ -11,7 +11,8 @@
 		CheckCircle2,
 		XCircle,
 		AlertCircle,
-		MessageSquare
+		MessageSquare,
+		ArrowRight
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -215,13 +216,13 @@
 	<title>Agenda — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-20">
-	<Header />
+<div class="min-h-screen pb-24">
+	<Header title="Agenda" />
 
 	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
 		<div>
-			<h1 class="text-xl font-bold text-surface-950-50">Minha Agenda</h1>
-			<p class="mt-0.5 text-sm text-surface-600-400">
+			<h1 class="preset-typo-headline">Minha agenda</h1>
+			<p class="mt-1 preset-typo-subtitle">
 				Propostas em negociação e operações confirmadas no calendário.
 			</p>
 		</div>
@@ -233,28 +234,32 @@
 		{:else}
 			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				<div class="mb-4 flex items-center justify-between">
-					<h2 class="text-base font-bold text-surface-950-50">{monthNames[currentMonth]} {currentYear}</h2>
+					<h2 class="capitalize preset-typo-title">{monthNames[currentMonth]} {currentYear}</h2>
 					<div class="flex gap-1">
 						<button
 							type="button"
 							onclick={() => changeMonth(-1)}
-							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
+							aria-label="Mês anterior"
+							title="Mês anterior"
+							class="btn-icon btn-icon-lg preset-tonal"
 						>
-							<ChevronLeft class="h-4 w-4 text-surface-600-400" />
+							<ChevronLeft size={18} />
 						</button>
 						<button
 							type="button"
 							onclick={() => changeMonth(1)}
-							class="rounded-container border border-surface-200-800 p-2 hover:bg-surface-100-900"
+							aria-label="Próximo mês"
+							title="Próximo mês"
+							class="btn-icon btn-icon-lg preset-tonal"
 						>
-							<ChevronRight class="h-4 w-4 text-surface-600-400" />
+							<ChevronRight size={18} />
 						</button>
 					</div>
 				</div>
 
 				<div
 					style="display: grid; grid-template-columns: repeat(7, 1fr);"
-					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-600-400"
+					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-800-200"
 				>
 					<div>Dom</div>
 					<div>Seg</div>
@@ -311,7 +316,7 @@
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="text-base font-bold text-surface-950-50">Propostas em negociação</h2>
+				<h2 class="preset-typo-title">Propostas em negociação</h2>
 
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
@@ -322,7 +327,7 @@
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container {conflict
+								class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {conflict
 									? 'preset-tonal-error'
 									: 'preset-tonal-secondary'}"
 							>
@@ -331,13 +336,13 @@
 								/>
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-surface-950-50">{neg.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
-									<Clock class="h-3 w-3" />
+								<h3 class="line-clamp-2 preset-typo-card-title">{neg.title}</h3>
+								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
+									<Clock class="h-4 w-4 shrink-0" />
 									De {formatDbDate(neg.start_date)} até {formatDbDate(neg.end_date)}
 								</p>
 								<span
-									class="mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase preset-tonal-secondary"
+									class="badge mt-2 rounded-full px-2 py-0.5 uppercase preset-tonal-secondary text-xs font-bold tracking-wide"
 								>
 									{neg.status === 'solicitada' ? 'Solicitada' : 'Em negociação'}
 								</span>
@@ -346,7 +351,7 @@
 
 						{#if conflict}
 							<div
-								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-2.5 py-2 text-xs font-medium"
+								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-3 py-2.5 text-sm font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
 								Atenção: período sobreposto a outra atividade na agenda.
@@ -355,14 +360,15 @@
 
 						<a
 							href={resolve(neg.href)}
-							class="flex w-full items-center justify-center gap-1 rounded-container preset-filled-secondary-500 py-2 text-xs font-semibold"
+							class="btn btn-lg preset-filled-secondary-500 w-full"
 						>
-							Abrir negociação
+							<span>Abrir negociação</span>
+							<ArrowRight size={18} />
 						</a>
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
 						Nenhuma proposta com datas no momento.
 					</div>
@@ -370,7 +376,7 @@
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="text-base font-bold text-surface-950-50">Operações aguardando início</h2>
+				<h2 class="preset-typo-title">Operações aguardando início</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
@@ -381,16 +387,16 @@
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container {conflict
+								class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {conflict
 									? 'preset-tonal-error'
 									: 'preset-tonal-warning'}"
 							>
 								<Calendar class="h-5 w-5 {conflict ? 'text-error-500' : 'text-warning-600'}" />
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-surface-950-50">{req.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
-									<Clock class="h-3 w-3" />
+								<h3 class="line-clamp-2 preset-typo-card-title">{req.title}</h3>
+								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
+									<Clock class="h-4 w-4 shrink-0" />
 									De {formatDbDate(req.start_date)} até {formatDbDate(req.end_date)}
 								</p>
 							</div>
@@ -398,7 +404,7 @@
 
 						{#if conflict}
 							<div
-								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-2.5 py-2 text-xs font-medium"
+								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-3 py-2.5 text-sm font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
 								Atenção: você já possui atividades marcadas nestes dias.
@@ -408,22 +414,24 @@
 						<div class="flex gap-2">
 							<a
 								href={resolve(req.href)}
-								class="flex flex-1 items-center justify-center gap-1 rounded-container preset-filled-primary-500 py-2 text-xs font-semibold"
+								class="btn preset-filled-primary-500 flex-1"
 							>
-								<CheckCircle2 class="h-3.5 w-3.5" /> Gerenciar
+								<CheckCircle2 size={18} />
+								<span>Gerenciar</span>
 							</a>
 							<button
 								type="button"
 								onclick={() => openCancelModal(req)}
-								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-surface-200-800 bg-surface-50-950 py-2 text-xs font-semibold text-surface-700-300 hover:preset-tonal"
+								class="btn preset-tonal-error flex-1"
 							>
-								<XCircle class="h-3.5 w-3.5" /> Cancelar
+								<XCircle size={18} />
+								<span>Cancelar</span>
 							</button>
 						</div>
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
 						Nenhuma operação aguardando início.
 					</div>
@@ -431,7 +439,7 @@
 			</div>
 
 			<div class="space-y-3 p-0.5">
-				<h2 class="text-base font-bold text-surface-950-50">Em operação</h2>
+				<h2 class="preset-typo-title">Em operação</h2>
 
 				{#each operatingBookings as conf (conf.id)}
 					<div
@@ -439,14 +447,14 @@
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container preset-tonal-primary"
+								class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container preset-tonal-primary"
 							>
 								<Calendar class="h-5 w-5 text-primary-600" />
 							</div>
 							<div class="min-w-0 flex-1">
-								<h3 class="truncate text-sm font-bold text-surface-950-50">{conf.title}</h3>
-								<p class="mt-0.5 flex items-center gap-1 text-xs text-surface-600-400">
-									<Clock class="h-3 w-3" />
+								<h3 class="line-clamp-2 preset-typo-card-title">{conf.title}</h3>
+								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
+									<Clock class="h-4 w-4 shrink-0" />
 									De {formatDbDate(conf.start_date)} até {formatDbDate(conf.end_date)}
 								</p>
 							</div>
@@ -455,22 +463,23 @@
 						<div class="flex gap-2 border-t border-surface-200-800 pt-2">
 							<a
 								href={resolve(conf.href)}
-								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-primary-500 preset-tonal-primary py-2 text-xs font-semibold"
+								class="btn preset-tonal-primary flex-1"
 							>
-								Ver operação
+								<span>Ver operação</span>
 							</a>
 							<button
 								type="button"
 								onclick={() => openCancelModal(conf)}
-								class="flex flex-1 items-center justify-center gap-1 rounded-container border border-error-500 bg-surface-50-950 py-2 text-xs font-semibold text-error-500 transition-colors hover:preset-tonal-error"
+								class="btn preset-tonal-error flex-1"
 							>
-								<XCircle class="h-3.5 w-3.5" /> Cancelar
+								<XCircle size={18} />
+								<span>Cancelar</span>
 							</button>
 						</div>
 					</div>
 				{:else}
 					<div
-						class="rounded-container border border-surface-200-800 bg-surface-50-950 py-6 text-center text-sm text-surface-600-400"
+						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
 						Nenhuma operação em campo no momento.
 					</div>

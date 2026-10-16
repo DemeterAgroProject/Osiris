@@ -5,7 +5,7 @@
 	import { page } from '$app/state';
 	import { markOnboardingSeen, safeRedirectPath } from '$lib/onboarding';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
-	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import OnboardingSlide from '$lib/components/OnboardingSlide.svelte';
 	import carIllustration from '$lib/images/car.png';
 	import chatIllustration from '$lib/images/chat.png';
@@ -84,13 +84,13 @@
 {:else}
 	<div class="flex min-h-screen flex-col bg-surface-50-950">
 		<header class="flex shrink-0 items-center justify-between px-6 pb-2 pt-12">
-			<span class="text-sm font-medium text-surface-600-400" aria-live="polite">{stepLabel}</span>
+			<span class="text-sm font-medium text-surface-800-200" aria-live="polite">{stepLabel}</span>
 			<button
 				type="button"
 				onclick={finish}
-				class="text-sm font-medium transition-colors hover:text-primary-700"
+				class="btn preset-tonal"
 			>
-				Pular
+				<span>Pular</span>
 			</button>
 		</header>
 
@@ -120,7 +120,7 @@
 						<Carousel.Indicator
 							{index}
 							aria-label="Slide {index + 1} de {totalSlides}"
-							class="h-2 w-2 rounded-full bg-surface-400-600 transition-all duration-300 hover:preset-tonal data-[current]:w-8 data-[current]:bg-surface-950-50"
+							class="h-2 w-2 rounded-full bg-surface-400-600 transition-all duration-300 hover:preset-tonal data-[current]:w-8 data-[current]:bg-primary-500"
 						/>
 					{/each}
 				</Carousel.IndicatorGroup>
@@ -128,10 +128,11 @@
 				<div class="flex items-center justify-between">
 					{#if currentSlide > 0}
 						<Carousel.PrevTrigger
-							class="rounded-full p-2 text-surface-400-600 transition-colors hover:preset-tonal hover:text-surface-600-400"
+							class="btn-icon btn-icon-lg preset-tonal"
+							title="Slide anterior"
 							aria-label="Slide anterior"
 						>
-							<ChevronLeft class="h-7 w-7" strokeWidth={2} />
+							<ArrowLeft size={18} />
 						</Carousel.PrevTrigger>
 					{:else}
 						<div class="w-11" aria-hidden="true"></div>
@@ -141,16 +142,18 @@
 						<button
 							type="button"
 							onclick={finish}
-							class="text-base font-bold text-primary-600 transition-colors hover:text-primary-700"
+							class="btn btn-lg preset-filled-primary-500"
 						>
-							Começar
+							<span>Começar</span>
+							<ArrowRight size={18} />
 						</button>
 					{:else}
 						<Carousel.NextTrigger
-							class="rounded-full p-2 text-primary-600 transition-colors hover:preset-tonal-primary hover:text-primary-700"
+							class="btn-icon btn-icon-lg preset-filled-primary-500"
+							title="Próximo slide"
 							aria-label="Próximo slide"
 						>
-							<ChevronRight class="h-7 w-7" strokeWidth={2} />
+							<ArrowRight size={18} />
 						</Carousel.NextTrigger>
 					{/if}
 				</div>

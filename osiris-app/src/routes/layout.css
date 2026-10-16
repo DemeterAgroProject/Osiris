@@ -6,6 +6,9 @@
 @import '@skeletonlabs/skeleton-svelte';
 @import '../osiris.css';
 
+/* fonte do tema (Fontsource, como o Skeleton recomenda): vai junto com o app e funciona offline */
+@import '@fontsource-variable/plus-jakarta-sans';
+
 @variant dark (&:where(.dark, .dark *));
 
 .hide-scrollbar {
@@ -15,4 +18,99 @@
 
 .hide-scrollbar::-webkit-scrollbar {
 	display: none;
+}
+
+/* texto de exemplo dos campos: legível ao sol, mas mais claro que o valor digitado */
+input::placeholder,
+textarea::placeholder {
+	color: var(--color-surface-800);
+	opacity: 1;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+	color: var(--color-surface-300);
+}
+
+/*
+	Escala tipográfica do Osiris, a partir dos presets semânticos do Skeleton
+	(https://www.skeleton.dev/docs/design/typography), ajustados para o celular.
+	Os tamanhos vêm de --text-* e acompanham o --text-scaling do tema.
+	Ficam em @layer components para que uma utilidade (ex.: text-primary-700-300) ainda possa sobrescrever a cor.
+*/
+@layer components {
+	/* títulos: fonte, peso e cor de título do tema */
+	.preset-typo-headline,
+	.preset-typo-title,
+	.preset-typo-card-title {
+		color: var(--heading-font-color);
+		font-family: var(--heading-font-family);
+		font-weight: var(--heading-font-weight);
+		letter-spacing: var(--heading-letter-spacing);
+		@variant dark {
+			color: var(--heading-font-color-dark);
+		}
+	}
+
+	/* título da tela (um por página, no <h1>) */
+	.preset-typo-headline {
+		font-size: var(--text-2xl);
+		line-height: var(--text-2xl--line-height);
+		@variant lg {
+			font-size: var(--text-3xl);
+			line-height: var(--text-3xl--line-height);
+		}
+	}
+
+	/* título de seção ou de bloco */
+	.preset-typo-title {
+		font-size: var(--text-xl);
+		line-height: var(--text-xl--line-height);
+	}
+
+	/* nome de anúncio, serviço ou negociação dentro de um card */
+	.preset-typo-card-title {
+		font-size: var(--text-base);
+		line-height: 1.35;
+	}
+
+	/* linha de apoio logo abaixo de um título */
+	.preset-typo-subtitle {
+		font-size: var(--text-sm);
+		line-height: var(--text-sm--line-height);
+		color: var(--color-surface-800-200);
+	}
+
+	/* textos corridos (descrições) e textos menores */
+	.preset-typo-body-1 {
+		font-size: var(--text-base);
+		line-height: 1.625;
+	}
+	.preset-typo-body-2 {
+		font-size: var(--text-sm);
+		line-height: var(--text-sm--line-height);
+	}
+
+	/* informação secundária: data, local, contagem */
+	.preset-typo-caption {
+		font-size: var(--text-xs);
+		line-height: var(--text-xs--line-height);
+		color: var(--color-surface-800-200);
+	}
+
+	/* rótulo curto em caixa alta acima de um valor ou de um grupo ("PREÇO", "PERÍODO", "ATALHOS") */
+	.preset-typo-label {
+		font-size: var(--text-xs);
+		line-height: var(--text-xs--line-height);
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--color-surface-800-200);
+	}
+
+	.preset-typo-menu,
+	.preset-typo-button,
+	.btn {
+		font-weight: 600;
+	}
 }

@@ -7,10 +7,13 @@
 	import NegotiationPropose from '$lib/components/NegotiationPropose.svelte';
 	import FavoriteButton from '$lib/components/FavoriteButton.svelte';
 	import AppRating from '$lib/components/ui/AppRating.svelte';
+	import AppAccordion from '$lib/components/ui/AppAccordion.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
 	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
-	import { ChevronLeft } from 'lucide-svelte';
+	import { ChevronRight, CircleAlert, CircleUser, Handshake, ImageOff, Images, LogIn } from 'lucide-svelte';
+
+	const TYPE_LABEL = { maquinario: 'Máquina', produto: 'Produto', servico: 'Serviço' };
 
 	function resolveDisplayName(profile, authUser) {
 		return (
@@ -437,135 +440,167 @@
 	<title>{item?.title ? `${item.title} — Osiris` : 'Anúncio — Osiris'}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-100-900 pb-24">
-	<Header />
+<div class="min-h-screen bg-surface-100-900 pb-28">
+	<Header title="Anúncio" backHref="/buscar" backUsesHistory />
 
 	<main class="mx-auto w-full max-w-3xl">
-		<!-- volta para onde a pessoa estava; aberto direto por um link, vai para a busca -->
-		<a
-			href={resolve('/buscar')}
-			onclick={(event) => {
-				if (history.length > 1) {
-					event.preventDefault();
-					history.back();
-				}
-			}}
-			class="mx-4 mt-4 inline-flex items-center gap-1 rounded-full border border-surface-200-800 bg-surface-50-950 px-3 py-2 text-sm font-medium text-surface-600-400"
-		>
-			<ChevronLeft class="h-4 w-4" />
-			Voltar
-		</a>
-
 		{#if loading}
-			<div class="px-4 py-10 text-center text-sm text-surface-600-400">Carregando anúncio...</div>
+			<div class="space-y-4 px-4 py-4" role="status" aria-live="polite">
+				<span class="sr-only">Carregando anúncio...</span>
+				<div class="placeholder aspect-[16/10] w-full animate-pulse rounded-container"></div>
+				<div class="placeholder h-8 w-2/3 animate-pulse"></div>
+				<div class="placeholder h-6 w-1/3 animate-pulse"></div>
+			</div>
 		{:else if errorMessage}
-			<div class="mx-4 mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
+			<div class="mx-4 mt-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
+				<CircleAlert class="h-5 w-5 shrink-0" />
+				{errorMessage}
+			</div>
 		{:else if item}
-			<section class="mt-4 rounded-container bg-surface-50-950 p-4 shadow-sm">
-				{#if galleryImages.length > 0}
-					{#if galleryImages.length === 1}
-						<img
-							src={galleryImages[0]}
-							alt={item.title}
-							class="aspect-[16/10] w-full rounded-container object-cover"
-						/>
+			<div class="space-y-4 px-4 pt-3">
+				<!-- fotos -->
+				<section class="relative overflow-hidden rounded-container bg-surface-50-950 shadow-sm">
+					{#if galleryImages.length > 0}
+						{#if galleryImages.length === 1}
+							<img
+								src={galleryImages[0]}
+								alt={item.title}
+								class="aspect-[16/10] w-full object-cover"
+							/>
+						{:else}
+							<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto">
+								{#each galleryImages as imageUrl, index (imageUrl + index)}
+									<img
+										src={imageUrl}
+										alt={`${item.title} — imagem ${index + 1}`}
+										class="aspect-[16/10] w-[88%] shrink-0 snap-center object-cover first:rounded-r-container last:rounded-l-container"
+									/>
+								{/each}
+							</div>
+							<span class="badge absolute bottom-2 right-2 gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
+								<Images class="h-3.5 w-3.5" />
+								{galleryImages.length} fotos
+							</span>
+						{/if}
 					{:else}
-						<div class="hide-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-container">
-							{#each galleryImages as imageUrl, index (imageUrl + index)}
-								<img
-									src={imageUrl}
-									alt={`${item.title} — imagem ${index + 1}`}
-									class="aspect-[16/10] w-[85%] shrink-0 snap-center rounded-container object-cover"
-								/>
-							{/each}
+						<div class="flex aspect-[16/10] flex-col items-center justify-center gap-2 preset-tonal-primary text-sm font-medium">
+							<ImageOff class="h-10 w-10" strokeWidth={1.5} />
+							Sem foto
 						</div>
 					{/if}
-				{:else}
-					<div class="aspect-[16/10] rounded-container preset-tonal-primary"></div>
+
+					{#if TYPE_LABEL[item.type]}
+						<span class="badge absolute left-3 top-3 rounded-full preset-filled-primary-500 px-3 py-1 text-xs font-bold shadow-sm">
+							{TYPE_LABEL[item.type]}
+						</span>
+					{/if}
+				</section>
+
+				<!-- título, preço e ação principal -->
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+					<div class="flex items-start justify-between gap-3">
+						<h1 class="min-w-0 flex-1 preset-typo-headline">{item.title}</h1>
+						<FavoriteButton
+							productId={item.productId ?? null}
+							serviceId={item.serviceId ?? null}
+						/>
+					</div>
+
+					<p class="mt-3 preset-typo-label">Preço</p>
+					<p class="text-3xl font-bold leading-tight text-primary-700-300">{item.priceLabel}</p>
+
+					{#if isOwnListing}
+						<div class="mt-4 flex items-center gap-3 rounded-container preset-tonal-primary p-4 text-sm">
+							<CircleUser class="h-6 w-6 shrink-0" />
+							<div class="min-w-0 flex-1">
+								<p class="font-semibold">Este anúncio é seu.</p>
+								<a
+									href={resolve(page.params.tipo === 'servico' ? '/servicos' : '/inventario')}
+									class="anchor mt-1 inline-block font-medium text-primary-700-300"
+								>
+									<span>Gerenciar meus anúncios</span>
+								</a>
+							</div>
+						</div>
+					{:else if viewerChecked && !viewerId}
+						<!-- visitante: entra antes de escrever a proposta, para não perder o que digitou -->
+						<a
+							href={resolve(`/login?redirect=/anuncio/${page.params.tipo}/${page.params.id}`)}
+							class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
+						>
+							<LogIn size={18} />
+							<span>Entrar para negociar</span>
+						</a>
+					{:else}
+						<button
+							type="button"
+							onclick={() => (showNegotiationModal = true)}
+							class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
+						>
+							<Handshake size={18} />
+							<span>Negociar</span>
+						</button>
+					{/if}
+				</section>
+
+				{#if item.description}
+					<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+						<h2 class="preset-typo-title">Descrição</h2>
+						<p class="mt-2 whitespace-pre-line preset-typo-body-1 text-surface-900-100">{item.description}</p>
+					</section>
 				{/if}
 
-				<div class="mt-4 flex items-start justify-between gap-3">
-					<div class="min-w-0 flex-1">
-						<p class="text-3xl font-extrabold text-primary-700">{item.priceLabel}</p>
-						<h1 class="mt-2 text-3xl font-bold text-surface-950-50">{item.title}</h1>
-						{#if item.description}
-							<p class="mt-3 text-base leading-7 text-surface-600-400">{item.description}</p>
-						{/if}
-					</div>
-					<FavoriteButton
-						productId={item.productId ?? null}
-						serviceId={item.serviceId ?? null}
-					/>
-				</div>
-
-				<div class="mt-6 overflow-hidden rounded-container border border-surface-200-800">
-					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">
-						<h2 class="text-2xl font-semibold text-surface-950-50">Detalhes</h2>
-					</div>
-					<div class="divide-y divide-surface-200-800 px-4">
-						{#each item.details as detail (detail.label)}
-							<div class="grid grid-cols-2 gap-3 py-3 text-sm">
-								<p class="font-semibold text-surface-600-400">{detail.label}</p>
-								<p class="font-medium text-surface-950-50">{detail.value}</p>
-							</div>
-						{/each}
-					</div>
-				</div>
+				<AppAccordion title="Mais informações">
+					<table class="w-full border-separate border-spacing-0 text-base">
+						<caption class="sr-only">Detalhes do anúncio</caption>
+						<tbody>
+							{#each item.details as detail (detail.label)}
+								<tr class="odd:bg-surface-100-900">
+									<th
+										scope="row"
+										class="rounded-l-container px-4 py-3.5 text-left align-middle font-normal text-surface-950-50"
+									>
+										{detail.label}
+									</th>
+									<td
+										class="rounded-r-container px-4 py-3.5 text-right align-middle font-bold break-words text-surface-950-50"
+									>
+										{detail.value}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</AppAccordion>
 
 				<a
 					href={seller.id ? resolve(`/perfil/${seller.id}`) : '#'}
-					class="mt-6 flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 transition-colors hover:border-primary-300"
+					class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm transition-colors hover:border-primary-500"
 				>
 					{#if seller.avatarUrl}
 						<img src={seller.avatarUrl} alt={seller.name} class="h-14 w-14 rounded-full object-cover" />
 					{:else}
 						<div
-							class="flex h-14 w-14 items-center justify-center rounded-full preset-tonal-primary text-lg font-bold text-primary-700"
+							class="flex h-14 w-14 items-center justify-center rounded-full preset-tonal-primary text-lg font-bold"
 						>
 							{seller.name.slice(0, 1).toUpperCase()}
 						</div>
 					{/if}
 					<div class="min-w-0 flex-1">
-						<p class="text-sm font-semibold text-primary-700">Anunciante</p>
-						<p class="truncate text-xl font-semibold text-surface-950-50">{seller.name}</p>
+						<p class="text-primary-700-300 preset-typo-label">Anunciante</p>
+						<p class="truncate text-lg font-bold text-surface-950-50">{seller.name}</p>
 						<AppRating
 							value={sellerReviewStats.average}
 							count={sellerReviewStats.count}
 							size="sm"
 						/>
 					</div>
+					<ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300" />
 				</a>
 
-				{#if isOwnListing}
-					<div class="mt-6 rounded-container preset-tonal-primary p-4 text-sm">
-						<p class="font-semibold">Este anúncio é seu.</p>
-						<a
-							href={resolve(page.params.tipo === 'servico' ? '/servicos' : '/inventario')}
-							class="mt-1 inline-block font-medium underline"
-						>
-							Gerenciar meus anúncios
-						</a>
-					</div>
-				{:else if viewerChecked && !viewerId}
-					<!-- visitante: entra antes de escrever a proposta, para não perder o que digitou -->
-					<a
-						href={resolve(`/login?redirect=/anuncio/${page.params.tipo}/${page.params.id}`)}
-						class="mt-6 block w-full rounded-container preset-filled-primary-500 px-4 py-4 text-center text-lg font-semibold transition-colors"
-					>
-						Entrar para negociar
-					</a>
-				{:else}
-					<button
-						onclick={() => (showNegotiationModal = true)}
-						class="mt-6 w-full rounded-container preset-filled-primary-500 px-4 py-4 text-lg font-semibold transition-colors"
-					>
-						Negociar
-					</button>
-				{/if}
-
-				<div class="mt-8 overflow-hidden rounded-container border border-surface-200-800">
-					<div class="border-b border-surface-200-800 bg-surface-50-950 px-4 py-3">
-						<h2 class="text-lg font-semibold text-surface-950-50">Avaliações do anúncio</h2>
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm">
+					<div class="border-b border-surface-200-800 px-4 py-3">
+						<h2 class="preset-typo-title">Avaliações do anúncio</h2>
 						<div class="mt-1">
 							<AppRating
 								value={productReviewStats.average}
@@ -582,8 +617,8 @@
 							emptyDescription="Seja o primeiro a avaliar após uma negociação."
 						/>
 					</div>
-				</div>
-			</section>
+				</section>
+			</div>
 		{/if}
 	</main>
 

@@ -35,7 +35,7 @@
 		{#snippet children(datePicker)}
 			<DatePicker.Control class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<div>
-						<span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+						<span class="mb-1 block preset-typo-label">
 							{startLabel}
 						</span>
 						<div class="input-group grid-cols-[minmax(0,1fr)_auto]">
@@ -48,15 +48,15 @@
 							<button
 								type="button"
 								onclick={() => datePicker().setOpen(true)}
-								class="ig-btn preset-tonal px-3 text-surface-700-300"
+								class="ig-btn preset-tonal px-3 text-surface-900-100"
 								aria-label="Abrir calendário para a data inicial"
 							>
-								<CalendarDays class="size-4" />
+								<CalendarDays size={18} />
 							</button>
 						</div>
 					</div>
 					<div>
-						<span class="mb-1 block text-xs font-semibold uppercase tracking-wider text-surface-700-300">
+						<span class="mb-1 block preset-typo-label">
 							{endLabel}
 						</span>
 						<div class="input-group grid-cols-[minmax(0,1fr)_auto]">
@@ -69,10 +69,10 @@
 							<button
 								type="button"
 								onclick={() => datePicker().setOpen(true)}
-								class="ig-btn preset-tonal px-3 text-surface-700-300"
+								class="ig-btn preset-tonal px-3 text-surface-900-100"
 								aria-label="Abrir calendário para a data final"
 							>
-								<CalendarDays class="size-4" />
+								<CalendarDays size={18} />
 							</button>
 						</div>
 					</div>
@@ -87,19 +87,19 @@
 					<DatePicker.Context>
 						{#snippet children(datePicker)}
 							<DatePicker.ViewControl class="mb-3 flex items-center justify-between">
-								<DatePicker.PrevTrigger class="rounded-full p-2 text-surface-700-300 hover:preset-tonal" aria-label="Mês anterior">
-									<ChevronLeft class="size-4" />
+								<DatePicker.PrevTrigger class="btn-icon preset-tonal" title="Mês anterior" aria-label="Mês anterior">
+									<ChevronLeft size={18} />
 								</DatePicker.PrevTrigger>
 								<DatePicker.RangeText class="text-sm font-semibold text-surface-950-50" />
-								<DatePicker.NextTrigger class="rounded-full p-2 text-surface-700-300 hover:preset-tonal" aria-label="Próximo mês">
-									<ChevronRight class="size-4" />
+								<DatePicker.NextTrigger class="btn-icon preset-tonal" title="Próximo mês" aria-label="Próximo mês">
+									<ChevronRight size={18} />
 								</DatePicker.NextTrigger>
 							</DatePicker.ViewControl>
 							<DatePicker.Table class="w-full table-fixed border-collapse">
 								<DatePicker.TableHead>
 									<DatePicker.TableRow>
 										{#each datePicker().weekDays as weekDay, id (id)}
-											<DatePicker.TableHeader class="pb-2 text-center text-xs font-medium text-surface-700-300">
+											<DatePicker.TableHeader class="pb-2 text-center text-xs font-medium text-surface-900-100">
 												{weekDay.narrow}
 											</DatePicker.TableHeader>
 										{/each}
@@ -111,7 +111,7 @@
 											{#each week as day, dayId (dayId)}
 												<DatePicker.TableCell value={day} class="p-0.5">
 													<DatePicker.TableCellTrigger
-														class="flex size-9 w-full items-center justify-center rounded-container text-sm text-surface-700-300 hover:preset-tonal data-[selected]:preset-filled-primary-500 data-[in-range]:preset-tonal-primary data-[outside-range]:opacity-40"
+														class="flex size-9 w-full items-center justify-center rounded-container text-sm text-surface-900-100 hover:preset-tonal data-[selected]:preset-filled-primary-500 data-[in-range]:preset-tonal-primary data-[outside-range]:opacity-40"
 													>
 														{day.day}
 													</DatePicker.TableCellTrigger>

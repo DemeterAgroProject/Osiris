@@ -15,10 +15,10 @@
 
 	const confirmButtonClass = $derived(
 		variant === 'danger'
-			? 'preset-filled-error-500 focus:ring-error-500/30'
+			? 'preset-filled-error-500'
 			: variant === 'warning'
-				? 'preset-filled-warning-500 focus:ring-warning-500/30'
-				: 'preset-filled-primary-500 focus:ring-primary-500/30'
+				? 'preset-filled-warning-500'
+				: 'preset-filled-primary-500'
 	);
 
 	function handleCancel() {
@@ -47,7 +47,7 @@
 				type="button"
 				onclick={handleCancel}
 				disabled={loading}
-				class="btn min-h-11 w-full preset-outlined-surface-500 disabled:opacity-50"
+				class="btn btn-lg preset-tonal w-full"
 			>
 				{cancelLabel}
 			</button>
@@ -55,9 +55,9 @@
 				type="button"
 				onclick={handleConfirm}
 				disabled={loading}
-				class="btn min-h-11 w-full font-semibold focus:ring-2 focus:ring-offset-1 disabled:opacity-60 {confirmButtonClass}"
+				class="btn btn-lg w-full {confirmButtonClass}"
 			>
-				{loading ? 'Aguarde...' : confirmLabel}
+				<span>{loading ? 'Aguarde...' : confirmLabel}</span>
 			</button>
 		</div>
 	{/snippet}

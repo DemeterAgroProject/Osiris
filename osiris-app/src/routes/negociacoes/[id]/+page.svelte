@@ -2,10 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ChevronLeft, CheckCircle2, XCircle } from 'lucide-svelte';
+	import { ArrowRight, CalendarDays, Check, CheckCircle2, CircleAlert, FileText, MessagesSquare, Package, Quote, SlidersHorizontal, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
+	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { showToast } from '$lib/components/ui/toast.js';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
@@ -126,6 +127,19 @@
 	let actionLoading = $state(false);
 	let showAcceptDialog = $state(false);
 	let showRejectDialog = $state(false);
+	// gaveta com os detalhes da proposta (celular)
+	let detailsOpen = $state(false);
+
+	// fecha a gaveta antes de abrir a confirmação, para não empilhar dois diálogos
+	function openAccept() {
+		detailsOpen = false;
+		showAcceptDialog = true;
+	}
+
+	function openReject() {
+		detailsOpen = false;
+		showRejectDialog = true;
+	}
 	let editPrice = $state('');
 	let editStart = $state('');
 	let editEnd = $state('');
@@ -134,6 +148,33 @@
 	const isProvider = $derived(authUserId && negotiation?.provider_id === authUserId);
 	const canManage = $derived(isNegotiationOpen(negotiation?.status));
 	const chatDisabled = $derived(!canManage);
+
+	// o NegotiationPropose grava a quantidade no fim da mensagem ("Quantidade solicitada: N")
+	const QUANTITY_PATTERN = /\s*Quantidade solicitada:\s*([^\n]+?)\s*$/;
+	const proposalQuantityRaw = $derived(negotiation?.message?.match(QUANTITY_PATTERN)?.[1] ?? '');
+	const proposalQuantity = $derived(
+		proposalQuantityRaw
+			? `${proposalQuantityRaw} ${(negotiation?.products?.stock_unit ?? '').toLowerCase()}`.trim()
+			: ''
+	);
+	const proposalMessage = $derived((negotiation?.message ?? '').replace(QUANTITY_PATTERN, '').trim());
+	// valor de cada unidade, só quando a proposta pede mais de uma
+	const unitPriceLabel = $derived.by(() => {
+		const quantity = Number(proposalQuantityRaw.replace(',', '.'));
+		const price = Number(negotiation?.proposed_price);
+		if (!(quantity > 1) || !(price > 0)) return '';
+		return `${formatCurrency(price / quantity)} cada`;
+	});
+	const proposalSentLabel = $derived.by(() => {
+		const sent = negotiation?.created_at ? new Date(negotiation.created_at) : null;
+		if (!sent || Number.isNaN(sent.getTime())) return '';
+		const time = sent.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+		const day =
+			sent.toDateString() === new Date().toDateString()
+				? 'hoje'
+				: `em ${sent.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+		return `Enviada ${day} às ${time}`;
+	});
 
 	function statusBadgeClass(tone) {
 		const map = {
@@ -150,6 +191,9 @@
 		const profile = isProvider ? negotiation?.client : negotiation?.provider;
 		return profile?.display_name || 'Participante';
 	}
+
+	// foto que não carregou (link quebrado): mostra a inicial no lugar
+	let failedPhoto = $state(null);
 
 	function counterpartyPhoto() {
 		const profile = isProvider ? negotiation?.client : negotiation?.provider;
@@ -171,7 +215,7 @@
 			row.product_id
 				? supabase
 						.from('products')
-						.select('id, name, category, owner_id')
+						.select('id, name, category, owner_id, stock_unit')
 						.eq('id', row.product_id)
 						.maybeSingle()
 						.then((r) => r.data)
@@ -378,180 +422,337 @@
 	<title>Negociação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface-50-950 pb-24">
-	<Header />
+{#snippet statusBadge()}
+	<span
+		class="badge shrink-0 gap-1.5 rounded-full px-2.5 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(
+			negotiationStatusTone(negotiation.status)
+		)}"
+	>
+		<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+		{negotiationStatusLabel(negotiation.status)}
+	</span>
+{/snippet}
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
-		<a
-			href={resolve('/negociacoes')}
-			class="inline-flex items-center gap-1 text-sm font-medium text-surface-600-400 hover:text-primary-700"
+{#snippet decisionButtons()}
+	<div class="grid grid-cols-2 gap-3">
+		<button
+			type="button"
+			onclick={openReject}
+			disabled={actionLoading}
+			class="btn btn-lg preset-tonal-error w-full"
 		>
-			<ChevronLeft class="h-4 w-4" />
-			Voltar
-		</a>
+			<XCircle size={18} />
+			<span>Recusar</span>
+		</button>
+		<button
+			type="button"
+			onclick={openAccept}
+			disabled={actionLoading}
+			class="btn btn-lg preset-filled-primary-500 w-full"
+		>
+			<CheckCircle2 size={18} />
+			<span>Aceitar</span>
+		</button>
+	</div>
+{/snippet}
 
-		{#if loading}
-			<div class="flex justify-center py-16">
-				<div
-					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-				></div>
+<!-- detalhes completos: coluna da esquerda no computador, gaveta no celular -->
+{#snippet details(idPrefix)}
+	<div class="space-y-4">
+		{#if negotiation.status === 'aceita'}
+			<div class="flex items-center gap-3 rounded-container preset-tonal-success p-4">
+				<CheckCircle2 class="h-8 w-8 shrink-0" />
+				<div class="min-w-0 flex-1">
+					<p class="preset-typo-label text-inherit">Negociação concluída</p>
+					<p class="text-base font-bold">Proposta aceita</p>
+				</div>
 			</div>
-		{:else if errorMessage && !negotiation}
-			<div class="mt-4 rounded-container preset-tonal-error p-4 text-sm">{errorMessage}</div>
-		{:else if negotiation}
-			{#if errorMessage}
-				<p class="mt-3 text-sm text-error-500">{errorMessage}</p>
+		{/if}
+
+		<section class="space-y-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			{#if negotiation.coverUrl}
+				<img
+					src={negotiation.coverUrl}
+					alt={resolveListingTitle(negotiation)}
+					class="aspect-[16/9] w-full rounded-container object-cover"
+				/>
 			{/if}
 
-			<div class="mt-4 grid gap-6 md:grid-cols-2 md:items-start">
-				<div class="space-y-4">
-					<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-						{#if negotiation.coverUrl}
-							<img
-								src={negotiation.coverUrl}
-								alt={resolveListingTitle(negotiation)}
-								class="mb-4 aspect-[16/10] w-full rounded-container object-cover"
-							/>
-						{/if}
-						<div class="flex items-start justify-between gap-3">
-							<div class="flex min-w-0 items-start gap-3">
-								{#if counterpartyPhoto()}
-									<img
-										src={counterpartyPhoto()}
-										alt={counterpartyName()}
-										class="h-10 w-10 shrink-0 rounded-full object-cover"
-									/>
-								{/if}
-								<div class="min-w-0">
-									{#if listingHref(negotiation)}
-										<a
-											href={resolve(listingHref(negotiation))}
-											class="text-xl font-bold text-surface-950-50 hover:text-primary-700"
-										>
-											{resolveListingTitle(negotiation)}
-										</a>
-									{:else}
-										<h1 class="text-xl font-bold text-surface-950-50">{resolveListingTitle(negotiation)}</h1>
-									{/if}
-									<p class="mt-1 text-sm text-surface-600-400">
-										{isProvider ? 'Cliente' : 'Anunciante'}: {counterpartyName()}
-									</p>
-								</div>
-							</div>
-							<span
-								class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {statusBadgeClass(
-									negotiationStatusTone(negotiation.status)
-								)}"
-							>
-								{negotiationStatusLabel(negotiation.status)}
-							</span>
-						</div>
+		<!-- cabeçalho da proposta -->
+		<header class="space-y-3">
+			<div class="flex items-center justify-between gap-3">
+				<p class="preset-typo-label text-primary-700-300">
+					{isProvider ? 'Proposta recebida' : 'Proposta enviada'}
+				</p>
+				{@render statusBadge()}
+			</div>
 
-						<dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-							<div>
-								<dt class="text-xs text-surface-600-400">Valor proposto</dt>
-								<dd class="font-semibold text-primary-700">
-									{formatCurrency(negotiation.proposed_price)}
-								</dd>
-							</div>
-							{#if negotiation.proposed_start_date}
-								<div class="col-span-2">
-									<dt class="text-xs text-surface-600-400">Período</dt>
-									<dd class="font-medium text-surface-950-50">
-										{formatDbDate(negotiation.proposed_start_date)} — {formatDbDate(
-											negotiation.proposed_end_date
-										)}
-									</dd>
-								</div>
-							{/if}
-						</dl>
+			{#if listingHref(negotiation)}
+				<a
+					href={resolve(listingHref(negotiation))}
+					class="block preset-typo-headline hover:text-primary-700-300"
+				>
+					{resolveListingTitle(negotiation)}
+				</a>
+			{:else}
+				<p class="preset-typo-headline">{resolveListingTitle(negotiation)}</p>
+			{/if}
 
-						{#if negotiation.message && canManage}
-							<p class="mt-3 rounded-container bg-surface-50-950 p-3 text-sm text-surface-600-400 whitespace-pre-wrap">
-								{negotiation.message}
-							</p>
-						{/if}
-					</div>
+			<div class="flex items-center gap-3">
+				{#if counterpartyPhoto() && counterpartyPhoto() !== failedPhoto}
+					<img
+						src={counterpartyPhoto()}
+						alt={counterpartyName()}
+						class="h-12 w-12 shrink-0 rounded-full object-cover"
+						onerror={() => (failedPhoto = counterpartyPhoto())}
+					/>
+				{:else}
+					<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full preset-tonal-primary text-lg font-bold">
+						{counterpartyName().slice(0, 1).toUpperCase()}
+					</span>
+				{/if}
+				<div class="min-w-0">
+					<p class="preset-typo-caption">{isProvider ? 'Cliente' : 'Anunciante'}</p>
+					<p class="truncate text-base font-semibold text-surface-950-50">{counterpartyName()}</p>
+				</div>
+			</div>
+		</header>
 
-					{#if isProvider && canManage}
-						<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-							<h2 class="text-sm font-bold text-surface-950-50">Ajustar termos</h2>
-							<p class="mt-1 text-xs text-surface-600-400">Altere preço e datas da proposta.</p>
-							<div class="mt-3 space-y-3">
-								<input
-									type="text"
-									bind:value={editPrice}
-									class="w-full rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
-									placeholder="Valor final"
-								/>
-								<div class="grid grid-cols-2 gap-2">
-									<input
-										type="date"
-										bind:value={editStart}
-										class="rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
-									/>
-									<input
-										type="date"
-										bind:value={editEnd}
-										class="rounded-container border border-surface-200-800 px-3 py-2.5 text-sm"
-									/>
-								</div>
-								<button
-									type="button"
-									onclick={saveProposalEdits}
-									disabled={actionLoading}
-									class="w-full rounded-container border border-primary-500 preset-tonal-primary py-2.5 text-sm font-semibold disabled:opacity-60"
-								>
-									Salvar ajustes
-								</button>
-							</div>
-						</div>
+		<!-- valor e condições -->
+		<section class="overflow-hidden rounded-container border border-primary-500/20 bg-primary-500/5" aria-label="Valor proposto">
+			<div class="p-4">
+				<div class="flex items-center justify-between gap-2">
+					<p class="preset-typo-label">Valor proposto</p>
+					{#if unitPriceLabel}
+						<span class="badge rounded-full preset-tonal-primary px-2.5 py-1 text-xs font-semibold">{unitPriceLabel}</span>
+					{/if}
+				</div>
+				<p class="mt-1 text-3xl font-bold leading-tight text-primary-700-300">
+					{formatCurrency(negotiation.proposed_price)}
+				</p>
+			</div>
 
-						<div class="grid grid-cols-2 gap-3">
-							<button
-								type="button"
-								onclick={() => (showRejectDialog = true)}
-								disabled={actionLoading}
-								class="inline-flex items-center justify-center gap-2 rounded-container border border-error-500 bg-surface-50-950 py-3 text-sm font-semibold text-error-500 hover:preset-tonal-error"
-							>
-								<XCircle class="h-4 w-4" />
-								Recusar
-							</button>
-							<button
-								type="button"
-								onclick={() => (showAcceptDialog = true)}
-								disabled={actionLoading}
-								class="inline-flex items-center justify-center gap-2 rounded-container preset-filled-primary-500 py-3 text-sm font-semibold"
-							>
-								<CheckCircle2 class="h-4 w-4" />
-								Aceitar proposta
-							</button>
+			{#if proposalQuantity || negotiation.proposed_start_date}
+				<dl class="divide-y divide-primary-500/15 border-t border-primary-500/15 text-sm">
+					{#if proposalQuantity}
+						<div class="flex items-center justify-between gap-3 px-4 py-3">
+							<dt class="flex items-center gap-2 text-surface-800-200">
+								<Package class="h-4 w-4 shrink-0" />
+								Quantidade solicitada
+							</dt>
+							<dd class="text-right font-bold text-surface-950-50">{proposalQuantity}</dd>
 						</div>
 					{/if}
+					{#if negotiation.proposed_start_date}
+						<div class="flex items-center justify-between gap-3 px-4 py-3">
+							<dt class="flex items-center gap-2 text-surface-800-200">
+								<CalendarDays class="h-4 w-4 shrink-0" />
+								Período
+							</dt>
+							<dd class="text-right font-bold text-surface-950-50">
+								{formatDbDate(negotiation.proposed_start_date)} a {formatDbDate(negotiation.proposed_end_date)}
+							</dd>
+						</div>
+					{/if}
+				</dl>
+			{/if}
+		</section>
 
-					{#if negotiation.status === 'aceita' && linkedBooking}
-						<a
-							href={resolve(`/operacoes/${linkedBooking.id}`)}
-							class="block rounded-container preset-filled-primary-500 px-4 py-3 text-center text-sm font-semibold"
+		<!-- mensagem enviada com a proposta -->
+		{#if proposalMessage && canManage}
+			<figure class="rounded-container bg-surface-100-900 p-4">
+				<div class="flex gap-3">
+					<Quote class="h-6 w-6 shrink-0 fill-current text-primary-500/60" />
+					<blockquote class="min-w-0 whitespace-pre-wrap text-base italic text-surface-950-50 [overflow-wrap:anywhere]">
+						“{proposalMessage}”
+					</blockquote>
+				</div>
+				{#if proposalSentLabel}
+					<figcaption class="mt-2 pl-9 preset-typo-caption">{proposalSentLabel}</figcaption>
+				{/if}
+			</figure>
+		{/if}
+
+		{#if negotiation.status === 'aceita' && linkedBooking}
+			<a
+				href={resolve(`/operacoes/${linkedBooking.id}`)}
+				class="btn btn-lg preset-filled-primary-500 w-full"
+			>
+				<span>Ver operação</span>
+				<ArrowRight size={18} />
+			</a>
+		{/if}
+
+		</section>
+
+		{#if isProvider && canManage}
+			<section class="space-y-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm" aria-labelledby="{idPrefix}-ajustar">
+				<div class="flex items-start gap-3">
+					<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container preset-tonal-surface">
+						<SlidersHorizontal class="h-5 w-5" />
+					</span>
+					<div>
+						<h2 id="{idPrefix}-ajustar" class="preset-typo-title">Ajustar termos</h2>
+						<p class="preset-typo-subtitle">Altere o valor ou as datas da proposta.</p>
+					</div>
+				</div>
+				<div>
+					<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-price">Valor (R$)</label>
+					<input
+						id="{idPrefix}-edit-price"
+						type="text"
+						inputmode="decimal"
+						bind:value={editPrice}
+						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base font-semibold"
+						placeholder="Ex: 2.000,00"
+					/>
+				</div>
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-start">Início</label>
+						<input
+							id="{idPrefix}-edit-start"
+							type="date"
+							bind:value={editStart}
+							class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-sm"
+						/>
+					</div>
+					<div>
+						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-end">Término</label>
+						<input
+							id="{idPrefix}-edit-end"
+							type="date"
+							bind:value={editEnd}
+							class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-sm"
+						/>
+					</div>
+				</div>
+				<button
+					type="button"
+					onclick={saveProposalEdits}
+					disabled={actionLoading}
+					class="btn btn-lg preset-tonal-primary w-full"
+				>
+					<Check size={18} />
+					<span>Salvar ajustes</span>
+				</button>
+			</section>
+
+			{@render decisionButtons()}
+		{/if}
+	</div>
+{/snippet}
+
+<!--
+	Celular: a tela inteira é do chat (altura da janela, sem a barra inferior),
+	com um resumo da proposta no topo e os detalhes numa gaveta.
+	Computador (md+): duas colunas, detalhes à esquerda e chat à direita.
+-->
+<div class="flex h-dvh flex-col md:block md:h-auto md:min-h-screen md:pb-24">
+	<Header title="Negociação" backHref="/negociacoes" />
+
+	<main class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col md:block md:px-4 md:py-4">
+		{#if loading}
+			<div class="space-y-4 p-4 md:p-0" role="status" aria-live="polite">
+				<span class="sr-only">Carregando negociação...</span>
+				<div class="placeholder h-24 w-full animate-pulse rounded-container"></div>
+				<div class="placeholder h-64 w-full animate-pulse rounded-container"></div>
+			</div>
+		{:else if errorMessage && !negotiation}
+			<div class="m-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm md:m-0">
+				<CircleAlert class="h-5 w-5 shrink-0" />
+				{errorMessage}
+			</div>
+		{:else if negotiation}
+			<h1 class="sr-only">Negociação: {resolveListingTitle(negotiation)}</h1>
+
+			{#if errorMessage}
+				<div class="mx-4 mt-3 flex shrink-0 items-start gap-2 rounded-container preset-tonal-error p-3 text-sm md:mx-0 md:mb-3 md:mt-0">
+					<CircleAlert class="h-5 w-5 shrink-0" />
+					{errorMessage}
+				</div>
+			{/if}
+
+			<!-- resumo da proposta (só no celular) -->
+			<section class="shrink-0 border-b border-surface-200-800 bg-surface-50-950 px-4 py-3 md:hidden" aria-label="Resumo da proposta">
+				<div class="flex items-center gap-3">
+					<div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary">
+						{#if negotiation.coverUrl}
+							<img src={negotiation.coverUrl} alt="" class="h-full w-full object-cover" />
+						{:else}
+							<span class="text-lg font-bold">{counterpartyName().slice(0, 1).toUpperCase()}</span>
+						{/if}
+					</div>
+					<div class="min-w-0 flex-1">
+						<p class="truncate preset-typo-card-title">{resolveListingTitle(negotiation)}</p>
+						<p class="truncate text-sm text-surface-800-200">
+							<span class="font-bold text-primary-700-300">{formatCurrency(negotiation.proposed_price)}</span>
+							{#if negotiation.proposed_start_date}
+								· {formatDbDate(negotiation.proposed_start_date)} a {formatDbDate(negotiation.proposed_end_date)}
+							{/if}
+						</p>
+						<p class="truncate text-xs text-surface-800-200">
+							{isProvider ? 'Cliente' : 'Anunciante'}: <span class="font-semibold">{counterpartyName()}</span>
+						</p>
+					</div>
+					{@render statusBadge()}
+				</div>
+
+				<div class="mt-3 flex gap-2">
+					<button type="button" onclick={() => (detailsOpen = true)} class="btn preset-tonal min-w-0 flex-1">
+						<FileText size={18} />
+						<span class="truncate">Detalhes</span>
+					</button>
+					{#if isProvider && canManage}
+						<button
+							type="button"
+							onclick={openAccept}
+							disabled={actionLoading}
+							class="btn preset-filled-primary-500 min-w-0 flex-1"
 						>
-							Ver operação
+							<CheckCircle2 size={18} />
+							<span class="truncate">Aceitar</span>
+						</button>
+					{:else if negotiation.status === 'aceita' && linkedBooking}
+						<a href={resolve(`/operacoes/${linkedBooking.id}`)} class="btn preset-filled-primary-500 flex-1">
+							<span>Ver operação</span>
+							<ArrowRight size={18} />
 						</a>
 					{/if}
 				</div>
+			</section>
 
-				<div>
-					<h2 class="mb-2 text-sm font-bold text-surface-950-50">Chat</h2>
+			<div class="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2 md:items-start md:gap-4">
+				<aside class="hidden md:block" aria-label="Detalhes da proposta">
+					{@render details('lado')}
+				</aside>
+
+				<section
+					class="flex min-h-0 flex-1 flex-col md:block md:rounded-container md:border md:border-surface-200-800 md:bg-surface-50-950 md:p-4 md:shadow-sm"
+					aria-label="Conversa"
+				>
+					<h2 class="mb-3 hidden items-center gap-2 preset-typo-title md:flex">
+						<MessagesSquare class="h-5 w-5 text-primary-700-300" />
+						Conversa com {isProvider ? 'o cliente' : 'o anunciante'}
+					</h2>
 					<NegotiationChat
 						negotiationId={negotiation.id}
 						currentUserId={authUserId}
 						providerId={negotiation.provider_id}
 						disabled={chatDisabled}
 						onProviderMessage={handleProviderMessage}
+						fillOnMobile
 					/>
-				</div>
+				</section>
 			</div>
 		{/if}
 	</main>
+
+	{#if negotiation}
+		<AppDialog bind:open={detailsOpen} title="Detalhes da proposta" variant="sheet" size="md" closeLabel="Fechar detalhes">
+			{@render details('gaveta')}
+		</AppDialog>
+	{/if}
 
 	<AppConfirmDialog
 		bind:open={showAcceptDialog}
@@ -575,5 +776,8 @@
 		oncancel={() => (showRejectDialog = false)}
 	/>
 
-	<BottomNav active="mais" />
+	<!-- no celular a barra inferior sai para o chat ter a tela toda; voltar fica no cabeçalho -->
+	<div class="hidden md:block">
+		<BottomNav active="mais" />
+	</div>
 </div>

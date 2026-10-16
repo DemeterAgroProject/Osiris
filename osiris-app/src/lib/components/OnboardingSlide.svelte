@@ -7,14 +7,14 @@
 		<img
 			src={imageSrc}
 			alt={imageAlt || title}
-			class="max-h-[min(42vh,320px)] w-full max-w-xs object-contain  sm:max-w-sm"
+			class="max-h-[min(42vh,320px)] w-full max-w-xs object-contain sm:max-w-sm"
 			loading="lazy"
 			decoding="async"
 		/>
 	</div>
 
 	<div class="shrink-0 px-6 pb-2 text-center">
-		<h1 class="text-2xl font-bold tracking-tight text-surface-950-50 sm:text-3xl">{title}</h1>
-		<p class="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-surface-700-300 sm:text-base">{description}</p>
+		<h1 class="preset-typo-headline">{title}</h1>
+		<p class="mx-auto mt-3 max-w-sm preset-typo-body-1 text-surface-900-100">{description}</p>
 	</div>
 </div>
