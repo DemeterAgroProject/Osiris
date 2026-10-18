@@ -26,10 +26,10 @@
 
     const frameClass = $derived(
         fillOnMobile
-            ? 'min-h-0 flex-1 md:min-h-[280px] md:flex-none md:rounded-container md:border md:border-surface-200-800'
+            ? 'min-h-0 flex-1 md:min-h-[280px] md:flex-none md:rounded-container md:border md:border-surface-200-800 lg:min-h-0 lg:flex-1'
             : 'min-h-[280px] rounded-container border border-surface-200-800'
     );
-    const listClass = $derived(fillOnMobile ? 'min-h-0 p-4 md:max-h-[60vh] md:p-3' : 'max-h-[50vh] p-3');
+    const listClass = $derived(fillOnMobile ? 'min-h-0 p-4 md:max-h-[60vh] md:p-3 lg:max-h-none lg:p-4' : 'max-h-[50vh] p-3');
 
     let messages = $state([]);
     let draft = $state('');
