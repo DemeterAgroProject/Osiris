@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Send } from 'lucide-svelte';
+	import { Handshake, Send } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
@@ -164,22 +164,27 @@
 	title="Fazer proposta"
 	description="Envie para {sellerName}"
 	variant="sheet"
-	size="lg"
+	size="md"
 	dismissible={!sending}
 	onclose={resetForm}
 >
-	<div class="rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3">
-		<p class="line-clamp-1 text-sm font-semibold text-surface-950-50">{title}</p>
-		<p class="text-sm font-bold text-primary-700">{priceLabel}</p>
+	<div class="flex items-center gap-3 rounded-container border border-primary-500/20 bg-primary-500/5 px-4 py-3">
+		<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-container preset-tonal-primary">
+			<Handshake size={22} />
+		</span>
+		<div class="min-w-0">
+			<p class="line-clamp-2 preset-typo-card-title">{title}</p>
+			<p class="text-base font-bold text-primary-700-300">{priceLabel}</p>
+		</div>
 	</div>
 
-	<form id="negotiation-propose-form" class="mt-4 space-y-3" onsubmit={handleSubmit}>
+	<form id="negotiation-propose-form" class="mt-5 space-y-4" onsubmit={handleSubmit}>
 		{#if requiresDates}
 			<div class="grid grid-cols-2 gap-3">
 				<div>
 					<label
 						for="startDate"
-						class="mb-1 block preset-typo-label"
+						class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 					>
 						Início
 					</label>
@@ -187,13 +192,13 @@
 						id="startDate"
 						type="date"
 						bind:value={startDate}
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 				<div>
 					<label
 						for="endDate"
-						class="mb-1 block preset-typo-label"
+						class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 					>
 						Fim
 					</label>
@@ -201,7 +206,7 @@
 						id="endDate"
 						type="date"
 						bind:value={endDate}
-						class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 			</div>
@@ -210,7 +215,7 @@
 		<div>
 			<label
 				for="proposalValue"
-				class="mb-1 block preset-typo-label"
+				class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 			>
 				Valor proposto
 			</label>
@@ -219,7 +224,7 @@
 				type="text"
 				bind:value={proposalValue}
 				placeholder="Ex: 1.500,00"
-				class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
 			/>
 		</div>
@@ -228,7 +233,7 @@
 			<div>
 				<label
 					for="quantity"
-					class="mb-1 block preset-typo-label"
+					class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 				>
 					Quantidade
 				</label>
@@ -238,7 +243,7 @@
 					min="1"
 					step="1"
 					bind:value={quantity}
-					class="w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+					class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
 		{/if}
@@ -246,7 +251,7 @@
 		<div>
 			<label
 				for="message"
-				class="mb-1 block preset-typo-label"
+				class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 			>
 				Mensagem
 			</label>
@@ -255,7 +260,7 @@
 				rows="4"
 				bind:value={message}
 				placeholder="Ex: preciso para a colheita, entrega na fazenda..."
-				class="w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+				class="textarea w-full resize-none rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			></textarea>
 		</div>
 
