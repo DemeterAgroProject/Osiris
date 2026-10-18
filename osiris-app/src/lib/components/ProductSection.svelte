@@ -37,12 +37,12 @@
 		</div>
 
 		<div
-			class="hide-scrollbar mt-3 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:px-6 lg:px-8"
+			class="hide-scrollbar mt-3 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:px-6 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-8"
 			role="list"
 			aria-label={title}
 		>
 			{#each visibleProducts as product (product.id)}
-				<div class="w-44 shrink-0 snap-start sm:w-52" role="listitem">
+				<div class="w-44 shrink-0 snap-start sm:w-52 lg:w-auto" role="listitem">
 					<ProductCard {...product} />
 				</div>
 			{/each}

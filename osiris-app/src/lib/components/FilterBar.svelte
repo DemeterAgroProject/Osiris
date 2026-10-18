@@ -1,7 +1,9 @@
 <script>
+	import { untrack } from 'svelte';
 	import { SlidersHorizontal, Check, ChevronDown, Eraser } from 'lucide-svelte';
 	import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
+	import AppAccordion from '$lib/components/ui/AppAccordion.svelte';
 
 	function createDefaultMarketplaceFilters() {
 		return {
@@ -29,10 +31,16 @@
 		};
 	}
 
+	/**
+	 * variant 'bar': botão "Filtros" + atalhos de tipo (celular); os campos abrem numa gaveta.
+	 * 'sidebar': os mesmos campos fixos numa coluna lateral (computador).
+	 * 'chips': só os atalhos de tipo (acima dos resultados, no computador).
+	 */
 	let {
 		filters = $bindable(createDefaultMarketplaceFilters()),
 		locations = [],
-		resultCount = null
+		resultCount = null,
+		variant = 'bar'
 	} = $props();
 
 	const listingTypeOptions = [
@@ -115,6 +123,16 @@
 		isOpen = false;
 	}
 
+	// na lateral o rascunho acompanha o filtro aplicado (ex.: um atalho de tipo tocado acima dos resultados)
+	$effect(() => {
+		if (variant === 'sidebar') draft = cloneFilters(filters);
+	});
+
+	function clearAndApply() {
+		draft = createDefaultMarketplaceFilters();
+		applyFilters();
+	}
+
 	const quickTypeOptions = [{ id: '', label: 'Todos' }, ...listingTypeOptions];
 
 	function isQuickTypeSelected(id) {
@@ -126,6 +144,28 @@
 		filters = { ...cloneFilters(filters), listingTypes: id ? [id] : [] };
 	}
 
+	// quantos filtros estão marcados em cada grupo (selo no título do accordion)
+	function groupCount(group) {
+		switch (group) {
+			case 'tipo':
+				return draft.listingTypes.length;
+			case 'produtos':
+				return draft.productKinds.length;
+			case 'servicos':
+				return draft.serviceKinds.length;
+			case 'maoDeObra':
+				return draft.laborKinds.length;
+			case 'localidade':
+				return draft.location ? 1 : 0;
+			case 'ordenacao':
+				return draft.sort !== 'recentes' ? 1 : 0;
+			case 'preco':
+				return draft.minPrice || draft.maxPrice ? 1 : 0;
+			default:
+				return 0;
+		}
+	}
+
 	function updateDraftArray(key, values) {
 		draft = { ...draft, [key]: values };
 	}
@@ -135,6 +175,29 @@
 	}
 </script>
 
+{#snippet typeChips()}
+<!-- atalho para o filtro "Tipo de anúncio": um toque troca o tipo mostrado -->
+<div class="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Tipo de anúncio">
+	{#each quickTypeOptions as option (option.id)}
+		{@const selected = isQuickTypeSelected(option.id)}
+		<button
+			type="button"
+			onclick={() => selectQuickType(option.id)}
+			aria-pressed={selected}
+			class="btn shrink-0 rounded-full {selected
+				? 'preset-filled-primary-500'
+				: 'preset-outlined-surface-200-800 bg-surface-50-950'}"
+		>
+			{#if selected}
+				<Check size={18} />
+			{/if}
+			<span>{option.label}</span>
+		</button>
+	{/each}
+</div>
+{/snippet}
+
+{#if variant === 'bar'}
 <div class="mx-auto w-full max-w-7xl space-y-3 px-4 pb-3 pt-1 sm:px-6 lg:px-8">
 	<div class="flex items-center gap-2">
 		<button
@@ -158,25 +221,7 @@
 		{/if}
 	</div>
 
-	<!-- atalho para o filtro "Tipo de anúncio": um toque troca o tipo mostrado -->
-	<div class="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Tipo de anúncio">
-		{#each quickTypeOptions as option (option.id)}
-			{@const selected = isQuickTypeSelected(option.id)}
-			<button
-				type="button"
-				onclick={() => selectQuickType(option.id)}
-				aria-pressed={selected}
-				class="btn shrink-0 rounded-full {selected
-					? 'preset-filled-primary-500'
-					: 'preset-outlined-surface-200-800 bg-surface-50-950'}"
-			>
-				{#if selected}
-					<Check size={18} />
-				{/if}
-				<span>{option.label}</span>
-			</button>
-		{/each}
-	</div>
+	{@render typeChips()}
 
 	{#if activeLabels.length > 0}
 		<div class="flex flex-wrap gap-1.5">
@@ -188,6 +233,109 @@
 		</div>
 	{/if}
 </div>
+{:else if variant === 'chips'}
+	{@render typeChips()}
+{/if}
+
+{#snippet toggleOptions(key, options)}
+	<!-- caixinhas do tamanho do texto, sem quebrar; o que não couber desce para a linha de baixo -->
+	<ToggleGroup
+		multiple
+		value={draft[key]}
+		onValueChange={(details) => updateDraftArray(key, details.value)}
+		class="flex! w-full! flex-row! flex-wrap! items-start! gap-2 overflow-visible! rounded-none! border-0! bg-transparent! p-0!"
+	>
+		{#each options as option (option.id)}
+			<ToggleGroup.Item
+				value={option.id}
+				class="flex! h-auto! min-h-10 w-auto! aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2 text-sm font-medium whitespace-nowrap text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
+			>
+				{#if isSelected(key, option.id)}
+					<Check class="h-3.5 w-3.5 shrink-0" />
+				{/if}
+				<span>{option.label}</span>
+			</ToggleGroup.Item>
+		{/each}
+	</ToggleGroup>
+{/snippet}
+
+{#snippet filterFields()}
+<div>
+	<AppAccordion variant="section" title="Tipo de anúncio" open={true} badge={groupCount('tipo') || ''}>
+		{@render toggleOptions('listingTypes', listingTypeOptions)}
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Produtos" open={untrack(() => groupCount('produtos') > 0)} badge={groupCount('produtos') || ''}>
+		{@render toggleOptions('productKinds', productKindOptions)}
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Serviços" open={untrack(() => groupCount('servicos') > 0)} badge={groupCount('servicos') || ''}>
+		{@render toggleOptions('serviceKinds', serviceKindOptions)}
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Mão de obra" open={untrack(() => groupCount('maoDeObra') > 0)} badge={groupCount('maoDeObra') || ''}>
+		{@render toggleOptions('laborKinds', laborKindOptions)}
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Localidade" open={untrack(() => groupCount('localidade') > 0)} badge={groupCount('localidade') || ''}>
+		<div class="relative">
+			<select
+				bind:value={draft.location}
+				aria-label="Localidade"
+				class="select h-11 w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 pl-3 pr-9 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+			>
+				<option value="">Todas as regiões</option>
+				{#each locationOptions as option (option.id)}
+					<option value={option.id}>{option.label}</option>
+				{/each}
+			</select>
+			<ChevronDown
+				class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
+			/>
+		</div>
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Ordenação" open={untrack(() => groupCount('ordenacao') > 0)} badge={groupCount('ordenacao') || ''}>
+		<div class="relative">
+			<select
+				bind:value={draft.sort}
+				aria-label="Ordenação"
+				class="select h-11 w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 pl-3 pr-9 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+			>
+				{#each sortOptions as option (option.id)}
+					<option value={option.id}>{option.label}</option>
+				{/each}
+			</select>
+			<ChevronDown
+				class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
+			/>
+		</div>
+	</AppAccordion>
+
+	<AppAccordion variant="section" title="Faixa de preço (R$)" open={untrack(() => groupCount('preco') > 0)} badge={groupCount('preco') || ''}>
+		<div class="grid grid-cols-2 gap-2">
+			<input
+				type="number"
+				min="0"
+				inputmode="numeric"
+				bind:value={draft.minPrice}
+				placeholder="Mínimo"
+				aria-label="Preço mínimo (R$)"
+				class="input h-11 w-full min-w-0 rounded-container border border-surface-200-800 px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+			/>
+			<input
+				type="number"
+				min="0"
+				inputmode="numeric"
+				bind:value={draft.maxPrice}
+				placeholder="Máximo"
+				aria-label="Preço máximo (R$)"
+				class="input h-11 w-full min-w-0 rounded-container border border-surface-200-800 px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+			/>
+		</div>
+	</AppAccordion>
+</div>
+{/snippet}
 
 <AppDialog
 	bind:open={isOpen}
@@ -197,156 +345,7 @@
 	size="lg"
 	closeLabel="Fechar filtros"
 >
-	<div class="space-y-5">
-		<div class="space-y-2">
-			<p class="preset-typo-label">
-				Tipo de anúncio
-			</p>
-			<ToggleGroup
-				multiple
-				value={draft.listingTypes}
-				onValueChange={(details) => updateDraftArray('listingTypes', details.value)}
-				class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-4"
-			>
-				{#each listingTypeOptions as option (option.id)}
-					<ToggleGroup.Item
-						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-2 py-2.5 text-center text-xs font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700 sm:px-3 sm:text-sm"
-					>
-						{#if isSelected('listingTypes', option.id)}
-							<Check class="h-3.5 w-3.5 shrink-0" />
-						{/if}
-						<span class="min-w-0">{option.label}</span>
-					</ToggleGroup.Item>
-				{/each}
-			</ToggleGroup>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">Produtos</p>
-			<ToggleGroup
-				multiple
-				value={draft.productKinds}
-				onValueChange={(details) => updateDraftArray('productKinds', details.value)}
-				class="grid! w-full! grid-cols-2 gap-2 overflow-visible! rounded-none! border-0! bg-transparent!"
-			>
-				{#each productKindOptions as option (option.id)}
-					<ToggleGroup.Item
-						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
-					>
-						{#if isSelected('productKinds', option.id)}
-							<Check class="h-3.5 w-3.5 shrink-0" />
-						{/if}
-						<span class="min-w-0">{option.label}</span>
-					</ToggleGroup.Item>
-				{/each}
-			</ToggleGroup>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">Serviços</p>
-			<ToggleGroup
-				multiple
-				value={draft.serviceKinds}
-				onValueChange={(details) => updateDraftArray('serviceKinds', details.value)}
-				class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
-			>
-				{#each serviceKindOptions as option (option.id)}
-					<ToggleGroup.Item
-						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
-					>
-						{#if isSelected('serviceKinds', option.id)}
-							<Check class="h-3.5 w-3.5 shrink-0" />
-						{/if}
-						<span class="min-w-0">{option.label}</span>
-					</ToggleGroup.Item>
-				{/each}
-			</ToggleGroup>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">Mão de obra</p>
-			<ToggleGroup
-				multiple
-				value={draft.laborKinds}
-				onValueChange={(details) => updateDraftArray('laborKinds', details.value)}
-				class="grid! w-full! grid-cols-1 gap-2 overflow-visible! rounded-none! border-0! bg-transparent! sm:grid-cols-2"
-			>
-				{#each laborKindOptions as option (option.id)}
-					<ToggleGroup.Item
-						value={option.id}
-						class="flex! min-h-11 w-full! min-w-0 aspect-auto! items-center justify-center gap-1.5 rounded-container border border-surface-200-800 px-3 py-2.5 text-center text-sm font-medium leading-tight whitespace-normal text-surface-900-100 transition-colors data-[state=on]:border-primary-500 data-[state=on]:preset-tonal-primary data-[state=on]:text-primary-700"
-					>
-						{#if isSelected('laborKinds', option.id)}
-							<Check class="h-3.5 w-3.5 shrink-0" />
-						{/if}
-						<span class="min-w-0">{option.label}</span>
-					</ToggleGroup.Item>
-				{/each}
-			</ToggleGroup>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">Localidade</p>
-			<div class="relative">
-				<select
-					bind:value={draft.location}
-					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-				>
-					<option value="">Todas as regiões</option>
-					{#each locationOptions as option (option.id)}
-						<option value={option.id}>{option.label}</option>
-					{/each}
-				</select>
-				<ChevronDown
-					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
-				/>
-			</div>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">Ordenação</p>
-			<div class="relative">
-				<select
-					bind:value={draft.sort}
-					class="select w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-				>
-					{#each sortOptions as option (option.id)}
-						<option value={option.id}>{option.label}</option>
-					{/each}
-				</select>
-				<ChevronDown
-					class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-900-100"
-				/>
-			</div>
-		</div>
-
-		<div class="space-y-2">
-			<p class="preset-typo-label">
-				Faixa de preço (R$)
-			</p>
-			<div class="grid grid-cols-2 gap-2">
-				<input
-					type="number"
-					min="0"
-					inputmode="numeric"
-					bind:value={draft.minPrice}
-					placeholder="Mínimo (R$)"
-					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-				/>
-				<input
-					type="number"
-					min="0"
-					inputmode="numeric"
-					bind:value={draft.maxPrice}
-					placeholder="Máximo (R$)"
-					class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-				/>
-			</div>
-		</div>
-	</div>
+	{@render filterFields()}
 
 	{#snippet footer()}
 		<div class="grid grid-cols-2 gap-2">
@@ -369,3 +368,27 @@
 		</div>
 	{/snippet}
 </AppDialog>
+
+{#if variant === 'sidebar'}
+	<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm" aria-labelledby="filtros-laterais">
+		<div class="mb-2 flex items-center justify-between gap-2">
+			<h2 id="filtros-laterais" class="flex items-center gap-2 preset-typo-title">
+				<SlidersHorizontal size={20} />
+				Filtros
+			</h2>
+			{#if activeCount > 0}
+				<button type="button" onclick={clearAndApply} class="btn btn-sm preset-tonal">
+					<Eraser size={16} />
+					<span>Limpar</span>
+				</button>
+			{/if}
+		</div>
+
+		{@render filterFields()}
+
+		<button type="button" onclick={applyFilters} class="btn btn-md preset-filled-primary-500 mt-6 w-full">
+			<Check size={18} />
+			<span>Aplicar filtros</span>
+		</button>
+	</section>
+{/if}
