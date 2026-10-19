@@ -22,13 +22,13 @@
 		servico: { label: 'Serviço', icon: Briefcase, tone: 'preset-filled-secondary-500' }
 	};
 
-	let { title, price, pricingModel = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '', description = '' } = $props();
+	let { title, price, pricingModel = null, priceUnit = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '', description = '' } = $props();
 
 	// imagem que falha ao carregar (link quebrado) cai no aviso "Sem imagem"
 	let failedImage = $state(null);
 
 	const resolvedTitle = $derived(title || 'Anúncio');
-	const resolvedPrice = $derived(listingPriceLabel(tipo, price, pricingModel));
+	const resolvedPrice = $derived(listingPriceLabel(tipo, price, pricingModel, priceUnit));
 	// "R$ 280,00 / ha": valor em destaque, unidade menor (cabe numa linha no card)
 	const priceParts = $derived(resolvedPrice.match(/^(R\$\s?[\d.,]+)\s*(.*)$/u) ?? [resolvedPrice, resolvedPrice, '']);
 	const resolvedPublishedAt = $derived(formatPublishedDate(publishedAt));
@@ -45,7 +45,7 @@
 
 {#snippet priceLine()}
 	<p class="mt-1 flex flex-wrap items-baseline gap-x-1 text-lg font-bold leading-tight text-primary-700-300">
-		<span class="whitespace-nowrap">{priceParts[1]}</span>{#if priceParts[2]}<span class="text-xs font-medium text-surface-800-200">{priceParts[2]}</span>{/if}
+		<span class="whitespace-nowrap">{priceParts[1]}</span>{#if priceParts[2]}<span class="ml-1 text-xs font-medium text-surface-800-200">{priceParts[2]}</span>{/if}
 	</p>
 {/snippet}
 

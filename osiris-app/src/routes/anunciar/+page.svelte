@@ -10,6 +10,9 @@
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
     import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
     import { fetchMyMunicipio } from '$lib/municipios';
+    import { DELIVERY_LABEL, listingPriceLabel, stockUnitLabel } from '$lib/pricing';
+
+    const RENTAL_HINT = { hora: 'por hora de uso', dia: 'por dia', hectare: 'por hectare trabalhado' };
     import AppSteps from '$lib/components/ui/AppSteps.svelte';
     import { showToast } from '$lib/components/ui/toast.js';
 
@@ -83,11 +86,20 @@
 			serial_number: '',
             manufacture_year: '',
             current_horimeter: '',
-            offer_type: 'aluguel', // venda | aluguel (preço por hora)
+            offer_type: 'aluguel', // venda | aluguel
+            rental_unit: 'hora', // aluguel: preço por hora, dia ou hectare
+            operator_included: false,
+            condition: '', // nova | seminova | usada
+            power_hp: '',
 
             // Campos específicos de Produto/Insumo
             quantity: 1,
             stock_unit: 'Sacas',
+            brand_name: '', // marca ou fabricante (opcional)
+            min_order: '', // pedido mínimo na mesma unidade (opcional)
+
+            // Máquina e produto
+            delivery: '', // retirada | entrega | a_combinar
 
             // Imagens (URLs) — product_images
             images: [createEmptyImageRow(true)],
@@ -119,7 +131,7 @@
         if (currentStep === 1) { 
             if (!form.municipio) return false;
             if (form.category === 'maquinario') {
-                return form.name.trim().length > 0 && form.brand_id !== '' && form.type_id !== '' && form.model.trim().length > 0 && form.manufacture_year > 0 && form.current_horimeter !== '';
+                return form.name.trim().length > 0 && form.brand_id !== '' && form.type_id !== '' && form.model.trim().length > 0 && form.manufacture_year > 0 && form.current_horimeter !== '' && form.condition !== '';
             }
             // Se for produto, exige nome, categoria selecionada e quantidade
             return form.name.trim().length > 0 && form.product_category !== '' && form.quantity > 0;
@@ -142,10 +154,6 @@
         } else {
             goto(resolve('/inventario'));
         }
-    }
-
-    function formatPrice(value) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     }
 
     function formatSaveError(error) {
@@ -196,7 +204,8 @@
                         quantity: 1, 
                         stock_unit: 'Unidade',
                         status: 'ativo',
-                        municipio_id: form.municipio?.codigo_ibge ?? null
+                        municipio_id: form.municipio?.codigo_ibge ?? null,
+                        delivery: form.delivery || null
                     })
                     .select() 
                     .single();
@@ -214,7 +223,11 @@
                         serial_number: form.serial_number?.trim() || null,
                         manufacture_year: parseInt(form.manufacture_year),
                         current_horimeter: parseFloat(form.current_horimeter),
-                        offer_type: form.offer_type
+                        offer_type: form.offer_type,
+                        rental_unit: form.rental_unit,
+                        operator_included: form.offer_type === 'aluguel' && form.operator_included,
+                        condition: form.condition,
+                        power_hp: Number(form.power_hp) > 0 ? Math.round(Number(form.power_hp)) : null
                     });
 
                 if (machineryError) {
@@ -240,8 +253,11 @@
                         category: form.product_category,
                         quantity: form.quantity,
                         stock_unit: form.stock_unit,
+                        brand_name: form.brand_name.trim() || null,
+                        min_order: Number(form.min_order) > 0 ? Number(form.min_order) : null,
                         status: 'ativo',
-                        municipio_id: form.municipio?.codigo_ibge ?? null
+                        municipio_id: form.municipio?.codigo_ibge ?? null,
+                        delivery: form.delivery || null
                     })
                     .select('id')
                     .single();
@@ -384,6 +400,22 @@
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
+                                <label class={labelClass} for="condition">Condição</label>
+                                <select id="condition" bind:value={form.condition} class={selectClass}>
+                                    <option value="" disabled>Selecione</option>
+                                    <option value="nova">Nova</option>
+                                    <option value="seminova">Seminova</option>
+                                    <option value="usada">Usada</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class={labelClass} for="power">Potência (cv) <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                                <input type="number" inputmode="numeric" id="power" bind:value={form.power_hp} placeholder="Ex: 110" min="1" class={fieldClass} />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
                                 <label class={labelClass} for="year">Ano de fabricação</label>
                                 <input type="number" inputmode="numeric" id="year" bind:value={form.manufacture_year} placeholder="Ex: 2018" min="1950" class={fieldClass} />
                             </div>
@@ -402,6 +434,10 @@
                                 <option value="Fertilizantes">Fertilizantes</option>
                                 <option value="Mudas">Mudas </option>
                                 <option value="Defensivos">Defensivos Agrícolas</option>
+                                <option value="Corretivos">Corretivos (calcário, gesso)</option>
+                                <option value="Grãos">Grãos</option>
+                                <option value="Nutrição animal">Nutrição animal</option>
+                                <option value="Peças">Peças e acessórios</option>
                                 <option value="Outros">Outros</option>
                             </select>
                         </div>
@@ -419,6 +455,16 @@
                                     <option value="Litros">Litros</option>
                                     <option value="Unidades">Unidades</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class={labelClass} for="brand_name">Marca ou fabricante <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                                <input type="text" id="brand_name" bind:value={form.brand_name} maxlength="80" placeholder="Ex: Brasmax" class={fieldClass} />
+                            </div>
+                            <div>
+                                <label class={labelClass} for="min_order">Pedido mínimo <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                                <input type="number" inputmode="numeric" id="min_order" bind:value={form.min_order} min="1" placeholder={`Em ${stockUnitLabel(form.stock_unit)}`} class={fieldClass} />
                             </div>
                         </div>
                     {/if}
@@ -448,7 +494,7 @@
                     <fieldset class="mt-5">
                         <legend class="mb-2 text-sm font-semibold text-surface-950-50">Tipo de negócio</legend>
                         <div class="grid grid-cols-2 gap-3">
-                            {#each [{ value: 'aluguel', label: 'Aluguel', hint: 'preço por hora', icon: Timer }, { value: 'venda', label: 'Venda', hint: 'preço da máquina', icon: Tag }] as option (option.value)}
+                            {#each [{ value: 'aluguel', label: 'Aluguel', hint: 'preço por hora, dia ou hectare', icon: Timer }, { value: 'venda', label: 'Venda', hint: 'preço da máquina', icon: Tag }] as option (option.value)}
                                 {@const selected = form.offer_type === option.value}
                                 <label
                                     class="flex cursor-pointer flex-col gap-1 rounded-container border-2 p-4 shadow-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-500 {selected
@@ -465,6 +511,23 @@
                             {/each}
                         </div>
                     </fieldset>
+
+                    {#if form.offer_type === 'aluguel'}
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div>
+                                <label class={labelClass} for="rental_unit">Cobrança</label>
+                                <select id="rental_unit" bind:value={form.rental_unit} class={selectClass}>
+                                    <option value="hora">Por hora</option>
+                                    <option value="dia">Por dia</option>
+                                    <option value="hectare">Por hectare</option>
+                                </select>
+                            </div>
+                            <label class="flex cursor-pointer items-center gap-3 self-end rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium">
+                                <input type="checkbox" bind:checked={form.operator_included} class="checkbox" />
+                                Inclui operador
+                            </label>
+                        </div>
+                    {/if}
                 {/if}
 
                 <div class="mt-5">
@@ -482,18 +545,30 @@
                     </div>
                     <p class="mt-2 text-sm text-surface-800-200">
                         {form.category !== 'maquinario'
-                            ? 'Valor do produto anunciado.'
+                            ? `Valor por ${stockUnitLabel(form.stock_unit, 1)}.`
                             : form.offer_type === 'aluguel'
-                              ? 'Valor do aluguel por hora de uso da máquina.'
+                              ? `Valor do aluguel ${RENTAL_HINT[form.rental_unit]}${form.operator_included ? ', com operador' : ''}.`
                               : 'Valor pedido pela máquina.'}
                     </p>
+                </div>
+
+                <div class="mt-5">
+                    <label class={labelClass} for="delivery">Entrega <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                    <select id="delivery" bind:value={form.delivery} class={selectClass}>
+                        <option value="">Não informar</option>
+                        {#each Object.entries(DELIVERY_LABEL) as [value, label] (value)}
+                            <option {value}>{label}</option>
+                        {/each}
+                    </select>
                 </div>
 
                 {#if form.price && form.price > 0}
                     <div class="mt-5 rounded-container border border-primary-500 preset-tonal-primary p-4">
                         <p class="text-sm font-medium">Seu anúncio será publicado por:</p>
                         <p class="mt-1 text-3xl font-bold">
-                            {formatPrice(form.price)}{form.category === 'maquinario' && form.offer_type === 'aluguel' ? ' / hora' : ''}
+                            {form.category === 'maquinario'
+                                ? listingPriceLabel('maquinario', form.price, form.offer_type, form.rental_unit)
+                                : listingPriceLabel('produto', form.price, null, form.stock_unit)}
                         </p>
                         {#if form.name}
                             <p class="mt-1 truncate text-sm">{form.name}</p>

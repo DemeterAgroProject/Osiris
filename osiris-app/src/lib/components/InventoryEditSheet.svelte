@@ -5,6 +5,7 @@
 	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
 	import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
 	import { pickMunicipio } from '$lib/municipios';
+	import { DELIVERY_LABEL, MACHINE_CONDITION_LABEL, RENTAL_UNIT_LABEL, stockUnitLabel } from '$lib/pricing';
 
 	function createEmptyImageRow(isCover = false) {
 		return { id: null, url: '', is_cover: isCover, removed: false };
@@ -152,10 +153,26 @@
 		manufacture_year: '',
 		current_horimeter: '',
 		offer_type: 'aluguel',
+		rental_unit: 'hora',
+		operator_included: false,
+		condition: '',
+		power_hp: '',
+		brand_name: '',
+		min_order: '',
+		delivery: '',
 		municipio: null
 	});
 
 	const isMachinery = $derived(product ? isMachineryProduct(product) : false);
+
+	const RENTAL_PRICE_LABEL = { hora: 'Preço por hora (R$)', dia: 'Preço por dia (R$)', hectare: 'Preço por hectare (R$)' };
+	const priceLabel = $derived(
+		isMachinery
+			? form.offer_type === 'aluguel'
+				? RENTAL_PRICE_LABEL[form.rental_unit]
+				: 'Preço da máquina (R$)'
+			: `Preço por ${stockUnitLabel(form.stock_unit, 1) || 'unidade'} (R$)`
+	);
 	const machinery = $derived(product ? getMachineryFromProduct(product) : null);
 
 	async function loadImages(productId) {
@@ -190,6 +207,13 @@
 			manufacture_year: m?.manufacture_year != null ? String(m.manufacture_year) : '',
 			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : '',
 			offer_type: m?.offer_type ?? 'aluguel',
+			rental_unit: m?.rental_unit ?? 'hora',
+			operator_included: Boolean(m?.operator_included),
+			condition: m?.condition ?? '',
+			power_hp: m?.power_hp != null ? String(m.power_hp) : '',
+			brand_name: product.brand_name ?? '',
+			min_order: product.min_order != null ? String(product.min_order) : '',
+			delivery: product.delivery ?? '',
 			municipio: pickMunicipio(product.municipio)
 		};
 		errorMessage = '';
@@ -240,13 +264,16 @@
 			name: form.name.trim(),
 			description: form.description.trim() || null,
 			municipio_id: form.municipio?.codigo_ibge ?? null,
+			delivery: form.delivery || null,
 			price,
 			...(isMachinery
 				? { category: 'Maquinário', quantity: 1, stock_unit: 'Unidade' }
 				: {
 						category: form.category,
 						quantity: Number(form.quantity) || 1,
-						stock_unit: form.stock_unit
+						stock_unit: form.stock_unit,
+						brand_name: form.brand_name.trim() || null,
+						min_order: Number(form.min_order) > 0 ? Number(form.min_order) : null
 					})
 		});
 
@@ -259,6 +286,10 @@
 		if (isMachinery && machinery?.id) {
 			const { error: machineryError } = await updateMachinery(machinery.id, {
 				offer_type: form.offer_type,
+				rental_unit: form.rental_unit,
+				operator_included: form.offer_type === 'aluguel' && form.operator_included,
+				condition: form.condition || null,
+				power_hp: Number(form.power_hp) > 0 ? Math.round(Number(form.power_hp)) : null,
 				brand_id: form.brand_id,
 				type_id: form.type_id,
 				model: form.model.trim(),
@@ -338,15 +369,36 @@
 						bind:value={form.offer_type}
 						class="select w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					>
-						<option value="aluguel">Aluguel (preço por hora)</option>
+						<option value="aluguel">Aluguel</option>
 						<option value="venda">Venda (preço da máquina)</option>
 					</select>
 				</div>
+
+				{#if form.offer_type === 'aluguel'}
+					<div class="grid grid-cols-2 gap-3">
+						<div>
+							<label for="edit-rental-unit" class="mb-1 block text-sm font-medium text-surface-900-100">Cobrança</label>
+							<select
+								id="edit-rental-unit"
+								bind:value={form.rental_unit}
+								class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+							>
+								{#each Object.entries(RENTAL_UNIT_LABEL) as [value, label] (value)}
+									<option {value}>{label}</option>
+								{/each}
+							</select>
+						</div>
+						<label class="flex cursor-pointer items-center gap-3 self-end rounded-container border border-surface-200-800 px-3 py-3 text-sm font-medium">
+							<input type="checkbox" bind:checked={form.operator_included} class="checkbox" />
+							Inclui operador
+						</label>
+					</div>
+				{/if}
 			{/if}
 
 			<div>
 				<label for="edit-price" class="mb-1 block text-sm font-medium text-surface-900-100">
-					{isMachinery && form.offer_type === 'aluguel' ? 'Preço por hora (R$)' : 'Preço (R$)'}
+					{priceLabel}
 				</label>
 				<input
 					id="edit-price"
@@ -416,6 +468,33 @@
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
+						<label for="edit-condition" class="mb-1 block text-sm font-medium text-surface-900-100">Condição</label>
+						<select
+							id="edit-condition"
+							bind:value={form.condition}
+							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+						>
+							<option value="">Não informada</option>
+							{#each Object.entries(MACHINE_CONDITION_LABEL) as [value, label] (value)}
+								<option {value}>{label}</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label for="edit-power" class="mb-1 block text-sm font-medium text-surface-900-100">Potência (cv)</label>
+						<input
+							id="edit-power"
+							placeholder="Ex: 110"
+							type="number"
+							min="1"
+							bind:value={form.power_hp}
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+						/>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-2 gap-3">
+					<div>
 						<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-900-100">Ano</label>
 						<input
 							id="edit-year"
@@ -454,6 +533,10 @@
 						<option value="Fertilizantes">Fertilizantes</option>
 						<option value="Mudas">Mudas</option>
 						<option value="Defensivos">Defensivos Agrícolas</option>
+						<option value="Corretivos">Corretivos (calcário, gesso)</option>
+						<option value="Grãos">Grãos</option>
+						<option value="Nutrição animal">Nutrição animal</option>
+						<option value="Peças">Peças e acessórios</option>
 						<option value="Insumo">Insumo</option>
 						<option value="Outros">Outros</option>
 					</select>
@@ -488,7 +571,46 @@
 						</select>
 					</div>
 				</div>
+
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<label for="edit-brand-name" class="mb-1 block text-sm font-medium text-surface-900-100">Marca ou fabricante</label>
+						<input
+							id="edit-brand-name"
+							placeholder="Ex: Brasmax"
+							type="text"
+							maxlength="80"
+							bind:value={form.brand_name}
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+						/>
+					</div>
+					<div>
+						<label for="edit-min-order" class="mb-1 block text-sm font-medium text-surface-900-100">Pedido mínimo</label>
+						<input
+							id="edit-min-order"
+							placeholder={`Em ${stockUnitLabel(form.stock_unit)}`}
+							type="number"
+							min="1"
+							bind:value={form.min_order}
+							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
+						/>
+					</div>
+				</div>
 			{/if}
+
+			<div>
+				<label for="edit-delivery" class="mb-1 block text-sm font-medium text-surface-900-100">Entrega</label>
+				<select
+					id="edit-delivery"
+					bind:value={form.delivery}
+					class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
+				>
+					<option value="">Não informar</option>
+					{#each Object.entries(DELIVERY_LABEL) as [value, label] (value)}
+						<option {value}>{label}</option>
+					{/each}
+				</select>
+			</div>
 
 			<MunicipioPicker
 				id="edit-municipio"

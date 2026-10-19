@@ -121,6 +121,7 @@
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
+			priceUnit: product.stock_unit ?? null,
 			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
@@ -143,6 +144,7 @@
 			title: product.name,
 			price: product.price,
 			pricingModel: m?.offer_type ?? null,
+			priceUnit: m?.rental_unit ?? null,
 			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
@@ -270,7 +272,7 @@
 
 		let productQuery = supabase
 			.from('products')
-			.select(`id, name, price, status, created_at, category, description, municipio:municipios(${MUNICIPIO_EMBED})`)
+			.select(`id, name, price, status, created_at, category, description, stock_unit, municipio:municipios(${MUNICIPIO_EMBED})`)
 			.or(ACTIVE_STATUS_OR)
 			.neq('category', 'Maquinário')
 			.order('created_at', { ascending: false })
@@ -283,7 +285,7 @@
 				id, name, price, status, created_at, category, description,
 				municipio:municipios(${MUNICIPIO_EMBED}),
 				agricultural_machinery!inner (
-					id, model, manufacture_year, current_horimeter, offer_type,
+					id, model, manufacture_year, current_horimeter, offer_type, rental_unit,
 					brands (name), machinery_types (name)
 				)
 			`

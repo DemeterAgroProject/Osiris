@@ -90,6 +90,7 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#serial_number').fill(serialNumber);
 		await page.locator('#year').fill('2022');
 		await page.locator('#horimeter').fill('480');
+		await page.locator('#condition').selectOption('usada');
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.machinery);
 		await chooseMunicipio(page, '#anuncio-municipio');
 		await page.getByRole('button', { name: /Próximo/i }).click();
