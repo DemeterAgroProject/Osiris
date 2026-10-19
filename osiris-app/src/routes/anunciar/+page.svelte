@@ -514,5 +514,5 @@
         </div>
     </main>
 
-    <BottomNav active="inventario" />
+    <BottomNav active="anunciar" />
 </div>

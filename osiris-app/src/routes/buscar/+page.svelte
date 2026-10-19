@@ -8,6 +8,7 @@
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { CircleAlert, SearchX } from 'lucide-svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
@@ -374,26 +375,52 @@
 <div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
 	<Header title="Buscar" />
 	<SearchBar bind:value={searchQuery} loading={fetching} />
-	<FilterBar bind:filters locations={locationOptions} resultCount={visibleListings.length} />
 
-	{#if loading}
-		<div class="px-4 py-5">
-			<ListingSkeleton variant="grid" count={6} label="Carregando anúncios..." />
-		</div>
-	{:else if errorMessage}
-		<div class="mx-4 my-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
-			<CircleAlert class="h-5 w-5 shrink-0" />
-			{errorMessage}
-		</div>
-	{:else if visibleListings.length === 0}
-		<div class="mx-4 my-8 flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-12 text-center">
-			<SearchX class="h-10 w-10 text-surface-700-300" />
-			<p class="mt-3 text-base font-semibold">Nenhum anúncio encontrado</p>
-			<p class="mt-1 text-sm text-surface-900-100">Tente outra palavra ou toque em "Todos".</p>
-		</div>
-	{:else}
-		<ProductList title="Resultados da busca" products={visibleListings} />
-	{/if}
+	<!-- celular: botão de filtros (gaveta) e atalhos de tipo -->
+	<div class="lg:hidden">
+		<FilterBar bind:filters locations={locationOptions} resultCount={loading ? null : visibleListings.length} />
+	</div>
 
+	<!-- computador: filtros na coluna da esquerda, resultados à direita -->
+	<div class="mx-auto w-full max-w-7xl lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-8 lg:pt-4">
+		<aside class="sticky top-24 hidden lg:block" aria-label="Filtros">
+			<FilterBar variant="sidebar" bind:filters locations={locationOptions} />
+		</aside>
+
+		<div class="min-w-0">
+			<div class="mb-4 hidden space-y-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:block">
+				<div class="flex items-center gap-2">
+					<h1 class="preset-typo-title">Resultados encontrados</h1>
+					{#if !loading}
+						<span class="badge rounded-full preset-tonal-primary px-2.5 py-1 text-xs font-bold">
+							{visibleListings.length} {visibleListings.length === 1 ? 'anúncio' : 'anúncios'}
+						</span>
+					{/if}
+				</div>
+				<FilterBar variant="chips" bind:filters />
+			</div>
+
+			{#if loading}
+				<div class="px-4 py-5 lg:px-0 lg:py-0">
+					<ListingSkeleton variant="grid" count={6} label="Carregando anúncios..." />
+				</div>
+			{:else if errorMessage}
+				<div class="mx-4 my-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm lg:mx-0">
+					<CircleAlert class="h-5 w-5 shrink-0" />
+					{errorMessage}
+				</div>
+			{:else if visibleListings.length === 0}
+				<div class="mx-4 my-8 flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-12 text-center lg:mx-0 lg:my-0">
+					<SearchX class="h-10 w-10 text-surface-700-300" />
+					<p class="mt-3 text-base font-semibold">Nenhum anúncio encontrado</p>
+					<p class="mt-1 text-sm text-surface-900-100">Tente outra palavra ou toque em "Todos".</p>
+				</div>
+			{:else}
+				<ProductList title="Resultados da busca" products={visibleListings} />
+			{/if}
+		</div>
+	</div>
+
+	<SiteFooter />
 	<BottomNav active="buscar" />
 </div>

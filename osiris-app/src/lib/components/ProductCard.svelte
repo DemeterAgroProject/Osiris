@@ -1,6 +1,6 @@
 <script>
 	import { resolve } from '$app/paths';
-	import { MapPin, Clock, Briefcase, Tractor, Leaf, ImageOff } from 'lucide-svelte';
+	import { MapPin, Clock, Briefcase, Tractor, Leaf, ImageOff, Eye } from 'lucide-svelte';
 	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
 
 	function formatPublishedDate(value) {
@@ -22,7 +22,7 @@
 		servico: { label: 'Serviço', icon: Briefcase, tone: 'preset-filled-secondary-500' }
 	};
 
-	let { title, price, pricingModel = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '' } = $props();
+	let { title, price, pricingModel = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '', description = '' } = $props();
 
 	// imagem que falha ao carregar (link quebrado) cai no aviso "Sem imagem"
 	let failedImage = $state(null);
@@ -82,6 +82,10 @@
 {#snippet details()}
 	<div class="flex flex-1 flex-col p-3">
 		<h3 class="line-clamp-2 min-h-[2.7em] preset-typo-card-title">{resolvedTitle}</h3>
+		{#if description}
+			<!-- computador: uma linha da descrição, como no Stitch -->
+			<p class="mt-1 hidden truncate preset-typo-caption lg:block">{description}</p>
+		{/if}
 		{@render priceLine()}
 
 		{#if resolvedHref}
@@ -97,6 +101,11 @@
 					<span>{resolvedPublishedAt}</span>
 				</div>
 			</div>
+			<!-- computador: deixa claro que o card abre o anúncio (o card inteiro já é o link) -->
+			<span class="btn preset-tonal-primary mt-3 hidden w-full lg:inline-flex" aria-hidden="true">
+				<Eye size={18} />
+				<span>Ver detalhes</span>
+			</span>
 		{/if}
 	</div>
 {/snippet}

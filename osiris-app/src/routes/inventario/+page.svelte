@@ -13,11 +13,13 @@
 		ExternalLink,
 		PackageOpen,
 		CircleAlert,
-		CircleCheck
+		CircleCheck,
+		Home
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import InventoryEditSheet from '$lib/components/InventoryEditSheet.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import AppMenu from '$lib/components/ui/AppMenu.svelte';
@@ -450,6 +452,51 @@
 		];
 	}
 
+	// resumo do topo (computador), só com o que já foi carregado
+	const inventoryStats = $derived([
+		{
+			label: 'Máquinas',
+			value: maquinarios.length,
+			hint: `${maquinarios.filter((m) => isActiveStatus(m.status)).length} ativas`,
+			icon: Tractor,
+			tone: 'preset-tonal-primary'
+		},
+		{
+			label: 'Produtos e insumos',
+			value: produtos.length,
+			hint: `${produtos.filter((p) => isActiveStatus(p.status)).length} ativos`,
+			icon: Leaf,
+			tone: 'preset-tonal-tertiary'
+		},
+		{
+			label: 'Pausados',
+			value: [...maquinarios, ...produtos].filter((a) => isPausedStatus(a.status)).length,
+			hint: 'não aparecem na busca',
+			icon: Pause,
+			tone: 'preset-tonal-warning'
+		}
+	]);
+
+	// linha de detalhes do anúncio no computador
+	function adDetails(item, kind) {
+		if (kind === 'maquinario') {
+			const m = getMachineryFromProduct(item);
+			return [
+				[m?.brands?.name, m?.model].filter(Boolean).join(' '),
+				m?.manufacture_year ? `Ano ${m.manufacture_year}` : null,
+				Number(m?.current_horimeter) > 0 ? `${Number(m.current_horimeter).toLocaleString('pt-BR')} h` : null
+			]
+				.filter(Boolean)
+				.join(' · ');
+		}
+		return Number(item.quantity) > 0 ? `Estoque: ${Number(item.quantity).toLocaleString('pt-BR')} ${(item.stock_unit ?? '').toLowerCase()}`.trim() : '';
+	}
+
+	function priceCaption(item, kind) {
+		if (kind !== 'maquinario') return 'Preço';
+		return getMachineryFromProduct(item)?.offer_type === 'aluguel' ? 'Aluguel por hora' : 'Venda';
+	}
+
 	async function handleEditSaved() {
 		await loadAllAds();
 		statusMessage = { text: 'Anúncio atualizado com sucesso.', type: 'success' };
@@ -464,9 +511,9 @@
 	<article
 		class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md"
 	>
-		<div class="flex gap-3 p-3">
+		<div class="flex gap-3 p-3 lg:items-center lg:gap-5 lg:p-4">
 			<div
-				class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-container {kind === 'maquinario'
+				class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-container lg:h-28 lg:w-36 {kind === 'maquinario'
 					? 'preset-tonal-primary'
 					: 'preset-tonal-tertiary'}  {isPausedStatus(item.status) ? 'grayscale' : ''}"
 			>
@@ -480,7 +527,8 @@
 			</div>
 			<div class="flex min-w-0 flex-1 flex-col">
 				<div class="flex items-start gap-1">
-					<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title">{item.name}</h3>
+					<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title lg:text-lg">{item.name}</h3>
+					<div class="lg:hidden">
 					<AppMenu
 						items={adMenuItems(item)}
 						label="Ações do anúncio"
@@ -490,8 +538,9 @@
 							<MoreVertical size={18} />
 						{/snippet}
 					</AppMenu>
+					</div>
 				</div>
-				<p class="text-lg font-bold leading-tight text-primary-700-300">
+				<p class="text-lg font-bold leading-tight text-primary-700-300 lg:hidden">
 					{formatPrice(item.price)}
 					{#if kind === 'maquinario' && getMachineryFromProduct(item)?.offer_type === 'aluguel'}
 						<span class="text-xs font-medium text-surface-800-200">/ hora</span>
@@ -506,6 +555,31 @@
 						{getStatusLabel(item.status)}
 					</span>
 				</div>
+				{#if adDetails(item, kind)}
+					<p class="mt-1.5 hidden preset-typo-caption lg:block">{adDetails(item, kind)}</p>
+				{/if}
+			</div>
+
+			<!-- computador: preço com rótulo e ações à direita -->
+			<div class="hidden shrink-0 text-right lg:block">
+				<p class="preset-typo-label">{priceCaption(item, kind)}</p>
+				<p class="text-2xl font-bold leading-tight text-primary-700-300">
+					{formatPrice(item.price)}
+					{#if kind === 'maquinario' && getMachineryFromProduct(item)?.offer_type === 'aluguel'}
+						<span class="text-sm font-medium text-surface-800-200">/ hora</span>
+					{/if}
+				</p>
+			</div>
+			<div class="hidden shrink-0 items-center gap-2 lg:flex">
+				<button type="button" onclick={() => openEdit(item)} class="btn preset-tonal">
+					<Edit size={18} />
+					<span>Editar</span>
+				</button>
+				<AppMenu items={adMenuItems(item)} label="Ações do anúncio" triggerClass="btn-icon btn-icon-lg preset-tonal">
+					{#snippet trigger()}
+						<MoreVertical size={18} />
+					{/snippet}
+				</AppMenu>
 			</div>
 		</div>
 	</article>
@@ -527,7 +601,16 @@
 <div class="min-h-screen pb-24">
 	<Header title="Meu inventário" />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
+				<Home size={16} />
+				Início
+			</a>
+			<span class="text-surface-700-300">/</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">Meu inventário</span>
+		</nav>
+
 		<div class="mb-4 flex items-center justify-between gap-3">
 			<div class="min-w-0">
 				<h1 class="preset-typo-headline">Meus anúncios</h1>
@@ -540,12 +623,35 @@
 			</div>
 			<a
 				href={resolve('/anunciar')}
-				class="btn btn-lg preset-filled-primary-500 shrink-0"
+				class="btn btn-md preset-filled-primary-500 shrink-0"
 			>
 				<Plus size={18} />
-				<span>Novo</span>
+				<span class="lg:hidden">Novo</span>
+				<span class="hidden lg:inline">Novo anúncio</span>
 			</a>
 		</div>
+
+		<!-- computador: resumo do inventário (contagens dos anúncios já carregados) -->
+		{#if !loading}
+			<div class="mb-6 hidden grid-cols-3 gap-4 lg:grid">
+				{#each inventoryStats as stat (stat.label)}
+					<div class="flex items-center gap-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-5 shadow-sm">
+						<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {stat.tone}">
+							<stat.icon size={24} />
+						</span>
+						<div class="min-w-0">
+							<p class="preset-typo-label">{stat.label}</p>
+							<p class="text-3xl font-bold leading-tight text-surface-950-50">{stat.value}</p>
+							<p class="preset-typo-caption">{stat.hint}</p>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else if loading}
+			<div class="mb-6 hidden lg:block">
+				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+			</div>
+		{/if}
 
 		{#if statusMessage.text}
 			<div
@@ -631,5 +737,6 @@
 		oncancel={cancelDelete}
 	/>
 
+	<SiteFooter />
 	<BottomNav active="inventario" />
 </div>
