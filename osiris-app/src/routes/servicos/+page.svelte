@@ -16,11 +16,13 @@
 		Play,
 		ExternalLink,
 		CircleAlert,
-		CircleCheck
+		CircleCheck,
+		Home
 	} from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
 	import AppMenu from '$lib/components/ui/AppMenu.svelte';
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
@@ -137,6 +139,47 @@
 		}).format(price);
 		return `${formatted}${model !== 'Fixo' && model !== 'Empreitada/Fixo' && model !== 'A Combinar' ? ` / ${model}` : ''}`;
 	}
+
+	// rótulo do valor no computador, conforme o modelo de cobrança (services_pricing_model_check)
+	const PRICING_CAPTION = {
+		'Por Hora': 'Por hora',
+		'Por Hectare': 'Por hectare',
+		'Empreitada/Fixo': 'Valor fechado',
+		'A Combinar': 'A combinar'
+	};
+
+	function formatCurrencyOnly(price) {
+		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+	}
+
+	// resumo do topo (computador), só com o que já foi carregado
+	const serviceStats = $derived.by(() => {
+		const labor = allServices.filter((serv) => serv.service_type === 'Mão de Obra');
+		const packages = allServices.filter((serv) => serv.service_type === 'Pacote Completo');
+		return [
+			{
+				label: 'Mão de obra',
+				value: labor.length,
+				hint: `${labor.filter((serv) => isActiveStatus(serv.status)).length} ativos`,
+				icon: Users,
+				tone: 'preset-tonal-primary'
+			},
+			{
+				label: 'Pacote completo',
+				value: packages.length,
+				hint: `${packages.filter((serv) => isActiveStatus(serv.status)).length} ativos`,
+				icon: Briefcase,
+				tone: 'preset-tonal-secondary'
+			},
+			{
+				label: 'Pausados',
+				value: allServices.filter((serv) => isPausedStatus(serv.status)).length,
+				hint: 'não aparecem na busca',
+				icon: Pause,
+				tone: 'preset-tonal-warning'
+			}
+		];
+	});
 
 	function openEdit(service) {
 		editingService = service;
@@ -348,16 +391,16 @@
 			<article
 				class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md"
 			>
-				<div class="flex gap-3 p-3">
+				<div class="flex gap-3 p-3 lg:items-center lg:gap-5 lg:p-4">
 					{#if serv.image_url}
 						<img
 							src={serv.image_url}
 							alt={serv.title}
-							class="h-24 w-24 shrink-0 rounded-container object-cover {isPausedStatus(serv.status) ? 'grayscale' : ''}"
+							class="h-24 w-24 shrink-0 rounded-container object-cover lg:h-28 lg:w-36 {isPausedStatus(serv.status) ? 'grayscale' : ''}"
 						/>
 					{:else}
 						<div
-							class="flex h-24 w-24 shrink-0 items-center justify-center rounded-container {serv.service_type ===
+							class="flex h-24 w-24 shrink-0 items-center justify-center rounded-container lg:h-28 lg:w-36 {serv.service_type ===
 							'Pacote Completo'
 								? 'preset-tonal-secondary'
 								: 'preset-tonal-primary'}"
@@ -368,18 +411,20 @@
 
 					<div class="flex min-w-0 flex-1 flex-col">
 						<div class="flex items-start gap-1">
-							<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title">{serv.title}</h3>
-							<AppMenu
-								items={serviceMenuItems(serv)}
-								label="Ações do serviço"
-								triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
-							>
-								{#snippet trigger()}
-									<MoreVertical size={18} />
-								{/snippet}
-							</AppMenu>
+							<h3 class="line-clamp-2 min-w-0 flex-1 preset-typo-card-title lg:text-lg">{serv.title}</h3>
+							<div class="lg:hidden">
+								<AppMenu
+									items={serviceMenuItems(serv)}
+									label="Ações do serviço"
+									triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
+								>
+									{#snippet trigger()}
+										<MoreVertical size={18} />
+									{/snippet}
+								</AppMenu>
+							</div>
 						</div>
-						<p class="text-lg font-bold leading-tight text-primary-700-300">
+						<p class="text-lg font-bold leading-tight text-primary-700-300 lg:hidden">
 							{formatPrice(serv.price, serv.pricing_model)}
 						</p>
 						{#if serv.description}
@@ -397,6 +442,25 @@
 								</span>
 							{/if}
 						</div>
+					</div>
+
+					<!-- computador: valor com o modo de cobrança e ações à direita -->
+					<div class="hidden shrink-0 text-right lg:block">
+						<p class="preset-typo-label">{PRICING_CAPTION[serv.pricing_model] ?? 'Valor'}</p>
+						<p class="text-2xl font-bold leading-tight text-primary-700-300">
+							{serv.price ? formatCurrencyOnly(serv.price) : 'A combinar'}
+						</p>
+					</div>
+					<div class="hidden shrink-0 items-center gap-2 lg:flex">
+						<button type="button" onclick={() => openEdit(serv)} class="btn preset-tonal">
+							<Edit size={18} />
+							<span>Editar</span>
+						</button>
+						<AppMenu items={serviceMenuItems(serv)} label="Ações do serviço" triggerClass="btn-icon btn-icon-lg preset-tonal">
+							{#snippet trigger()}
+								<MoreVertical size={18} />
+							{/snippet}
+						</AppMenu>
 					</div>
 				</div>
 			</article>
@@ -427,7 +491,16 @@
 <div class="min-h-screen pb-24">
 	<Header title="Meus serviços" />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
+				<Home size={16} />
+				Início
+			</a>
+			<span class="text-surface-700-300">/</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">Meus serviços</span>
+		</nav>
+
 		<div class="mb-4 flex items-center justify-between gap-3">
 			<div class="min-w-0">
 				<h1 class="preset-typo-headline">Meus serviços</h1>
@@ -435,12 +508,35 @@
 			</div>
 			<a
 				href={resolve('/servicos/novo')}
-				class="btn btn-lg preset-filled-primary-500 shrink-0"
+				class="btn btn-md preset-filled-primary-500 shrink-0"
 			>
 				<Plus size={18} />
-				<span>Oferecer</span>
+				<span class="lg:hidden">Oferecer</span>
+				<span class="hidden lg:inline">Oferecer serviço</span>
 			</a>
 		</div>
+
+		<!-- computador: resumo dos serviços (contagens do que já foi carregado) -->
+		{#if !loading}
+			<div class="mb-6 hidden grid-cols-3 gap-4 lg:grid">
+				{#each serviceStats as stat (stat.label)}
+					<div class="flex items-center gap-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-5 shadow-sm">
+						<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {stat.tone}">
+							<stat.icon size={24} />
+						</span>
+						<div class="min-w-0">
+							<p class="preset-typo-label">{stat.label}</p>
+							<p class="text-3xl font-bold leading-tight text-surface-950-50">{stat.value}</p>
+							<p class="preset-typo-caption">{stat.hint}</p>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else if loading}
+			<div class="mb-6 hidden lg:block">
+				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+			</div>
+		{/if}
 
 		{#if statusMessage.text}
 			<div
@@ -506,5 +602,6 @@
 		oncancel={cancelDelete}
 	/>
 
+	<SiteFooter />
 	<BottomNav active="servicos" />
 </div>

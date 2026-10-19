@@ -6,7 +6,14 @@
 	import CategorySection from '$lib/components/CategorySection.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { resolve } from '$app/paths';
-	import { ArrowRight, CircleAlert, SearchX, Sprout } from 'lucide-svelte';
+	import { ArrowRight, Briefcase, CircleAlert, Leaf, Search, SearchX, Sprout, Tractor } from 'lucide-svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
+
+	const HERO_SHORTCUTS = [
+		{ tipo: 'maquinario', label: 'Máquinas', icon: Tractor },
+		{ tipo: 'produto', label: 'Insumos e sementes', icon: Leaf },
+		{ tipo: 'servico', label: 'Serviços', icon: Briefcase }
+	];
 	import { supabase } from '$lib/supabase';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
@@ -410,18 +417,50 @@
 
 	{#if !hasDiscoveryMode}
 		<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
-			<div class="relative overflow-hidden rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md">
-				<Sprout class="pointer-events-none absolute -bottom-6 -right-6 h-36 w-36 opacity-10" aria-hidden="true" />
+			<div class="relative overflow-hidden rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md lg:p-10">
+				<Sprout class="pointer-events-none absolute -bottom-6 -right-6 h-36 w-36 opacity-10 lg:h-72 lg:w-72" aria-hidden="true" />
 				<span class="badge rounded-full bg-white/15 px-2.5 py-1 uppercase text-xs font-bold tracking-wide">Marketplace Osiris</span>
-				<h1 class="mt-3 preset-typo-headline">Máquinas, produtos e serviços em um só lugar</h1>
-				<p class="mt-2 text-sm opacity-90 sm:text-base">Descubra oportunidades novas todos os dias.</p>
+				<h1 class="mt-3 preset-typo-headline lg:text-4xl">Máquinas, produtos e serviços em um só lugar</h1>
+				<p class="mt-2 text-sm opacity-90 sm:text-base lg:max-w-2xl lg:text-lg">Descubra oportunidades novas todos os dias.</p>
 				<a
 					href={resolve('/buscar')}
-					class="btn btn-lg preset-filled-surface-50-950 mt-4"
+					class="btn btn-md preset-filled-surface-50-950 mt-4 lg:hidden"
 				>
 					<span>Ver todos os anúncios</span>
 					<ArrowRight size={18} />
 				</a>
+
+				<!-- computador: busca direto do destaque (abre /buscar?q=...) e atalhos por tipo -->
+				<form
+					action={resolve('/buscar')}
+					method="get"
+					role="search"
+					class="relative mt-6 hidden max-w-3xl items-center gap-2 rounded-container bg-surface-50-950 p-2 shadow-lg lg:flex"
+				>
+					<Search size={20} class="ml-2 shrink-0 text-primary-700-300" aria-hidden="true" />
+					<label for="hero-search" class="sr-only">O que você procura?</label>
+					<input
+						id="hero-search"
+						name="q"
+						type="search"
+						autocomplete="off"
+						placeholder="O que você procura? Ex: trator, sementes de soja, tratorista"
+						class="input h-12 min-w-0 flex-1 border-0 bg-transparent text-base text-surface-950-50 focus:ring-0"
+					/>
+					<button type="submit" class="btn btn-lg preset-filled-primary-500 shrink-0">
+						<span>Buscar</span>
+						<ArrowRight size={18} />
+					</button>
+				</form>
+				<div class="mt-4 hidden flex-wrap items-center gap-2 lg:flex">
+					<span class="preset-typo-label text-inherit opacity-90">Atalhos:</span>
+					{#each HERO_SHORTCUTS as shortcut (shortcut.tipo)}
+						<a href={resolve(`/buscar?tipo=${shortcut.tipo}`)} class="btn btn-sm rounded-full bg-white/15 text-white hover:bg-white/25">
+							<shortcut.icon size={16} />
+							<span>{shortcut.label}</span>
+						</a>
+					{/each}
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -484,5 +523,6 @@
 		/>
 	{/if}
 
+	<SiteFooter />
 	<BottomNav active="inicio" />
 </div>

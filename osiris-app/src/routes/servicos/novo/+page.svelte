@@ -294,5 +294,5 @@
         </div>
     </main>
 
-    <BottomNav active="servicos" />
+    <BottomNav active="anunciar" />
 </div>

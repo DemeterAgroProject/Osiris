@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { CalendarDays, ChevronRight, CircleAlert, Inbox, MessageSquare, Tractor, Briefcase, Package } from 'lucide-svelte';
+	import { Archive, CalendarDays, ChevronRight, CircleAlert, Home, Inbox, MessageSquare, Tractor, Briefcase, Package } from 'lucide-svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
@@ -206,6 +207,31 @@
 		bookings.filter((b) => ['finalizada', 'cancelado', 'bloqueado_prestador'].includes(b.status))
 	);
 
+	// resumo do topo (computador)
+	const dealStats = $derived([
+		{
+			label: 'Propostas em andamento',
+			value: openNegotiations.length,
+			hint: 'aguardando acordo',
+			icon: MessageSquare,
+			tone: 'preset-tonal-warning'
+		},
+		{
+			label: 'Operações ativas',
+			value: activeBookings.length,
+			hint: 'aguardando início ou em campo',
+			icon: Tractor,
+			tone: 'preset-tonal-primary'
+		},
+		{
+			label: 'Encerradas',
+			value: closedNegotiations.length + closedBookings.length,
+			hint: 'propostas e operações',
+			icon: Archive,
+			tone: 'preset-tonal-surface'
+		}
+	]);
+
 	function resolveBookingCounterparty(booking) {
 		const isProvider = authUserId === booking.provider_id;
 		const profile = isProvider ? booking.client : booking.provider;
@@ -306,10 +332,10 @@
 {#snippet dealCard(card)}
 	<a
 		href={resolve(card.href)}
-		class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-3 shadow-sm transition-colors hover:border-primary-500 {card.muted ? 'opacity-90' : ''}"
+		class="flex items-center gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-3 shadow-sm transition-colors hover:border-primary-500 lg:gap-5 lg:p-4 {card.muted ? 'opacity-90' : ''}"
 	>
 		<div
-			class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-container {card.muted ? 'bg-surface-100-900 text-surface-800-200' : 'preset-tonal-primary'}"
+			class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-container lg:h-24 lg:w-32 {card.muted ? 'bg-surface-100-900 text-surface-800-200' : 'preset-tonal-primary'}"
 		>
 			{#if card.coverUrl}
 				<img src={card.coverUrl} alt="" class="h-full w-full object-cover {card.muted ? 'grayscale' : ''}" />
@@ -321,10 +347,10 @@
 			<span class="badge mb-1 rounded-full px-2 py-0.5 uppercase text-xs font-bold tracking-wide {statusBadgeClass(card.tone)}">
 				{card.statusLabel}
 			</span>
-			<p class="line-clamp-2 preset-typo-card-title">{card.title}</p>
+			<p class="line-clamp-2 preset-typo-card-title lg:text-lg">{card.title}</p>
 			<p class="truncate text-sm text-surface-800-200">{card.subtitle}</p>
 			{#if card.price || card.dates}
-				<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+				<div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 lg:hidden">
 					{#if card.price}
 						<span class="text-base font-bold text-primary-700-300">{card.price}</span>
 					{/if}
@@ -337,7 +363,27 @@
 				</div>
 			{/if}
 		</div>
-		<ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300" />
+		<ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300 lg:hidden" />
+
+		<!-- computador: valor e período à direita, e a ação do card (o card inteiro já é o link) -->
+		{#if card.price || card.dates}
+			<div class="hidden shrink-0 text-right lg:block">
+				{#if card.price}
+					<p class="preset-typo-label">{card.href.startsWith('/operacoes') ? 'Valor acordado' : 'Valor proposto'}</p>
+					<p class="text-2xl font-bold leading-tight text-primary-700-300">{card.price}</p>
+				{/if}
+				{#if card.dates}
+					<p class="mt-0.5 inline-flex items-center gap-1 preset-typo-caption">
+						<CalendarDays size={14} />
+						{card.dates}
+					</p>
+				{/if}
+			</div>
+		{/if}
+		<span class="btn preset-tonal hidden shrink-0 lg:inline-flex" aria-hidden="true">
+			<span>{card.href.startsWith('/operacoes') ? 'Ver operação' : 'Abrir conversa'}</span>
+			<ChevronRight size={18} />
+		</span>
 	</a>
 {/snippet}
 
@@ -354,11 +400,42 @@
 <div class="min-h-screen pb-24">
 	<Header title="Negociações" />
 
-	<main class="mx-auto w-full max-w-3xl px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
+				<Home size={16} />
+				Início
+			</a>
+			<span class="text-surface-700-300">/</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">Negociações</span>
+		</nav>
+
 		<div>
 			<h1 class="preset-typo-headline">Negociações</h1>
 			<p class="mt-1 preset-typo-subtitle">Propostas, conversas e operações no campo.</p>
 		</div>
+
+		<!-- computador: resumo (contagens do que já foi carregado) -->
+		{#if !loading && !errorMessage}
+			<div class="mt-5 hidden grid-cols-3 gap-4 lg:grid">
+				{#each dealStats as stat (stat.label)}
+					<div class="flex items-center gap-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-5 shadow-sm">
+						<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {stat.tone}">
+							<stat.icon size={24} />
+						</span>
+						<div class="min-w-0">
+							<p class="preset-typo-label">{stat.label}</p>
+							<p class="text-3xl font-bold leading-tight text-surface-950-50">{stat.value}</p>
+							<p class="preset-typo-caption">{stat.hint}</p>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else if loading}
+			<div class="mt-5 hidden lg:block">
+				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+			</div>
+		{/if}
 
 		<AppTabs bind:value={activeTab} items={negotiationTabs} label="Negociações" class="mt-4">
 			{#if loading}
@@ -466,5 +543,6 @@
 		</AppTabs>
 	</main>
 
+	<SiteFooter />
 	<BottomNav active="mais" />
 </div>

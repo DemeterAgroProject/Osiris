@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ArrowRight, CalendarDays, Check, CheckCircle2, CircleAlert, FileText, MessagesSquare, Package, Quote, SlidersHorizontal, XCircle } from 'lucide-svelte';
+	import { ArrowRight, CalendarDays, Check, CheckCircle2, CircleAlert, FileText, Home, MessagesSquare, Package, Quote, SlidersHorizontal, XCircle } from 'lucide-svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import AppConfirmDialog from '$lib/components/ui/AppConfirmDialog.svelte';
@@ -648,10 +648,10 @@
 	com um resumo da proposta no topo e os detalhes numa gaveta.
 	Computador (md+): duas colunas, detalhes à esquerda e chat à direita.
 -->
-<div class="flex h-dvh flex-col md:block md:h-auto md:min-h-screen md:pb-24">
+<div class="flex h-dvh flex-col md:block md:h-auto md:min-h-screen md:pb-24 lg:pb-0">
 	<Header title="Negociação" backHref="/negociacoes" />
 
-	<main class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col md:block md:px-4 md:py-4">
+	<main class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col md:block md:px-4 md:py-4 lg:max-w-6xl lg:px-8 lg:py-6">
 		{#if loading}
 			<div class="space-y-4 p-4 md:p-0" role="status" aria-live="polite">
 				<span class="sr-only">Carregando negociação...</span>
@@ -665,6 +665,17 @@
 			</div>
 		{:else if negotiation}
 			<h1 class="sr-only">Negociação: {resolveListingTitle(negotiation)}</h1>
+
+			<nav class="mb-4 hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+				<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
+					<Home size={16} />
+					Início
+				</a>
+				<span class="text-surface-700-300">/</span>
+				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">Negociações</a>
+				<span class="text-surface-700-300">/</span>
+				<span class="truncate font-semibold text-surface-950-50" aria-current="page">{resolveListingTitle(negotiation)}</span>
+			</nav>
 
 			{#if errorMessage}
 				<div class="mx-4 mt-3 flex shrink-0 items-start gap-2 rounded-container preset-tonal-error p-3 text-sm md:mx-0 md:mb-3 md:mt-0">
@@ -722,13 +733,13 @@
 				</div>
 			</section>
 
-			<div class="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2 md:items-start md:gap-4">
-				<aside class="hidden md:block" aria-label="Detalhes da proposta">
+			<div class="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2 md:items-start md:gap-4 lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-6">
+				<aside class="hidden md:block lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pr-1" aria-label="Detalhes da proposta">
 					{@render details('lado')}
 				</aside>
 
 				<section
-					class="flex min-h-0 flex-1 flex-col md:block md:rounded-container md:border md:border-surface-200-800 md:bg-surface-50-950 md:p-4 md:shadow-sm"
+					class="flex min-h-0 flex-1 flex-col md:block md:rounded-container md:border md:border-surface-200-800 md:bg-surface-50-950 md:p-4 md:shadow-sm lg:sticky lg:top-20 lg:flex lg:h-[calc(100dvh-8rem)] lg:flex-col"
 					aria-label="Conversa"
 				>
 					<h2 class="mb-3 hidden items-center gap-2 preset-typo-title md:flex">

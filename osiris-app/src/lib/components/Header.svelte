@@ -11,7 +11,9 @@
         CircleCheck,
         CircleX,
         Handshake,
+        Megaphone,
         MessageCircle,
+        Plus,
         Star,
         Tractor,
         User
@@ -75,6 +77,34 @@
      * backUsesHistory: a seta volta para a tela anterior (history.back); aberto direto por um link, vai para backHref.
      */
     let { title = '', backHref = '', backUsesHistory = false } = $props();
+
+    // menu do computador: quem entrou vê as áreas da conta; visitante vê as categorias do marketplace
+    const MEMBER_NAV = [
+        { href: '/', label: 'Início' },
+        { href: '/buscar', label: 'Buscar' },
+        { href: '/inventario', label: 'Meu inventário' },
+        { href: '/servicos', label: 'Meus serviços' },
+        { href: '/negociacoes', label: 'Negociações' },
+        { href: '/mais', label: 'Mais' }
+    ];
+    const VISITOR_NAV = [
+        { href: '/', label: 'Início' },
+        { href: '/buscar', label: 'Buscar' },
+        { href: '/buscar?tipo=maquinario', label: 'Máquinas' },
+        { href: '/buscar?tipo=produto', label: 'Produtos e insumos' },
+        { href: '/buscar?tipo=servico', label: 'Serviços' },
+        { href: '/mais', label: 'Mais' }
+    ];
+
+    function isNavActive(href) {
+        const [path, query] = href.split('?');
+        const tipo = page.url.searchParams.get('tipo');
+        if (query) return page.url.pathname === path && `tipo=${tipo}` === query;
+        if (path === '/') return page.url.pathname === '/';
+        // "Buscar" fica ativo só quando nenhuma categoria do menu está ativa
+        if (path === '/buscar' && !isLoggedIn) return page.url.pathname === '/buscar' && !tipo;
+        return page.url.pathname.startsWith(path);
+    }
 
     let authUser = $state(null);
     let profile = $state(null);
@@ -226,15 +256,53 @@
                 </a>
             {/if}
 
+            <!-- computador: marca no lugar do título da tela -->
+            <a href={resolve('/')} class="hidden leading-tight xl:block">
+                <span class="block text-lg font-bold text-surface-950-50">Osiris</span>
+                <span class="block text-primary-700-300 preset-typo-label">Marketplace agro</span>
+            </a>
+
             {#if title}
-                <div class="min-w-0 leading-tight">
+                <div class="min-w-0 leading-tight lg:hidden">
                     <p class="text-primary-600-400 preset-typo-label">Osiris</p>
                     <p class="truncate text-lg font-bold leading-tight text-surface-950-50">{title}</p>
                 </div>
             {/if}
         </div>
 
+        <!-- computador: as mesmas seções da barra inferior do celular -->
+        <nav class="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex" aria-label="Navegação principal">
+            {#each isLoggedIn ? MEMBER_NAV : VISITOR_NAV as item (item.href)}
+                {@const isActive = isNavActive(item.href)}
+                <a
+                    href={resolve(item.href)}
+                    aria-current={isActive ? 'page' : undefined}
+                    class="btn px-3 {isActive ? 'preset-tonal-primary' : 'hover:preset-tonal'}"
+                >
+                    <span>{item.label}</span>
+                </a>
+            {/each}
+        </nav>
+
         <div class="flex shrink-0 items-center gap-1">
+            {#if isLoggedIn}
+                <a
+                    href={resolve('/anunciar')}
+                    class="btn preset-filled-primary-500 mr-2 hidden lg:inline-flex"
+                    title="Novo anúncio"
+                    aria-label="Novo anúncio"
+                >
+                    <Plus size={18} />
+                    <span class="hidden xl:inline">Novo anúncio</span>
+                </a>
+            {:else}
+                <!-- visitante: entra antes e volta direto para o anúncio (mesmo caminho da tela Mais) -->
+                <a href={resolve('/login?redirect=/anunciar')} class="btn preset-tonal-primary mr-1 hidden lg:inline-flex">
+                    <Megaphone size={18} />
+                    <span>Anunciar</span>
+                </a>
+            {/if}
+            {#if isLoggedIn}
             <AppPopover
                 bind:open={notifOpen}
                 title="Notificações"
@@ -308,6 +376,7 @@
                     {/if}
                 </div>
             </AppPopover>
+            {/if}
 
             <!-- Avatar -->
             {#if isLoggedIn}

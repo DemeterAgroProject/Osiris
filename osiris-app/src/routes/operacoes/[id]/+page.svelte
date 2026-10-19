@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Check, CheckCircle2, CircleAlert, Clock, Flag, Play, Send, Star, Tractor, XCircle } from 'lucide-svelte';
+	import { Check, CheckCircle2, CircleAlert, Clock, Flag, Home, Play, Send, Star, Tractor, XCircle } from 'lucide-svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
@@ -348,10 +349,23 @@
 	<title>Operação — Osiris</title>
 </svelte:head>
 
-<div class="min-h-screen pb-24">
+<div class="min-h-screen pb-24 lg:pb-0">
 	<Header title="Operação" backHref="/negociacoes" />
 
-	<main class="mx-auto w-full max-w-3xl space-y-4 px-4 py-4">
+	<main class="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 lg:max-w-6xl lg:space-y-6 lg:px-8 lg:py-6">
+		{#if booking}
+			<nav class="hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+				<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
+					<Home size={16} />
+					Início
+				</a>
+				<span class="text-surface-700-300">/</span>
+				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">Negociações</a>
+				<span class="text-surface-700-300">/</span>
+				<span class="truncate font-semibold text-surface-950-50" aria-current="page">{listingTitle()}</span>
+			</nav>
+		{/if}
+
 		{#if loading}
 			<div class="space-y-4" role="status" aria-live="polite">
 				<span class="sr-only">Carregando operação...</span>
@@ -366,7 +380,7 @@
 		{:else if booking}
 			<!-- etapas da operação (bookings.status) -->
 			{#if stageIndex(booking.status) >= 0}
-				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm" aria-label="Etapas da operação">
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:px-10 lg:py-6" aria-label="Etapas da operação">
 					<ol class="flex items-start">
 						{#each OPERATION_STAGES as stage, index (stage.status)}
 							{@const current = stageIndex(booking.status)}
@@ -397,7 +411,9 @@
 				</section>
 			{/if}
 
-			<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+			<!-- computador: dados da operação à esquerda; ações, avaliação e avaliações à direita -->
+			<div class="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+			<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:sticky lg:top-20 lg:p-6">
 				{#if booking.coverUrl}
 					<img
 						src={booking.coverUrl}
@@ -458,6 +474,7 @@
 				</dl>
 			</section>
 
+			<div class="space-y-4">
 			{#if errorMessage}
 				<div class="flex items-start gap-2 rounded-container preset-tonal-error p-3 text-sm">
 					<CircleAlert class="h-5 w-5 shrink-0" />
@@ -613,6 +630,8 @@
 					</ul>
 				</section>
 			{/if}
+			</div>
+			</div>
 		{/if}
 	</main>
 
@@ -622,5 +641,6 @@
 		oncancelled={() => loadBooking(bookingId)}
 	/>
 
+	<SiteFooter />
 	<BottomNav active="mais" />
 </div>

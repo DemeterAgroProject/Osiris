@@ -120,7 +120,7 @@
 					type="button"
 					onclick={handleGoogleLogin}
 					disabled={signingIn}
-					class="btn btn-lg preset-outlined-surface-200-800 w-full"
+					class="btn btn-md preset-outlined-surface-200-800 w-full"
 				>
 					{#if signingIn}
 						<span
@@ -169,5 +169,5 @@
 		{/if}
 	</main>
 
-	<BottomNav active="mais" />
+	<BottomNav active="entrar" />
 </div>

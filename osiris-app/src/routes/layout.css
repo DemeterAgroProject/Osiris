@@ -114,3 +114,12 @@ textarea::placeholder {
 		font-weight: 600;
 	}
 }
+
+/* placeholders de carregamento: o surface-200 do tema quase some sobre o fundo claro */
+.placeholder {
+	background-color: color-mix(in oklab, var(--color-surface-950) 11%, transparent);
+}
+
+.dark .placeholder {
+	background-color: color-mix(in oklab, var(--color-surface-50) 12%, transparent);
+}
