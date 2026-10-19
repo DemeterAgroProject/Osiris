@@ -26,6 +26,22 @@ export async function enablePush(userId) {
 /** @type {Promise<boolean> | null} */
 let syncing = null;
 
+/** @type {'push-service' | 'save' | 'unknown' | null} */
+let lastFailure = null;
+
+/**
+ * Por que a última inscrição falhou: 'push-service' quando o navegador recusa o serviço de push
+ * (o Brave vem com ele desligado), 'save' quando o banco não gravou.
+ */
+export function pushFailureReason() {
+  return lastFailure;
+}
+
+/** Brave expõe navigator.brave; o push dele depende de uma opção nas configurações. */
+export function isBrave() {
+  return typeof navigator !== 'undefined' && 'brave' in navigator;
+}
+
 /**
  * Garante que este aparelho está inscrito com a chave VAPID atual e salvo no banco.
  * Não pede permissão: só age se ela já foi concedida. Se a chave mudou, refaz a inscrição.
@@ -39,6 +55,7 @@ export function syncPushSubscription(userId) {
 }
 
 async function subscribeThisDevice() {
+  lastFailure = null;
   try {
     await navigator.serviceWorker.register('/sw.js');
     // subscribe() falha se o service worker ainda está instalando: espera ele ficar ativo
@@ -64,11 +81,14 @@ async function subscribeThisDevice() {
 
     if (error) {
       console.error('Erro ao salvar inscrição de notificações:', error.message);
+      lastFailure = 'save';
       return false;
     }
     return true;
   } catch (error) {
     console.error('Erro ao ativar notificações:', error);
+    // "Registration failed - push service error": a permissão existe, mas o serviço de push do navegador recusou
+    lastFailure = error?.name === 'AbortError' || /push service/i.test(error?.message ?? '') ? 'push-service' : 'unknown';
     return false;
   }
 }

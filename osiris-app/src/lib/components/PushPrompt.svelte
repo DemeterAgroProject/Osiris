@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { Bell, X } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
-	import { enablePush, pushPermission, syncPushSubscription } from '$lib/push';
+	import { enablePush, isBrave, pushFailureReason, pushPermission, syncPushSubscription } from '$lib/push';
 	import { showToast } from '$lib/components/ui/toast.js';
 
 	// Pede a permissão de notificação com um toque (celulares bloqueiam o pedido automático)
@@ -48,6 +48,12 @@
 			showToast('Notificações ativadas neste aparelho.');
 		} else if (permission === 'denied') {
 			showToast('As notificações foram bloqueadas. Libere nas configurações do navegador.');
+		} else if (permission === 'granted' && pushFailureReason() === 'push-service') {
+			showToast(
+				isBrave()
+					? 'O Brave bloqueia notificações por padrão. Em brave://settings/privacy, ative “Usar os serviços do Google para mensagens push” e reinicie o navegador.'
+					: 'Este navegador recusou o serviço de notificações. Tente pelo Chrome.'
+			);
 		} else if (permission === 'granted') {
 			showToast('Não foi possível ativar as notificações. Tente novamente.');
 		}
