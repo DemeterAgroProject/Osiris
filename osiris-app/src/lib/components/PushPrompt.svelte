@@ -15,6 +15,8 @@
 	let permission = $state('unsupported');
 	let dismissed = $state(false);
 	let enabling = $state(false);
+	// o Edge (e o Chrome, para quem já recusou antes) mostra o pedido só como um ícone na barra de endereço
+	let permissionHint = $state(false);
 
 	const visible = $derived(
 		Boolean(userId) && permission === 'default' && !dismissed && !page.url.pathname.startsWith('/boas-vindas')
@@ -40,7 +42,10 @@
 	async function handleEnable() {
 		if (!userId || enabling) return;
 		enabling = true;
+		const hintTimer = setTimeout(() => (permissionHint = pushPermission() === 'default'), 3000);
 		const ok = await enablePush(userId);
+		clearTimeout(hintTimer);
+		permissionHint = false;
 		permission = pushPermission();
 		enabling = false;
 
@@ -55,7 +60,7 @@
 					: 'Este navegador recusou o serviço de notificações. Tente pelo Chrome.'
 			);
 		} else if (permission === 'granted') {
-			showToast('Não foi possível ativar as notificações. Tente novamente.');
+			showToast('Não foi possível ativar as notificações agora. Recarregue a página para tentar de novo.');
 		}
 	}
 
@@ -102,6 +107,11 @@
 					<Bell size={18} />
 					<span>{enabling ? 'Ativando...' : 'Ativar notificações'}</span>
 				</button>
+				{#if permissionHint}
+					<p class="mt-2 text-xs opacity-80" role="status">
+						Não apareceu o pedido? Procure o ícone de sino ou de cadeado na barra de endereço do navegador e escolha <b>Permitir</b>.
+					</p>
+				{/if}
 			</div>
 			<button type="button" class="btn-icon btn-icon-lg preset-tonal" title="Agora não" aria-label="Agora não" onclick={dismiss}>
 				<X size={18} />

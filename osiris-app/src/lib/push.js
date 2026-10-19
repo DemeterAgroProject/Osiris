@@ -26,7 +26,7 @@ export async function enablePush(userId) {
 /** @type {Promise<boolean> | null} */
 let syncing = null;
 
-/** @type {'push-service' | 'save' | 'unknown' | null} */
+/** @type {'push-service' | 'save' | 'timeout' | 'unknown' | null} */
 let lastFailure = null;
 
 /**
@@ -35,6 +35,14 @@ let lastFailure = null;
  */
 export function pushFailureReason() {
   return lastFailure;
+}
+
+/** Rejeita se a etapa não terminar a tempo, para o botão não ficar preso em "Ativando...". */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('tempo esgotado'), { name: 'TimeoutError' })), ms))
+  ]);
 }
 
 /** Brave expõe navigator.brave; o push dele depende de uma opção nas configurações. */
@@ -59,7 +67,7 @@ async function subscribeThisDevice() {
   try {
     await navigator.serviceWorker.register('/sw.js');
     // subscribe() falha se o service worker ainda está instalando: espera ele ficar ativo
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await withTimeout(navigator.serviceWorker.ready, 15000);
     const applicationServerKey = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
 
     let subscription = await registration.pushManager.getSubscription();
@@ -68,7 +76,7 @@ async function subscribeThisDevice() {
       subscription = null;
     }
     if (!subscription) {
-      subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+      subscription = await withTimeout(registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey }), 20000);
     }
 
     const { endpoint, keys } = subscription.toJSON();
@@ -88,7 +96,12 @@ async function subscribeThisDevice() {
   } catch (error) {
     console.error('Erro ao ativar notificações:', error);
     // "Registration failed - push service error": a permissão existe, mas o serviço de push do navegador recusou
-    lastFailure = error?.name === 'AbortError' || /push service/i.test(error?.message ?? '') ? 'push-service' : 'unknown';
+    lastFailure =
+      error?.name === 'TimeoutError'
+        ? 'timeout'
+        : error?.name === 'AbortError' || /push service/i.test(error?.message ?? '')
+          ? 'push-service'
+          : 'unknown';
     return false;
   }
 }
