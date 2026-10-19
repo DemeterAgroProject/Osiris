@@ -205,7 +205,19 @@
 		Boolean(isOwner && (authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google'))
 	);
 	const phone = $derived(profile?.phone_number || profile?.phone || '');
-	const role = $derived(roleLabel(profile?.role));
+	// role é "client" para quase todos: o selo diz se a pessoa anuncia (tem anúncio ativo)
+	let hasActiveListings = $state(false);
+	const role = $derived(
+		profile?.role === 'admin' ? roleLabel('admin') : hasActiveListings ? 'Anunciante' : ''
+	);
+
+	async function loadHasActiveListings(ownerId) {
+		const [products, services] = await Promise.all([
+			supabase.from('products').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'ativo'),
+			supabase.from('services').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'ativo')
+		]);
+		hasActiveListings = (products.count ?? 0) + (services.count ?? 0) > 0;
+	}
 
 	const reviewStats = $derived(computeReviewStats(reviews));
 	const rating = $derived(reviewStats.average);
@@ -285,7 +297,7 @@
 
 		if (user?.id === profileId) await loadMyMunicipio(profile?.municipio_id);
 		syncFormFromProfile();
-		await loadReviews();
+		await Promise.all([loadReviews(), loadHasActiveListings(profileId)]);
 		loading = false;
 	}
 
@@ -521,11 +533,13 @@
 
 					<h2 class="mt-3 text-center text-2xl font-bold text-surface-950-50">{displayName}</h2>
 
-					<span
-						class="mt-2 rounded-full preset-tonal-primary px-3 py-1 uppercase text-xs font-bold tracking-wide"
-					>
-						{role}
-					</span>
+					{#if role}
+						<span
+							class="mt-2 rounded-full preset-tonal-primary px-3 py-1 uppercase text-xs font-bold tracking-wide"
+						>
+							{role}
+						</span>
+					{/if}
 
 					<div class="mt-2">
 						<AppRating value={rating} count={reviewCount} size="sm" />

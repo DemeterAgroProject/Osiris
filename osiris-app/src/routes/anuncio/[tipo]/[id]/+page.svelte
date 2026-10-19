@@ -127,26 +127,13 @@
 		);
 	}
 
-	async function fetchReviewsForProduct(productId) {
-		const { data: bookings, error: bookingsError } = await supabase
-			.from('bookings')
-			.select('id')
-			.eq('product_id', productId);
-
-		if (bookingsError) {
-			return { reviews: [], error: bookingsError };
-		}
-
-		const bookingIds = (bookings ?? []).map((booking) => booking.id);
-		if (!bookingIds.length) {
-			return { reviews: [], error: null };
-		}
-
-		const { data, error } = await supabase
-			.from('reviews')
-			.select('id, rating, comment, created_at, booking_id, reviewer_id')
-			.in('booking_id', bookingIds)
-			.order('created_at', { ascending: false });
+	// avaliações que os clientes deram ao anunciante por este anúncio; a RPC as entrega a qualquer
+	// visitante sem expor as operações (bookings só são legíveis pelos participantes)
+	async function fetchReviewsForListing({ productId = null, serviceId = null }) {
+		const { data, error } = await supabase.rpc('avaliacoes_do_anuncio', {
+			p_product_id: productId,
+			p_service_id: serviceId
+		});
 
 		if (error) {
 			return { reviews: [], error };
@@ -259,14 +246,14 @@
 		sellerReviewStats = computeReviewStats(sellerReviews);
 	}
 
-	async function loadProductReviews(productId) {
-		if (!productId) {
+	async function loadListingReviews(listing) {
+		if (!listing.productId && !listing.serviceId) {
 			reviews = [];
 			return;
 		}
 
 		reviewsLoading = true;
-		const { reviews: data, error } = await fetchReviewsForProduct(productId);
+		const { reviews: data, error } = await fetchReviewsForListing(listing);
 		reviews = data;
 
 		if (error && error.code !== 'PGRST116') {
@@ -348,7 +335,7 @@
 
 			await Promise.all([
 				loadSeller(data.owner_id),
-				loadProductReviews(data.id),
+				loadListingReviews({ productId: data.id }),
 				loadProductGallery(data.id)
 			]);
 		} else if (routeTipo === 'maquinario') {
@@ -435,7 +422,7 @@
 
 			await Promise.all([
 				loadSeller(data.owner_id),
-				loadProductReviews(data.id),
+				loadListingReviews({ productId: data.id }),
 				loadProductGallery(data.id)
 			]);
 		} else if (routeTipo === 'servico') {
@@ -467,7 +454,7 @@
 			};
 
 			galleryImages = data.image_url ? [data.image_url] : [];
-			await loadSeller(data.owner_id);
+			await Promise.all([loadSeller(data.owner_id), loadListingReviews({ serviceId: data.id })]);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';
 		}

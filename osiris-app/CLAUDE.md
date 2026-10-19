@@ -31,6 +31,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - **Perfis**: e-mail, telefone e CPF não são legíveis por outros usuários (privilégio por coluna). Use `fetchProfile()` / `PUBLIC_PROFILE_COLUMNS` de `src/lib/profiles.js`. Nunca `select('*')` em `profiles`, nem `.select()` com colunas sensíveis após um `update`: falha com "permission denied".
 - Cancelar operação: sempre pela RPC `cancel_booking` (componente `CancelBookingDialog.svelte`), nunca `update({ status: 'cancelado' })`.
 - Aceitar proposta: RPC `aceitar_negociacao` (cria o registro em `bookings`).
+- Avaliações de um anúncio: RPC `avaliacoes_do_anuncio` (bookings só são legíveis pelos participantes; buscar via bookings deixa o anúncio "sem avaliações" para visitantes).
 - Status de anúncio em minúsculas: `'ativo'` / `'pausado'`.
 - Preço: use `listingPriceLabel()` de `src/lib/pricing.js`. Máquina tem `agricultural_machinery.offer_type` (`venda`: preço da máquina; `aluguel`: preço por `rental_unit` — hora, dia ou hectare); insumo é preço por `stock_unit` ("/ saca"); serviço segue `pricing_model`. Rótulos de condição, entrega e unidade também vêm de `pricing.js`.
 - **Localização**: anúncios (`products`, `services`) e perfil guardam `municipio_id` (código IBGE, tabela `municipios` com coordenadas), nunca endereço. Use `MunicipioPicker.svelte` nos formulários e `MUNICIPIO_EMBED` / `formatMunicipio()` de `src/lib/municipios.js` nas consultas. A cidade do perfil é privada (lida via `get_my_profile`) e só pré-preenche anúncios; em serviços, `location` é a área de atendimento em texto livre.
@@ -51,7 +52,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Armadilha: em função `SECURITY DEFINER`, `current_user` é sempre o dono (`postgres`). Checagens baseadas em `current_user` precisam de `SECURITY INVOKER`.
 - O dump completo (`supabase db dump`) e o `db diff` precisam do Docker Desktop rodando.
 - Há registros `[E2E]` e `[E2E-SEED-OSIRIS]` usados pela suíte E2E: não apague. Eles ficam ocultos do público pelas policies de SELECT de `products`/`services` (`is_test_listing`: dono com `profiles.is_test_account` ou nome começando por `[E2E`); só as contas de teste os veem.
-- Catálogo de demonstração (vitrine para apresentações): `scripts/demo-catalogo.sql` cria 4 anunciantes fictícios sem senha (ids `d0000000-…`, e-mail `@demo.invalid`) com máquinas, insumos e serviços; rodar de novo recria, e `scripts/remover-demo-catalogo.sql` apaga. Fotos são URLs do Unsplash.
+- Catálogo de demonstração (vitrine para apresentações): `scripts/demo-catalogo.sql` cria 4 anunciantes fictícios sem senha (ids `d0000000-…`, e-mail `@demo.invalid`) com máquinas, insumos, serviços e avaliações entre eles; rodar de novo apaga tudo ligado ao catálogo (inclusive negociações de teste com ele) e recria, e `scripts/remover-demo-catalogo.sql` apaga. Fotos são URLs do Unsplash.
 - A migração planejada para um Supabase self-hosted tem sua lista de verificação em `docs/migracao-self-hosted.md`.
 
 ## Push
