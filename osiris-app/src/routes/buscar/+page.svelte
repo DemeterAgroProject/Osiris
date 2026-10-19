@@ -357,12 +357,14 @@
 		loadMarketplaceListings(debouncedSearch);
 	});
 
+	// filtro e busca seguem o endereço: o menu de cima troca ?tipo= sem remontar a página
+	$effect(() => {
+		const params = page.url.searchParams;
+		filters = filtersFromSearchParams(params);
+		searchQuery = params.get('q') ?? '';
+	});
+
 	onMount(async () => {
-		const q = page.url.searchParams.get('q');
-		if (q) searchQuery = q;
-
-		filters = filtersFromSearchParams(page.url.searchParams);
-
 		await loadMarketplaceListings(searchQuery);
 		skipDebouncedFetch = false;
 	});
