@@ -23,16 +23,26 @@ export async function enablePush(userId) {
   return syncPushSubscription(userId);
 }
 
+/** @type {Promise<boolean> | null} */
+let syncing = null;
+
 /**
  * Garante que este aparelho está inscrito com a chave VAPID atual e salvo no banco.
  * Não pede permissão: só age se ela já foi concedida. Se a chave mudou, refaz a inscrição.
  * @returns {Promise<boolean>}
  */
-export async function syncPushSubscription(userId) {
-  if (pushPermission() !== 'granted' || !userId) return false;
+export function syncPushSubscription(userId) {
+  if (pushPermission() !== 'granted' || !userId) return Promise.resolve(false);
+  // o aviso e a troca de sessão podem pedir ao mesmo tempo: uma inscrição por vez
+  syncing ??= subscribeThisDevice().finally(() => (syncing = null));
+  return syncing;
+}
 
+async function subscribeThisDevice() {
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.register('/sw.js');
+    // subscribe() falha se o service worker ainda está instalando: espera ele ficar ativo
+    const registration = await navigator.serviceWorker.ready;
     const applicationServerKey = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
 
     let subscription = await registration.pushManager.getSubscription();
@@ -45,10 +55,12 @@ export async function syncPushSubscription(userId) {
     }
 
     const { endpoint, keys } = subscription.toJSON();
-    const { error } = await supabase.from('push_subscriptions').upsert(
-      { user_id: userId, endpoint, p256dh: keys.p256dh, auth: keys.auth },
-      { onConflict: 'endpoint' }
-    );
+    // a função passa o aparelho para a conta atual, mesmo que outra conta já tenha entrado nele
+    const { error } = await supabase.rpc('registrar_push', {
+      p_endpoint: endpoint,
+      p_p256dh: keys.p256dh,
+      p_auth: keys.auth
+    });
 
     if (error) {
       console.error('Erro ao salvar inscrição de notificações:', error.message);
