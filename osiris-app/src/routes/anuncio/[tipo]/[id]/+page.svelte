@@ -11,6 +11,7 @@
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
 	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
+	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
 	import { ChevronLeft, ChevronRight, CircleAlert, CircleUser, Handshake, Home, ImageOff, Images, LogIn } from 'lucide-svelte';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -309,7 +310,7 @@
 		if (routeTipo === 'produto') {
 			const { data, error } = await supabase
 				.from('products')
-				.select('id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description')
+				.select(`id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -326,6 +327,7 @@
 				priceLabel: listingPriceLabel('produto', data.price),
 				description: data.description?.trim() || '',
 				details: [
+					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
 					{ label: 'Categoria', value: data.category || 'Não informado' },
 					{ label: 'Quantidade disponível', value: data.quantity != null ? `${data.quantity} ${data.stock_unit || ''}`.trim() : 'Não informado' }
 				]
@@ -348,6 +350,7 @@
 					category,
 					status,
 					owner_id,
+					municipio:municipios(${MUNICIPIO_EMBED}),
 					created_at,
 					agricultural_machinery (
 						id,
@@ -387,6 +390,7 @@
 				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Negócio', value: MACHINE_OFFER_LABEL[machinery.offer_type] ?? 'Não informado' },
+					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
 					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
 					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
 					{ label: 'Modelo', value: machinery.model || 'Não informado' },
@@ -403,7 +407,7 @@
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
-				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url')
+				.select(`id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -421,7 +425,8 @@
 				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Tipo', value: data.service_type || 'Não informado' },
-					{ label: 'Local', value: data.location || 'Não informado' }
+					{ label: 'Cidade', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
+					{ label: 'Área de atendimento', value: data.location || 'Não informado' }
 				]
 			};
 

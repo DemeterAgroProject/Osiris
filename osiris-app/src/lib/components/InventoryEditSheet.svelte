@@ -3,6 +3,8 @@
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
 	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+	import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
+	import { pickMunicipio } from '$lib/municipios';
 
 	function createEmptyImageRow(isCover = false) {
 		return { id: null, url: '', is_cover: isCover, removed: false };
@@ -149,7 +151,8 @@
 		serial_number: '',
 		manufacture_year: '',
 		current_horimeter: '',
-		offer_type: 'aluguel'
+		offer_type: 'aluguel',
+		municipio: null
 	});
 
 	const isMachinery = $derived(product ? isMachineryProduct(product) : false);
@@ -186,7 +189,8 @@
 			serial_number: m?.serial_number ?? '',
 			manufacture_year: m?.manufacture_year != null ? String(m.manufacture_year) : '',
 			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : '',
-			offer_type: m?.offer_type ?? 'aluguel'
+			offer_type: m?.offer_type ?? 'aluguel',
+			municipio: pickMunicipio(product.municipio)
 		};
 		errorMessage = '';
 		void loadImages(product.id);
@@ -235,6 +239,7 @@
 		const { error: productError } = await updateProduct(product.id, {
 			name: form.name.trim(),
 			description: form.description.trim() || null,
+			municipio_id: form.municipio?.codigo_ibge ?? null,
 			price,
 			...(isMachinery
 				? { category: 'Maquinário', quantity: 1, stock_unit: 'Unidade' }
@@ -484,6 +489,12 @@
 					</div>
 				</div>
 			{/if}
+
+			<MunicipioPicker
+				id="edit-municipio"
+				label={isMachinery ? 'Cidade onde a máquina está' : 'Cidade onde o produto está'}
+				bind:value={form.municipio}
+			/>
 
 			<ProductImageUrlsEditor bind:images />
 		</form>

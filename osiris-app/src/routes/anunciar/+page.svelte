@@ -8,6 +8,8 @@
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+    import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
+    import { fetchMyMunicipio } from '$lib/municipios';
     import AppSteps from '$lib/components/ui/AppSteps.svelte';
     import { showToast } from '$lib/components/ui/toast.js';
 
@@ -88,12 +90,19 @@
             stock_unit: 'Sacas',
 
             // Imagens (URLs) — product_images
-            images: [createEmptyImageRow(true)]
+            images: [createEmptyImageRow(true)],
+
+            // Cidade onde está (município do IBGE); vem preenchida com a cidade do perfil
+            municipio: null
     });
 
     onMount(async () => {
         // pede o login antes de a pessoa preencher as etapas, não só no envio
         if (!(await requireUser('/anunciar'))) return;
+
+        fetchMyMunicipio().then((municipio) => {
+            if (municipio && !form.municipio) form.municipio = municipio;
+        });
 
         const [{ data: bData }, { data: tData }] = await Promise.all([
             supabase.from('brands').select('*').order('name'),
@@ -108,6 +117,7 @@
         if (currentStep === 0) return form.category !== '';
         
         if (currentStep === 1) { 
+            if (!form.municipio) return false;
             if (form.category === 'maquinario') {
                 return form.name.trim().length > 0 && form.brand_id !== '' && form.type_id !== '' && form.model.trim().length > 0 && form.manufacture_year > 0 && form.current_horimeter !== '';
             }
@@ -185,7 +195,8 @@
                         category: 'Maquinário', 
                         quantity: 1, 
                         stock_unit: 'Unidade',
-                        status: 'ativo'
+                        status: 'ativo',
+                        municipio_id: form.municipio?.codigo_ibge ?? null
                     })
                     .select() 
                     .single();
@@ -229,7 +240,8 @@
                         category: form.product_category,
                         quantity: form.quantity,
                         stock_unit: form.stock_unit,
-                        status: 'ativo'
+                        status: 'ativo',
+                        municipio_id: form.municipio?.codigo_ibge ?? null
                     })
                     .select('id')
                     .single();
@@ -410,6 +422,16 @@
                             </div>
                         </div>
                     {/if}
+                </div>
+
+                <div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
+                    <MunicipioPicker
+                        id="anuncio-municipio"
+                        label={form.category === 'maquinario' ? 'Cidade onde a máquina está' : 'Cidade onde o produto está'}
+                        hint="Só a cidade aparece no anúncio. Endereço e retirada você combina na negociação."
+                        required
+                        bind:value={form.municipio}
+                    />
                 </div>
 
                 <div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">

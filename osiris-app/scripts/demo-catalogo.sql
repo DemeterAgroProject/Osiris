@@ -2,6 +2,8 @@
 -- Para apresentações e testes com usuários. Pode rodar de novo: apaga a versão anterior e recria.
 --   npx supabase db query --linked -f scripts/demo-catalogo.sql
 -- Para remover tudo: scripts/remover-demo-catalogo.sql
+-- Se alguém já negociou com os anunciantes de demonstração, a recriação falha (as notificações e
+-- negociações seguram os perfis) e nada é alterado; para só reaplicar as cidades, rode a seção 6.
 --
 -- Os anunciantes são usuários sem senha (ninguém consegue entrar com eles), com e-mail no domínio
 -- reservado .invalid e ids fixos começando por d0000000. Fotos: Unsplash (licença livre), por URL.
@@ -150,7 +152,26 @@ from (values
    'Mão de Obra', 'A Combinar', null, 'Dom Pedrito, RS', 64, 'photo-1675640433299-ea7c9d56723c')
 ) as v(n, dono, titulo, descricao, tipo, cobranca, preco, local, horas_atras, foto);
 
+-- 6. cidade de cada anunciante (código IBGE), no perfil e nos anúncios
+with cidades(dono, municipio) as (values
+  ('d0000000-0000-4000-8000-000000000001'::uuid, 4301602), -- Santa Rita: Bagé
+  ('d0000000-0000-4000-8000-000000000002'::uuid, 4306601), -- Três Coxilhas: Dom Pedrito
+  ('d0000000-0000-4000-8000-000000000003'::uuid, 4300406), -- Pampa Sementes: Alegrete
+  ('d0000000-0000-4000-8000-000000000004'::uuid, 4318309)  -- Coxilha Serviços: São Gabriel
+),
+perfis as (
+  update public.profiles p set municipio_id = c.municipio from cidades c where p.id = c.dono returning p.id
+),
+produtos as (
+  update public.products p set municipio_id = c.municipio from cidades c
+  where p.owner_id = c.dono and p.id::text like 'd1000000-%' returning p.id
+)
+update public.services s set municipio_id = c.municipio from cidades c
+where s.owner_id = c.dono and s.id::text like 'd4000000-%'
+  and exists (select 1 from perfis) and exists (select 1 from produtos);
+
 select
+  (select count(*) from public.products where id::text like 'd1000000-%' and municipio_id is not null) as com_cidade,
   (select count(*) from public.profiles where id::text like 'd0000000-%') as anunciantes,
   (select count(*) from public.products where id::text like 'd1000000-%') as produtos_e_maquinas,
   (select count(*) from public.agricultural_machinery where product_id::text like 'd1000000-%') as maquinas,

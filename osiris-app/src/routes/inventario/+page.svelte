@@ -114,6 +114,8 @@
 			stock_unit,
 			created_at,
 			updated_at,
+			municipio_id,
+			municipio:municipios (codigo_ibge, nome, uf),
 			agricultural_machinery (
 				id,
 				brand_id,

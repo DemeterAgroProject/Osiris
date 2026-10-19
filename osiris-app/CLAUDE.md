@@ -33,6 +33,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Aceitar proposta: RPC `aceitar_negociacao` (cria o registro em `bookings`).
 - Status de anúncio em minúsculas: `'ativo'` / `'pausado'`.
 - Preço: use `listingPriceLabel()` de `src/lib/pricing.js`. Máquina tem `agricultural_machinery.offer_type` (`venda`: preço da máquina; `aluguel`: preço por hora); serviço segue `pricing_model`.
+- **Localização**: anúncios (`products`, `services`) e perfil guardam `municipio_id` (código IBGE, tabela `municipios` com coordenadas), nunca endereço. Use `MunicipioPicker.svelte` nos formulários e `MUNICIPIO_EMBED` / `formatMunicipio()` de `src/lib/municipios.js` nas consultas. A cidade do perfil é privada (lida via `get_my_profile`) e só pré-preenche anúncios; em serviços, `location` é a área de atendimento em texto livre.
 - Termos e privacidade (`/termos`, `/privacidade`) leem o responsável e o contato de `src/lib/legal.js`.
 
 ## Regras de negócio (aplicadas por triggers)
