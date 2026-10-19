@@ -49,7 +49,9 @@
         location: '', // área de atendimento, texto livre (opcional)
         pricing_model: 'Por Hora', // 'Por Hora', 'Por Hectare', 'Empreitada/Fixo', 'A Combinar'
         price: null,
-        image_url: '' // foto de capa (opcional)
+        image_url: '', // foto de capa (opcional)
+        equipment: '', // equipamento incluso (opcional)
+        service_radius_km: '' // até quantos km da cidade (opcional)
     });
 
     const imageUrlInvalid = $derived(form.image_url.trim() !== '' && !/^https?:\/\/\S+$/i.test(form.image_url.trim()));
@@ -99,6 +101,8 @@
             // sem texto, a área de atendimento é a própria cidade
             location: form.location.trim() || formatMunicipio(form.municipio),
             image_url: form.image_url.trim() || null,
+            equipment: form.equipment.trim() || null,
+            service_radius_km: Number(form.service_radius_km) > 0 ? Math.round(Number(form.service_radius_km)) : null,
             status: 'ativo'
         });
 
@@ -211,8 +215,34 @@
                                 type="text"
                                 id="location"
                                 bind:value={form.location}
-                                placeholder="Ex: Campanha gaúcha, até 80 km"
+                                placeholder="Ex: Campanha gaúcha e fronteira"
                                 class="{fieldClass} pl-11"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class={labelClass} for="equipment">Equipamento incluso <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <input
+                                type="text"
+                                id="equipment"
+                                bind:value={form.equipment}
+                                maxlength="200"
+                                placeholder="Ex: colheitadeira 30 pés + caminhão"
+                                class={fieldClass}
+                            />
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class={labelClass} for="service_radius_km">Atende até (km) <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <input
+                                type="number"
+                                inputmode="numeric"
+                                id="service_radius_km"
+                                bind:value={form.service_radius_km}
+                                min="1"
+                                placeholder="Ex: 80"
+                                class={fieldClass}
                             />
                         </div>
                     </div>

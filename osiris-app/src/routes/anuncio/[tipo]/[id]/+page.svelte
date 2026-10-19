@@ -317,7 +317,7 @@
 		if (routeTipo === 'produto') {
 			const { data, error } = await supabase
 				.from('products')
-				.select(`id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description, brand_name, min_order, delivery, municipio:municipios(${MUNICIPIO_EMBED})`)
+				.select(`id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description, brand_name, min_order, delivery, cultivar, harvest, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -338,6 +338,8 @@
 					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
 					{ label: 'Categoria', value: data.category || 'Não informado' },
 					data.brand_name && { label: 'Marca', value: data.brand_name },
+					data.cultivar && { label: 'Cultivar', value: data.cultivar },
+					data.harvest && { label: 'Safra', value: data.harvest },
 					{ label: 'Quantidade disponível', value: data.quantity != null ? `${Number(data.quantity).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.quantity)}`.trim() : 'Não informado' },
 					data.min_order && { label: 'Pedido mínimo', value: `${Number(data.min_order).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.min_order)}` },
 					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
@@ -375,6 +377,7 @@
 						operator_included,
 						condition,
 						power_hp,
+						traction,
 						brands (name),
 						machinery_types (name)
 					)
@@ -423,6 +426,7 @@
 					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
 					{ label: 'Modelo', value: machinery.model || 'Não informado' },
 					machinery.power_hp && { label: 'Potência', value: `${machinery.power_hp} cv` },
+					machinery.traction && { label: 'Tração', value: machinery.traction === 'esteira' ? 'Esteira' : machinery.traction },
 					{ label: 'Ano', value: machinery.manufacture_year || 'Não informado' },
 					{ label: 'Horímetro', value: machinery.current_horimeter != null ? `${Number(machinery.current_horimeter).toLocaleString('pt-BR')} h` : 'Não informado' },
 					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
@@ -437,7 +441,7 @@
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
-				.select(`id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url, municipio:municipios(${MUNICIPIO_EMBED})`)
+				.select(`id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url, equipment, service_radius_km, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -456,8 +460,10 @@
 				details: [
 					{ label: 'Tipo', value: data.service_type || 'Não informado' },
 					{ label: 'Cidade', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
-					{ label: 'Área de atendimento', value: data.location || 'Não informado' }
-				]
+					{ label: 'Área de atendimento', value: data.location || 'Não informado' },
+					data.service_radius_km && { label: 'Atende até', value: `${data.service_radius_km} km da cidade` },
+					data.equipment && { label: 'Equipamento incluso', value: data.equipment }
+				].filter(Boolean)
 			};
 
 			galleryImages = data.image_url ? [data.image_url] : [];

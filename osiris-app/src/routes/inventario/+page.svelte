@@ -119,6 +119,8 @@
 			brand_name,
 			min_order,
 			delivery,
+			cultivar,
+			harvest,
 			municipio:municipios (codigo_ibge, nome, uf),
 			agricultural_machinery (
 				id,
@@ -133,6 +135,7 @@
 				operator_included,
 				condition,
 				power_hp,
+				traction,
 				machinery_types (name),
 				brands (name)
 			)

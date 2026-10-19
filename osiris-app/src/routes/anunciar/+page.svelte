@@ -13,6 +13,10 @@
     import { DELIVERY_LABEL, listingPriceLabel, stockUnitLabel } from '$lib/pricing';
 
     const RENTAL_HINT = { hora: 'por hora de uso', dia: 'por dia', hectare: 'por hectare trabalhado' };
+
+    // cultivar e safra só fazem sentido para sementes, mudas e grãos
+    const SEED_CATEGORIES = ['Sementes', 'Mudas', 'Grãos'];
+    const harvestInvalid = $derived(form.harvest.trim() !== '' && !/^\d{4}(\/\d{2})?$/.test(form.harvest.trim()));
     import AppSteps from '$lib/components/ui/AppSteps.svelte';
     import { showToast } from '$lib/components/ui/toast.js';
 
@@ -91,12 +95,15 @@
             operator_included: false,
             condition: '', // nova | seminova | usada
             power_hp: '',
+            traction: '', // 4x2 | 4x4 | esteira (opcional)
 
             // Campos específicos de Produto/Insumo
             quantity: 1,
             stock_unit: 'Sacas',
             brand_name: '', // marca ou fabricante (opcional)
             min_order: '', // pedido mínimo na mesma unidade (opcional)
+            cultivar: '', // sementes, mudas e grãos (opcional)
+            harvest: '', // safra "2025/26" (opcional)
 
             // Máquina e produto
             delivery: '', // retirada | entrega | a_combinar
@@ -134,6 +141,7 @@
                 return form.name.trim().length > 0 && form.brand_id !== '' && form.type_id !== '' && form.model.trim().length > 0 && form.manufacture_year > 0 && form.current_horimeter !== '' && form.condition !== '';
             }
             // Se for produto, exige nome, categoria selecionada e quantidade
+            if (harvestInvalid) return false;
             return form.name.trim().length > 0 && form.product_category !== '' && form.quantity > 0;
         }
         
@@ -227,7 +235,8 @@
                         rental_unit: form.rental_unit,
                         operator_included: form.offer_type === 'aluguel' && form.operator_included,
                         condition: form.condition,
-                        power_hp: Number(form.power_hp) > 0 ? Math.round(Number(form.power_hp)) : null
+                        power_hp: Number(form.power_hp) > 0 ? Math.round(Number(form.power_hp)) : null,
+                        traction: form.traction || null
                     });
 
                 if (machineryError) {
@@ -255,6 +264,8 @@
                         stock_unit: form.stock_unit,
                         brand_name: form.brand_name.trim() || null,
                         min_order: Number(form.min_order) > 0 ? Number(form.min_order) : null,
+                        cultivar: SEED_CATEGORIES.includes(form.product_category) ? form.cultivar.trim() || null : null,
+                        harvest: SEED_CATEGORIES.includes(form.product_category) ? form.harvest.trim() || null : null,
                         status: 'ativo',
                         municipio_id: form.municipio?.codigo_ibge ?? null,
                         delivery: form.delivery || null
@@ -414,6 +425,16 @@
                             </div>
                         </div>
 
+                        <div>
+                            <label class={labelClass} for="traction">Tração <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <select id="traction" bind:value={form.traction} class={selectClass}>
+                                <option value="">Não informar</option>
+                                <option value="4x2">4x2</option>
+                                <option value="4x4">4x4</option>
+                                <option value="esteira">Esteira</option>
+                            </select>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class={labelClass} for="year">Ano de fabricação</label>
@@ -467,6 +488,21 @@
                                 <input type="number" inputmode="numeric" id="min_order" bind:value={form.min_order} min="1" placeholder={`Em ${stockUnitLabel(form.stock_unit)}`} class={fieldClass} />
                             </div>
                         </div>
+                        {#if SEED_CATEGORIES.includes(form.product_category)}
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class={labelClass} for="cultivar">Cultivar <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                                    <input type="text" id="cultivar" bind:value={form.cultivar} maxlength="80" placeholder="Ex: BMX Zeus IPRO" class={fieldClass} />
+                                </div>
+                                <div>
+                                    <label class={labelClass} for="harvest">Safra <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                                    <input type="text" id="harvest" bind:value={form.harvest} maxlength="7" placeholder="Ex: 2025/26" aria-invalid={harvestInvalid ? 'true' : undefined} class={fieldClass} />
+                                    {#if harvestInvalid}
+                                        <p class="mt-1 text-xs text-error-600">Use o formato 2025/26 ou 2026.</p>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/if}
                     {/if}
                 </div>
 
