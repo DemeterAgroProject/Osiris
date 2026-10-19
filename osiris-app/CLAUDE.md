@@ -55,7 +55,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 ## Push
 
-`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`; para gerar um novo par VAPID: `scripts/gerar-vapid.ps1`. No app, a permissão é pedida pelo aviso `PushPrompt.svelte` (no layout raiz, só com um toque: celulares bloqueiam o pedido automático), que também refaz a inscrição se a chave VAPID mudou. No iPhone o push só funciona com o app adicionado à tela de início.
+`insert` em `notifications` → trigger `trg_notify_push` → `net.http_post` para a Edge Function `send-push` com só o id da notificação e o cabeçalho `x-webhook-secret` (lido do Vault, `push_webhook_secret`). A função (deploy com `--no-verify-jwt`) confere o segredo, busca a notificação e envia o Web Push. Para configurar ou rotacionar o segredo: `scripts/configurar-push.ps1`; para gerar um novo par VAPID: `scripts/gerar-vapid.ps1`. No app, a permissão é pedida pelo aviso `PushPrompt.svelte` (no layout raiz, só com um toque: celulares bloqueiam o pedido automático), que também refaz a inscrição se a chave VAPID mudou. A inscrição é gravada pela RPC `registrar_push` (passa o aparelho para a conta logada; não faça upsert direto em `push_subscriptions`). No iPhone o push só funciona com o app adicionado à tela de início.
 
 ## Tempo real
 

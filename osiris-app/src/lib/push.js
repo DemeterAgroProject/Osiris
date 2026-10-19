@@ -23,16 +23,51 @@ export async function enablePush(userId) {
   return syncPushSubscription(userId);
 }
 
+/** @type {Promise<boolean> | null} */
+let syncing = null;
+
+/** @type {'push-service' | 'save' | 'timeout' | 'unknown' | null} */
+let lastFailure = null;
+
+/**
+ * Por que a última inscrição falhou: 'push-service' quando o navegador recusa o serviço de push
+ * (o Brave vem com ele desligado), 'save' quando o banco não gravou.
+ */
+export function pushFailureReason() {
+  return lastFailure;
+}
+
+/** Rejeita se a etapa não terminar a tempo, para o botão não ficar preso em "Ativando...". */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('tempo esgotado'), { name: 'TimeoutError' })), ms))
+  ]);
+}
+
+/** Brave expõe navigator.brave; o push dele depende de uma opção nas configurações. */
+export function isBrave() {
+  return typeof navigator !== 'undefined' && 'brave' in navigator;
+}
+
 /**
  * Garante que este aparelho está inscrito com a chave VAPID atual e salvo no banco.
  * Não pede permissão: só age se ela já foi concedida. Se a chave mudou, refaz a inscrição.
  * @returns {Promise<boolean>}
  */
-export async function syncPushSubscription(userId) {
-  if (pushPermission() !== 'granted' || !userId) return false;
+export function syncPushSubscription(userId) {
+  if (pushPermission() !== 'granted' || !userId) return Promise.resolve(false);
+  // o aviso e a troca de sessão podem pedir ao mesmo tempo: uma inscrição por vez
+  syncing ??= subscribeThisDevice().finally(() => (syncing = null));
+  return syncing;
+}
 
+async function subscribeThisDevice() {
+  lastFailure = null;
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.register('/sw.js');
+    // subscribe() falha se o service worker ainda está instalando: espera ele ficar ativo
+    const registration = await withTimeout(navigator.serviceWorker.ready, 15000);
     const applicationServerKey = urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY);
 
     let subscription = await registration.pushManager.getSubscription();
@@ -41,22 +76,32 @@ export async function syncPushSubscription(userId) {
       subscription = null;
     }
     if (!subscription) {
-      subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+      subscription = await withTimeout(registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey }), 20000);
     }
 
     const { endpoint, keys } = subscription.toJSON();
-    const { error } = await supabase.from('push_subscriptions').upsert(
-      { user_id: userId, endpoint, p256dh: keys.p256dh, auth: keys.auth },
-      { onConflict: 'endpoint' }
-    );
+    // a função passa o aparelho para a conta atual, mesmo que outra conta já tenha entrado nele
+    const { error } = await supabase.rpc('registrar_push', {
+      p_endpoint: endpoint,
+      p_p256dh: keys.p256dh,
+      p_auth: keys.auth
+    });
 
     if (error) {
       console.error('Erro ao salvar inscrição de notificações:', error.message);
+      lastFailure = 'save';
       return false;
     }
     return true;
   } catch (error) {
     console.error('Erro ao ativar notificações:', error);
+    // "Registration failed - push service error": a permissão existe, mas o serviço de push do navegador recusou
+    lastFailure =
+      error?.name === 'TimeoutError'
+        ? 'timeout'
+        : error?.name === 'AbortError' || /push service/i.test(error?.message ?? '')
+          ? 'push-service'
+          : 'unknown';
     return false;
   }
 }
