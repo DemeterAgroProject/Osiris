@@ -10,7 +10,15 @@
 	import AppAccordion from '$lib/components/ui/AppAccordion.svelte';
 	import ReviewList from '$lib/components/ReviewList.svelte';
 	import { supabase } from '$lib/supabase';
-	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
+	import {
+		DELIVERY_LABEL,
+		listingPriceLabel,
+		MACHINE_CONDITION_LABEL,
+		MACHINE_OFFER_LABEL,
+		RENTAL_UNIT_LABEL,
+		stockUnitLabel
+	} from '$lib/pricing';
+	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
 	import { ChevronLeft, ChevronRight, CircleAlert, CircleUser, Handshake, Home, ImageOff, Images, LogIn } from 'lucide-svelte';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -119,26 +127,13 @@
 		);
 	}
 
-	async function fetchReviewsForProduct(productId) {
-		const { data: bookings, error: bookingsError } = await supabase
-			.from('bookings')
-			.select('id')
-			.eq('product_id', productId);
-
-		if (bookingsError) {
-			return { reviews: [], error: bookingsError };
-		}
-
-		const bookingIds = (bookings ?? []).map((booking) => booking.id);
-		if (!bookingIds.length) {
-			return { reviews: [], error: null };
-		}
-
-		const { data, error } = await supabase
-			.from('reviews')
-			.select('id, rating, comment, created_at, booking_id, reviewer_id')
-			.in('booking_id', bookingIds)
-			.order('created_at', { ascending: false });
+	// avaliações que os clientes deram ao anunciante por este anúncio; a RPC as entrega a qualquer
+	// visitante sem expor as operações (bookings só são legíveis pelos participantes)
+	async function fetchReviewsForListing({ productId = null, serviceId = null }) {
+		const { data, error } = await supabase.rpc('avaliacoes_do_anuncio', {
+			p_product_id: productId,
+			p_service_id: serviceId
+		});
 
 		if (error) {
 			return { reviews: [], error };
@@ -251,14 +246,14 @@
 		sellerReviewStats = computeReviewStats(sellerReviews);
 	}
 
-	async function loadProductReviews(productId) {
-		if (!productId) {
+	async function loadListingReviews(listing) {
+		if (!listing.productId && !listing.serviceId) {
 			reviews = [];
 			return;
 		}
 
 		reviewsLoading = true;
-		const { reviews: data, error } = await fetchReviewsForProduct(productId);
+		const { reviews: data, error } = await fetchReviewsForListing(listing);
 		reviews = data;
 
 		if (error && error.code !== 'PGRST116') {
@@ -309,7 +304,7 @@
 		if (routeTipo === 'produto') {
 			const { data, error } = await supabase
 				.from('products')
-				.select('id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description')
+				.select(`id, name, price, category, quantity, stock_unit, status, owner_id, created_at, description, brand_name, min_order, delivery, cultivar, harvest, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -323,17 +318,24 @@
 				type: 'produto',
 				productId: data.id,
 				title: data.name,
-				priceLabel: listingPriceLabel('produto', data.price),
+				priceLabel: listingPriceLabel('produto', data.price, null, data.stock_unit),
 				description: data.description?.trim() || '',
+				// opcionais só aparecem quando preenchidos
 				details: [
+					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
 					{ label: 'Categoria', value: data.category || 'Não informado' },
-					{ label: 'Quantidade disponível', value: data.quantity != null ? `${data.quantity} ${data.stock_unit || ''}`.trim() : 'Não informado' }
-				]
+					data.brand_name && { label: 'Marca', value: data.brand_name },
+					data.cultivar && { label: 'Cultivar', value: data.cultivar },
+					data.harvest && { label: 'Safra', value: data.harvest },
+					{ label: 'Quantidade disponível', value: data.quantity != null ? `${Number(data.quantity).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.quantity)}`.trim() : 'Não informado' },
+					data.min_order && { label: 'Pedido mínimo', value: `${Number(data.min_order).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.min_order)}` },
+					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
+				].filter(Boolean)
 			};
 
 			await Promise.all([
 				loadSeller(data.owner_id),
-				loadProductReviews(data.id),
+				loadListingReviews({ productId: data.id }),
 				loadProductGallery(data.id)
 			]);
 		} else if (routeTipo === 'maquinario') {
@@ -348,6 +350,8 @@
 					category,
 					status,
 					owner_id,
+					delivery,
+					municipio:municipios(${MUNICIPIO_EMBED}),
 					created_at,
 					agricultural_machinery (
 						id,
@@ -356,6 +360,11 @@
 						manufacture_year,
 						current_horimeter,
 						offer_type,
+						rental_unit,
+						operator_included,
+						condition,
+						power_hp,
+						traction,
 						brands (name),
 						machinery_types (name)
 					)
@@ -383,27 +392,43 @@
 				type: 'maquinario',
 				productId: data.id,
 				title: data.name,
-				priceLabel: listingPriceLabel('maquinario', data.price, machinery.offer_type),
+				priceLabel: listingPriceLabel('maquinario', data.price, machinery.offer_type, machinery.rental_unit),
 				description: data.description?.trim() || '',
+				// opcionais só aparecem quando preenchidos
 				details: [
-					{ label: 'Negócio', value: MACHINE_OFFER_LABEL[machinery.offer_type] ?? 'Não informado' },
+					{
+						label: 'Negócio',
+						value:
+							machinery.offer_type === 'aluguel'
+								? `Aluguel ${(RENTAL_UNIT_LABEL[machinery.rental_unit] ?? 'por hora').toLowerCase()}`
+								: (MACHINE_OFFER_LABEL[machinery.offer_type] ?? 'Não informado')
+					},
+					machinery.offer_type === 'aluguel' && {
+						label: 'Operador',
+						value: machinery.operator_included ? 'Incluso no preço' : 'Não incluso'
+					},
+					machinery.condition && { label: 'Condição', value: MACHINE_CONDITION_LABEL[machinery.condition] },
+					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
 					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
 					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
 					{ label: 'Modelo', value: machinery.model || 'Não informado' },
+					machinery.power_hp && { label: 'Potência', value: `${machinery.power_hp} cv` },
+					machinery.traction && { label: 'Tração', value: machinery.traction === 'esteira' ? 'Esteira' : machinery.traction },
 					{ label: 'Ano', value: machinery.manufacture_year || 'Não informado' },
-					{ label: 'Horímetro', value: machinery.current_horimeter != null ? `${Number(machinery.current_horimeter).toLocaleString('pt-BR')} h` : 'Não informado' }
-				]
+					{ label: 'Horímetro', value: machinery.current_horimeter != null ? `${Number(machinery.current_horimeter).toLocaleString('pt-BR')} h` : 'Não informado' },
+					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
+				].filter(Boolean)
 			};
 
 			await Promise.all([
 				loadSeller(data.owner_id),
-				loadProductReviews(data.id),
+				loadListingReviews({ productId: data.id }),
 				loadProductGallery(data.id)
 			]);
 		} else if (routeTipo === 'servico') {
 			const { data, error } = await supabase
 				.from('services')
-				.select('id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url')
+				.select(`id, title, price, description, service_type, pricing_model, location, status, owner_id, created_at, image_url, equipment, service_radius_km, municipio:municipios(${MUNICIPIO_EMBED})`)
 				.eq('id', routeId)
 				.maybeSingle();
 
@@ -421,12 +446,15 @@
 				description: data.description?.trim() || '',
 				details: [
 					{ label: 'Tipo', value: data.service_type || 'Não informado' },
-					{ label: 'Local', value: data.location || 'Não informado' }
-				]
+					{ label: 'Cidade', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
+					{ label: 'Área de atendimento', value: data.location || 'Não informado' },
+					data.service_radius_km && { label: 'Atende até', value: `${data.service_radius_km} km da cidade` },
+					data.equipment && { label: 'Equipamento incluso', value: data.equipment }
+				].filter(Boolean)
 			};
 
 			galleryImages = data.image_url ? [data.image_url] : [];
-			await loadSeller(data.owner_id);
+			await Promise.all([loadSeller(data.owner_id), loadListingReviews({ serviceId: data.id })]);
 		} else {
 			errorMessage = 'Tipo de anúncio não suportado.';
 		}

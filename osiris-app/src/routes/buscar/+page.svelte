@@ -10,6 +10,7 @@
 	import { CircleAlert, SearchX } from 'lucide-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import { supabase } from '$lib/supabase';
+	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const FETCH_LIMIT = 60;
@@ -120,7 +121,8 @@
 			tipo: 'produto',
 			title: product.name,
 			price: product.price,
-			location: null, // produtos ainda não têm local no banco
+			priceUnit: product.stock_unit ?? null,
+			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category,
@@ -142,7 +144,8 @@
 			title: product.name,
 			price: product.price,
 			pricingModel: m?.offer_type ?? null,
-			location: null, // produtos ainda não têm local no banco
+			priceUnit: m?.rental_unit ?? null,
+			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category || 'Maquinário',
@@ -160,7 +163,8 @@
 			title: service.title,
 			price: service.price,
 			pricingModel: service.pricing_model,
-			location: service.location || null,
+			// o card mostra a cidade-base; serviços antigos só têm a área de atendimento em texto
+			location: formatMunicipio(pickMunicipio(service.municipio)) || service.location || null,
 			publishedAt: service.created_at,
 			imageUrl: service.image_url || null,
 			category: service.service_type,
@@ -268,7 +272,7 @@
 
 		let productQuery = supabase
 			.from('products')
-			.select('id, name, price, status, created_at, category, description')
+			.select(`id, name, price, status, created_at, category, description, stock_unit, municipio:municipios(${MUNICIPIO_EMBED})`)
 			.or(ACTIVE_STATUS_OR)
 			.neq('category', 'Maquinário')
 			.order('created_at', { ascending: false })
@@ -279,8 +283,9 @@
 			.select(
 				`
 				id, name, price, status, created_at, category, description,
+				municipio:municipios(${MUNICIPIO_EMBED}),
 				agricultural_machinery!inner (
-					id, model, manufacture_year, current_horimeter, offer_type,
+					id, model, manufacture_year, current_horimeter, offer_type, rental_unit,
 					brands (name), machinery_types (name)
 				)
 			`
@@ -292,7 +297,7 @@
 		let serviceQuery = supabase
 			.from('services')
 			.select(
-				'id, title, price, status, location, created_at, service_type, pricing_model, description, image_url'
+				`id, title, price, status, location, created_at, service_type, pricing_model, description, image_url, municipio:municipios(${MUNICIPIO_EMBED})`
 			)
 			.or(ACTIVE_STATUS_OR)
 			.order('created_at', { ascending: false })
@@ -357,12 +362,14 @@
 		loadMarketplaceListings(debouncedSearch);
 	});
 
+	// filtro e busca seguem o endereço: o menu de cima troca ?tipo= sem remontar a página
+	$effect(() => {
+		const params = page.url.searchParams;
+		filters = filtersFromSearchParams(params);
+		searchQuery = params.get('q') ?? '';
+	});
+
 	onMount(async () => {
-		const q = page.url.searchParams.get('q');
-		if (q) searchQuery = q;
-
-		filters = filtersFromSearchParams(page.url.searchParams);
-
 		await loadMarketplaceListings(searchQuery);
 		skipDebouncedFetch = false;
 	});

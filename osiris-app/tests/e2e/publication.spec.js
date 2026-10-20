@@ -13,6 +13,17 @@ function uniqueMarker(testInfo, domain) {
 	return `[E2E] ${domain} ${testInfo.workerIndex}-${Date.now()}`;
 }
 
+const ALEGRETE = 4300406;
+
+/** Escolhe a cidade no campo de busca de município (src/lib/components/MunicipioPicker.svelte). */
+async function chooseMunicipio(page, inputSelector, text = 'Alegrete') {
+	const input = page.locator(inputSelector);
+	await input.fill('');
+	await input.fill(text);
+	await page.getByRole('option', { name: /Alegretes+–s+RS/ }).click();
+	await expect(input).toHaveValue('Alegrete, RS');
+}
+
 async function selectFirstLoadedOption(page, selector) {
 	await expect.poll(() => page.locator(`${selector} option`).count()).toBeGreaterThan(1);
 	await page.locator(selector).selectOption({ index: 1 });
@@ -22,7 +33,7 @@ async function findProductByName(client, name) {
 	const { data, error } = await client
 		.from('products')
 		.select(
-			'id, owner_id, name, description, category, quantity, stock_unit, price, status, agricultural_machinery(id, brand_id, type_id, model, serial_number, manufacture_year, current_horimeter), product_images(id, url, is_cover)'
+			'id, owner_id, name, description, category, quantity, stock_unit, price, status, municipio_id, agricultural_machinery(id, brand_id, type_id, model, serial_number, manufacture_year, current_horimeter), product_images(id, url, is_cover)'
 		)
 		.eq('name', name)
 		.single();
@@ -34,7 +45,7 @@ async function findProductByName(client, name) {
 async function findServiceByTitle(client, title) {
 	const { data, error } = await client
 		.from('services')
-		.select('id, owner_id, title, description, service_type, pricing_model, price, location, status')
+		.select('id, owner_id, title, description, service_type, pricing_model, price, location, status, municipio_id')
 		.eq('title', title)
 		.single();
 
@@ -79,7 +90,9 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#serial_number').fill(serialNumber);
 		await page.locator('#year').fill('2022');
 		await page.locator('#horimeter').fill('480');
+		await page.locator('#condition').selectOption('usada');
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.machinery);
+		await chooseMunicipio(page, '#anuncio-municipio');
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
 		await page.getByPlaceholder('500').fill('950');
@@ -97,7 +110,8 @@ test.describe('Publicacao de anuncios', () => {
 			quantity: 1,
 			stock_unit: 'Unidade',
 			price: 950,
-			status: 'ativo'
+			status: 'ativo',
+			municipio_id: ALEGRETE
 		});
 		expect(product.agricultural_machinery).toHaveLength(1);
 		expect(product.agricultural_machinery[0]).toMatchObject({
@@ -129,6 +143,7 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#qty').fill('40');
 		await page.locator('#unit').selectOption('Sacas');
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.product);
+		await chooseMunicipio(page, '#anuncio-municipio');
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
 		await page.getByPlaceholder('500').fill('275');
@@ -146,7 +161,8 @@ test.describe('Publicacao de anuncios', () => {
 			quantity: 40,
 			stock_unit: 'Sacas',
 			price: 275,
-			status: 'ativo'
+			status: 'ativo',
+			municipio_id: ALEGRETE
 		});
 		expect(product.agricultural_machinery).toHaveLength(0);
 		expect(product.product_images).toEqual([
@@ -170,6 +186,7 @@ test.describe('Publicacao de anuncios', () => {
 
 		await page.locator('#title').fill(title);
 		await page.locator('#description').fill(description);
+		await chooseMunicipio(page, '#servico-municipio');
 		await page.locator('#location').fill(location);
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
@@ -190,7 +207,8 @@ test.describe('Publicacao de anuncios', () => {
 			pricing_model: 'Por Hectare',
 			price: 180,
 			location,
-			status: 'ativo'
+			status: 'ativo',
+			municipio_id: ALEGRETE
 		});
 
 		await expect(page).toHaveURL(/\/servicos$/);

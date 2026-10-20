@@ -8,11 +8,14 @@
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
 	import { fetchProfile, PUBLIC_PROFILE_COLUMNS } from '$lib/profiles';
+	import { formatMunicipio, MUNICIPIO_EMBED } from '$lib/municipios';
+	import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
 	import {
 		ArrowLeft,
 		Mail,
 		Check,
 		Phone,
+		MapPin,
 		SquarePen,
 		Camera,
 		User,
@@ -176,8 +179,19 @@
 	let form = $state({
 		displayName: '',
 		phone: '',
-		photoUrl: ''
+		photoUrl: '',
+		municipio: null
 	});
+
+	// cidade do próprio usuário (privada): pré-preenche os anúncios
+	let myMunicipio = $state(null);
+
+	async function loadMyMunicipio(municipioId) {
+		myMunicipio = null;
+		if (!municipioId) return;
+		const { data } = await supabase.from('municipios').select(MUNICIPIO_EMBED).eq('codigo_ibge', municipioId).maybeSingle();
+		myMunicipio = data ?? null;
+	}
 
 	const profileId = $derived(page.params.id);
 	const isOwner = $derived(Boolean(authUser?.id && profileId && authUser.id === profileId));
@@ -191,7 +205,19 @@
 		Boolean(isOwner && (authUser?.email_confirmed_at || authUser?.app_metadata?.provider === 'google'))
 	);
 	const phone = $derived(profile?.phone_number || profile?.phone || '');
-	const role = $derived(roleLabel(profile?.role));
+	// role é "client" para quase todos: o selo diz se a pessoa anuncia (tem anúncio ativo)
+	let hasActiveListings = $state(false);
+	const role = $derived(
+		profile?.role === 'admin' ? roleLabel('admin') : hasActiveListings ? 'Anunciante' : ''
+	);
+
+	async function loadHasActiveListings(ownerId) {
+		const [products, services] = await Promise.all([
+			supabase.from('products').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'ativo'),
+			supabase.from('services').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'ativo')
+		]);
+		hasActiveListings = (products.count ?? 0) + (services.count ?? 0) > 0;
+	}
 
 	const reviewStats = $derived(computeReviewStats(reviews));
 	const rating = $derived(reviewStats.average);
@@ -219,7 +245,8 @@
 		form = {
 			displayName: profile?.display_name || displayName,
 			phone: profile?.phone_number || profile?.phone || '',
-			photoUrl: profile?.photo_url || profile?.avatar_url || ''
+			photoUrl: profile?.photo_url || profile?.avatar_url || '',
+			municipio: myMunicipio
 		};
 	}
 
@@ -268,8 +295,9 @@
 			profile = data;
 		}
 
+		if (user?.id === profileId) await loadMyMunicipio(profile?.municipio_id);
 		syncFormFromProfile();
-		await loadReviews();
+		await Promise.all([loadReviews(), loadHasActiveListings(profileId)]);
 		loading = false;
 	}
 
@@ -307,7 +335,8 @@
 			.update({
 				display_name,
 				phone_number: form.phone.trim() || null,
-				photo_url: form.photoUrl.trim() || null
+				photo_url: form.photoUrl.trim() || null,
+				municipio_id: form.municipio?.codigo_ibge ?? null
 			})
 			.eq('id', authUser.id)
 			.select(PUBLIC_PROFILE_COLUMNS)
@@ -319,8 +348,10 @@
 			return;
 		}
 
+		myMunicipio = form.municipio;
 		profile = {
 			...profile,
+			municipio_id: form.municipio?.codigo_ibge ?? null,
 			display_name,
 			phone_number: form.phone.trim() || null,
 			photo_url: form.photoUrl.trim() || null,
@@ -455,6 +486,13 @@
 					</div>
 				</div>
 
+				<MunicipioPicker
+					id="perfil-municipio"
+					label="Sua cidade"
+					hint="Preenche a cidade dos seus anúncios. Não aparece no seu perfil público."
+					bind:value={form.municipio}
+				/>
+
 				<button
 					type="submit"
 					disabled={saving}
@@ -495,11 +533,13 @@
 
 					<h2 class="mt-3 text-center text-2xl font-bold text-surface-950-50">{displayName}</h2>
 
-					<span
-						class="mt-2 rounded-full preset-tonal-primary px-3 py-1 uppercase text-xs font-bold tracking-wide"
-					>
-						{role}
-					</span>
+					{#if role}
+						<span
+							class="mt-2 rounded-full preset-tonal-primary px-3 py-1 uppercase text-xs font-bold tracking-wide"
+						>
+							{role}
+						</span>
+					{/if}
 
 					<div class="mt-2">
 						<AppRating value={rating} count={reviewCount} size="sm" />
@@ -525,6 +565,10 @@
 								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
 								<span class="truncate text-sm text-surface-900-100">{phone || 'Não informado'}</span>
 							</div>
+							<div class="flex items-start gap-2">
+								<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
+								<span class="truncate text-sm text-surface-900-100">{formatMunicipio(myMunicipio) || 'Cidade não informada'}</span>
+							</div>
 						</div>
 					{/if}
 				</div>
@@ -539,7 +583,7 @@
 						<div class="flex-1">
 							<h3 class="font-semibold text-surface-950-50">Editar perfil</h3>
 							<p class="mt-0.5 text-sm text-surface-900-100">
-								Atualize nome, telefone e foto do seu perfil público.
+								Atualize nome, telefone, foto e a sua cidade.
 							</p>
 						</div>
 					</div>
