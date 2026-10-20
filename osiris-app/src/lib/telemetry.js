@@ -72,18 +72,33 @@ function enqueue(kind, name, props = {}, route = null) {
 		route: route ? String(route).slice(0, 120) : null,
 		session_id: sessionId(),
 		env: environment(),
-		props: cleanProps(props)
+		props: cleanProps(props),
+		// relógio monotônico: não depende do relógio do aparelho estar certo
+		at: performance.now()
 	});
 	if (queue.length >= 20) flush();
 	else if (!flushTimer) flushTimer = setTimeout(flush, FLUSH_MS);
+}
+
+/**
+ * Tira o lote da fila. Os eventos esperam até 4 s na fila: cada um vai com o atraso até o envio
+ * (client_delay_ms) e o banco grava a hora de chegada menos esse atraso, não a hora do lote.
+ */
+function takeBatch() {
+	const now = performance.now();
+	const batch = queue.map(({ at, ...row }) => ({
+		...row,
+		client_delay_ms: Math.min(3600000, Math.max(0, Math.round(now - at)))
+	}));
+	queue = [];
+	return batch;
 }
 
 async function flush() {
 	clearTimeout(flushTimer);
 	flushTimer = null;
 	if (queue.length === 0) return;
-	const batch = queue;
-	queue = [];
+	const batch = takeBatch();
 	// falha de log não pode virar erro na tela nem gerar outro log
 	try {
 		await supabase.from('app_events').insert(batch);
@@ -95,8 +110,7 @@ async function flush() {
 /** Ao fechar ou trocar de aba: envia o que falta com keepalive (o fetch normal seria cancelado). */
 function flushOnExit() {
 	if (queue.length === 0) return;
-	const batch = queue;
-	queue = [];
+	const batch = takeBatch();
 	try {
 		fetch(`${PUBLIC_SUPABASE_URL.replace(/\/+$/, '')}/rest/v1/app_events`, {
 			method: 'POST',

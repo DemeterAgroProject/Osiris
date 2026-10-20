@@ -71,10 +71,16 @@
 		}
 	}
 
+	// o Supabase repete SIGNED_IN toda vez que a aba volta ao foco: sincroniza uma vez por conta
+	let syncedUserId = null;
+
 	function handleUser(user) {
 		userId = user?.id ?? null;
 		permission = pushPermission();
-		if (userId && permission === 'granted') syncPushSubscription(userId);
+		if (userId && permission === 'granted' && userId !== syncedUserId) {
+			syncedUserId = userId;
+			syncPushSubscription(userId);
+		}
 	}
 
 	onMount(() => {
