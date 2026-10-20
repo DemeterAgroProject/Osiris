@@ -10,6 +10,8 @@
     import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Users, Briefcase, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
+    import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
+    import { fetchMyMunicipio, formatMunicipio } from '$lib/municipios';
 
     const SERVICE_TYPE_OPTIONS = [
         { value: 'Mão de Obra', label: 'Mão de obra', hint: 'Apenas o operador ou trabalhador (ex: tratorista, capataz)', icon: Users, tone: 'preset-tonal-primary' },
@@ -28,7 +30,11 @@
     const fieldClass = 'input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
 
     // pede o login antes de a pessoa preencher as etapas, não só no envio
-    onMount(() => requireUser('/servicos/novo'));
+    onMount(async () => {
+        if (!(await requireUser('/servicos/novo'))) return;
+        const municipio = await fetchMyMunicipio();
+        if (municipio && !form.municipio) form.municipio = municipio;
+    });
 
     let currentStep = $state(0);
     const totalSteps = 3;
@@ -39,17 +45,20 @@
         service_type: '', // 'Mão de Obra' ou 'Pacote Completo'
         title: '',
         description: '',
-        location: 'Alegrete e Região, RS', // Padrão regional do Osíris
+        municipio: null, // cidade-base (município do IBGE)
+        location: '', // área de atendimento, texto livre (opcional)
         pricing_model: 'Por Hora', // 'Por Hora', 'Por Hectare', 'Empreitada/Fixo', 'A Combinar'
         price: null,
-        image_url: '' // foto de capa (opcional)
+        image_url: '', // foto de capa (opcional)
+        equipment: '', // equipamento incluso (opcional)
+        service_radius_km: '' // até quantos km da cidade (opcional)
     });
 
     const imageUrlInvalid = $derived(form.image_url.trim() !== '' && !/^https?:\/\/\S+$/i.test(form.image_url.trim()));
 
     function canProceed() {
         if (currentStep === 0) return form.service_type !== '';
-        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && form.location.trim().length > 0 && !imageUrlInvalid;
+        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && Boolean(form.municipio) && !imageUrlInvalid;
         if (currentStep === 2) {
             if (form.pricing_model === 'A Combinar') return true;
             return form.price !== null && form.price > 0;
@@ -88,8 +97,12 @@
             service_type: form.service_type,
             pricing_model: form.pricing_model,
             price: finalPrice,
-            location: form.location,
+            municipio_id: form.municipio?.codigo_ibge ?? null,
+            // sem texto, a área de atendimento é a própria cidade
+            location: form.location.trim() || formatMunicipio(form.municipio),
             image_url: form.image_url.trim() || null,
+            equipment: form.equipment.trim() || null,
+            service_radius_km: Number(form.service_radius_km) > 0 ? Math.round(Number(form.service_radius_km)) : null,
             status: 'ativo'
         });
 
@@ -187,16 +200,49 @@
                         ></textarea>
                     </div>
 
+                    <MunicipioPicker
+                        id="servico-municipio"
+                        label="Cidade onde você está"
+                        required
+                        bind:value={form.municipio}
+                    />
+
                     <div>
-                        <label class={labelClass} for="location">Onde você atende</label>
+                        <label class={labelClass} for="location">Área de atendimento <span class="font-normal text-surface-700-300">(opcional)</span></label>
                         <div class="relative">
                             <MapPin class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
                             <input
                                 type="text"
                                 id="location"
                                 bind:value={form.location}
-                                placeholder="Ex: Alegrete e região, RS"
+                                placeholder="Ex: Campanha gaúcha e fronteira"
                                 class="{fieldClass} pl-11"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class={labelClass} for="equipment">Equipamento incluso <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <input
+                                type="text"
+                                id="equipment"
+                                bind:value={form.equipment}
+                                maxlength="200"
+                                placeholder="Ex: colheitadeira 30 pés + caminhão"
+                                class={fieldClass}
+                            />
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class={labelClass} for="service_radius_km">Atende até (km) <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <input
+                                type="number"
+                                inputmode="numeric"
+                                id="service_radius_km"
+                                bind:value={form.service_radius_km}
+                                min="1"
+                                placeholder="Ex: 80"
+                                class={fieldClass}
                             />
                         </div>
                     </div>
