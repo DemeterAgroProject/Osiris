@@ -119,7 +119,12 @@ no Excel ou no Google Planilhas.
 
 - A coleta está descrita na Política de privacidade (`/privacidade`, itens 1, 2 e 5). Para os
   testes com usuários, o termo de consentimento do estudo deve mencioná-la.
-- Os registros ficam até o fim do projeto. Para apagar tudo:
+- **Limpeza automática:** o job `limpeza-logs-de-teste` do `pg_cron` roda todo domingo às 3h (UTC)
+  e apaga os eventos `dev` e `preview` com mais de 7 dias. Os de produção não são apagados.
+- **Espaço:** cada evento ocupa ~265 bytes com os índices; uma sessão de teste inteira, ~10 KB.
+  Para acompanhar:
+  `select pg_size_pretty(pg_total_relation_size('public.app_events')) logs, pg_size_pretty(pg_database_size(current_database())) banco;`
+- Os registros de produção ficam até o fim do projeto. Para apagar tudo:
   `delete from public.app_events;` (ou só o desenvolvimento: `where env = 'dev'`).
 - Para adicionar um evento: `track('nome_do_evento', { detalhe: 'valor' })` em
   `$lib/telemetry`, só com dados não pessoais; documente aqui.
