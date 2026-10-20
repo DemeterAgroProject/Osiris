@@ -61,7 +61,7 @@
 		if (row.product_id) {
 			const { data: product, error } = await supabase
 				.from('products')
-				.select('id, name, price, category, agricultural_machinery (offer_type)')
+				.select('id, name, price, category, stock_unit, agricultural_machinery (offer_type, rental_unit)')
 				.eq('id', row.product_id)
 				.maybeSingle();
 
@@ -83,6 +83,7 @@
 				title: product?.name || 'Anúncio favoritado',
 				price: product?.price ?? null,
 				pricingModel: machinery?.offer_type ?? null,
+				priceUnit: tipo === 'maquinario' ? (machinery?.rental_unit ?? null) : (product?.stock_unit ?? null),
 				imageUrl: coverUrlFromMap(imagesByProductId, product?.id),
 				publishedAt: row.created_at,
 				href: `/anuncio/${tipo}/${row.product_id}`
@@ -216,6 +217,7 @@
 						title={favorite.title}
 						price={favorite.price}
 						pricingModel={favorite.pricingModel}
+						priceUnit={favorite.priceUnit}
 						imageUrl={favorite.imageUrl}
 						publishedAt={favorite.publishedAt}
 						tipo={favorite.tipo}

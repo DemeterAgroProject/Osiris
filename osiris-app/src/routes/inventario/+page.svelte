@@ -26,6 +26,7 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import { supabase } from '$lib/supabase';
+	import { stockUnitLabel } from '$lib/pricing';
 	import { requireUser } from '$lib/auth';
 	import { onMount } from 'svelte';
 
@@ -114,6 +115,13 @@
 			stock_unit,
 			created_at,
 			updated_at,
+			municipio_id,
+			brand_name,
+			min_order,
+			delivery,
+			cultivar,
+			harvest,
+			municipio:municipios (codigo_ibge, nome, uf),
 			agricultural_machinery (
 				id,
 				brand_id,
@@ -123,6 +131,11 @@
 				manufacture_year,
 				current_horimeter,
 				offer_type,
+				rental_unit,
+				operator_included,
+				condition,
+				power_hp,
+				traction,
 				machinery_types (name),
 				brands (name)
 			)
@@ -492,9 +505,23 @@
 		return Number(item.quantity) > 0 ? `Estoque: ${Number(item.quantity).toLocaleString('pt-BR')} ${(item.stock_unit ?? '').toLowerCase()}`.trim() : '';
 	}
 
+	const RENTAL_CAPTION = { hora: 'Aluguel por hora', dia: 'Aluguel por dia', hectare: 'Aluguel por hectare' };
+	const RENTAL_SUFFIX = { hora: '/ hora', dia: '/ dia', hectare: '/ ha' };
+
 	function priceCaption(item, kind) {
 		if (kind !== 'maquinario') return 'Preço';
-		return getMachineryFromProduct(item)?.offer_type === 'aluguel' ? 'Aluguel por hora' : 'Venda';
+		const machinery = getMachineryFromProduct(item);
+		return machinery?.offer_type === 'aluguel' ? RENTAL_CAPTION[machinery.rental_unit] ?? 'Aluguel' : 'Venda';
+	}
+
+	// unidade ao lado do preço: "/ hora", "/ dia", "/ ha" na máquina alugada; "/ saca" no insumo
+	function priceSuffix(item, kind) {
+		if (kind === 'maquinario') {
+			const machinery = getMachineryFromProduct(item);
+			return machinery?.offer_type === 'aluguel' ? RENTAL_SUFFIX[machinery.rental_unit] ?? '/ hora' : '';
+		}
+		const unit = stockUnitLabel(item.stock_unit, 1);
+		return unit ? `/ ${unit}` : '';
 	}
 
 	async function handleEditSaved() {
@@ -542,8 +569,8 @@
 				</div>
 				<p class="text-lg font-bold leading-tight text-primary-700-300 lg:hidden">
 					{formatPrice(item.price)}
-					{#if kind === 'maquinario' && getMachineryFromProduct(item)?.offer_type === 'aluguel'}
-						<span class="text-xs font-medium text-surface-800-200">/ hora</span>
+					{#if priceSuffix(item, kind)}
+						<span class="text-xs font-medium text-surface-800-200">{priceSuffix(item, kind)}</span>
 					{/if}
 				</p>
 				<div class="mt-2 flex flex-wrap gap-1.5">
@@ -565,8 +592,8 @@
 				<p class="preset-typo-label">{priceCaption(item, kind)}</p>
 				<p class="text-2xl font-bold leading-tight text-primary-700-300">
 					{formatPrice(item.price)}
-					{#if kind === 'maquinario' && getMachineryFromProduct(item)?.offer_type === 'aluguel'}
-						<span class="text-sm font-medium text-surface-800-200">/ hora</span>
+					{#if priceSuffix(item, kind)}
+						<span class="text-sm font-medium text-surface-800-200">{priceSuffix(item, kind)}</span>
 					{/if}
 				</p>
 			</div>
