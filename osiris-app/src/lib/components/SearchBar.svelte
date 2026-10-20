@@ -9,8 +9,12 @@
 		inputId = 'marketplace-search'
 	} = $props();
 
+	let input = $state(null);
+
+	// limpar devolve o foco ao campo para a pessoa digitar outra busca
 	function clearSearch() {
 		value = '';
+		input?.focus();
 	}
 </script>
 
@@ -30,15 +34,15 @@
 		<input
 			id={inputId}
 			type="search"
+			bind:this={input}
 			bind:value
 			{placeholder}
 			autocomplete="off"
 			aria-label={placeholder}
-			class="input h-13 w-full rounded-container border-surface-200-800 bg-surface-50-950 pl-11 pr-12 text-base shadow-sm placeholder:text-surface-800-200 transition-all hover:border-surface-300-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:cursor-wait disabled:opacity-70"
-			disabled={loading}
+			class="input h-13 w-full rounded-container border-surface-200-800 bg-surface-50-950 pl-11 pr-12 text-base shadow-sm placeholder:text-surface-800-200 transition-all hover:border-surface-300-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 [&::-webkit-search-cancel-button]:appearance-none"
 		/>
 
-		{#if value.trim() && !loading}
+		{#if value.trim()}
 			<button
 				type="button"
 				onclick={clearSearch}

@@ -15,7 +15,7 @@
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const FETCH_LIMIT = 60;
-	const DEBOUNCE_MS = 350;
+	const DEBOUNCE_MS = 500;
 	// a busca roda enquanto a pessoa digita ("tra", "trat"...): o log espera o termo parar de mudar
 	const SEARCH_TRACK_MS = 2000;
 
