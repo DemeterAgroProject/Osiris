@@ -11,6 +11,7 @@
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
 	import { watchChanges } from '$lib/realtime';
+	import { track, trackError } from '$lib/telemetry';
 
 	// etapas mostradas no topo (fluxo de bookings.status aplicado pelos triggers)
 	const OPERATION_STAGES = [
@@ -301,11 +302,19 @@
 		actionLoading = false;
 
 		if (error) {
+			trackError('operacao_status_falhou', error, { status: newStatus });
 			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
+			track(OPERATION_EVENT[newStatus] ?? 'operacao_status', { status: newStatus });
 			await loadBooking(id);
 		}
 	}
+
+	const OPERATION_EVENT = {
+		em_operacao: 'operacao_iniciada',
+		em_avaliacao: 'operacao_encerrada',
+		finalizada: 'operacao_finalizada'
+	};
 
 	async function tryFinalizeAfterReviews() {
 		if (!booking || booking.status !== 'em_avaliacao') return;
@@ -335,9 +344,11 @@
 		reviewSubmitting = false;
 
 		if (error) {
+			trackError('avaliacao_falhou', error);
 			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 			return;
 		}
+		track('avaliacao_enviada', { nota: rating, com_comentario: Boolean(comment.trim()) });
 
 		comment = '';
 		await loadBooking(id);

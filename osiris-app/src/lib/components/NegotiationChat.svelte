@@ -3,6 +3,7 @@
     import { Lock, MessageCircle, Send } from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
     import { watchChanges } from '$lib/realtime';
+    import { track } from '$lib/telemetry';
 
     // hora da mensagem; de outro dia, mostra também a data
     function formatMessageTime(value) {
@@ -121,6 +122,7 @@
             .single();
 
         if (!error && data) {
+            track('mensagem_enviada', { prestador: Boolean(providerId && currentUserId === providerId) });
             // Atualização otimista: mostra a mensagem imediatamente
             await appendMessage(data);
 

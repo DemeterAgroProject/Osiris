@@ -63,6 +63,10 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 Tabelas na publicação `supabase_realtime`: `notifications`, `negotiation_messages`, `negotiations` e `bookings` (o Realtime aplica as policies de SELECT). Nas telas, use `watchChanges()` de `src/lib/realtime.js`: ele também chama o callback sem payload quando o app volta do segundo plano ou o canal reconecta, e a tela deve recarregar nesse caso (eventos com o celular bloqueado se perdem). Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
 
+## Logs de uso e de erros
+
+O app grava eventos e erros em `public.app_events` (só inserção pela API; leitura pelo SQL Editor via schema `analytics`). Use `track()` / `trackError()` de `src/lib/telemetry.js` nos fluxos novos, só com dados não pessoais (nada de e-mail, telefone ou texto digitado); `console.error`, exceções e erros de página já são capturados sozinhos. Catálogo de eventos e consultas prontas em `docs/logs.md`.
+
 ## Segredos
 
 Nunca coloque chaves em migrations, código ou commits: segredos ficam no `.env` local (gitignored), no Vault ou nos secrets da Edge Function. `supabase/.temp/` é cache da CLI e está no `.gitignore`.
