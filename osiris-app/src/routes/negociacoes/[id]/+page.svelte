@@ -10,6 +10,7 @@
 	import { showToast } from '$lib/components/ui/toast.js';
 	import NegotiationChat from '$lib/components/NegotiationChat.svelte';
 	import { supabase } from '$lib/supabase';
+	import { track, trackError } from '$lib/telemetry';
 	import { watchChanges } from '$lib/realtime';
 	import { userMessage } from '$lib/errors';
 
@@ -358,8 +359,10 @@
 			.eq('id', negotiation.id);
 
 		if (error) {
+			trackError('proposta_alteracao_falhou', error);
 			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
+			track('proposta_alterada');
 			await loadNegotiation();
 		}
 		actionLoading = false;
@@ -374,6 +377,7 @@
 		});
 
 		if (error) {
+			trackError('proposta_aceite_falhou', error);
 			errorMessage = userMessage(error, 'Não foi possível aceitar a proposta.');
 			actionLoading = false;
 			showAcceptDialog = false;
@@ -390,6 +394,7 @@
 
 		showAcceptDialog = false;
 		actionLoading = false;
+		track('proposta_aceita');
 		showToast('Proposta aceita. Contrato criado com sucesso.');
 		await goto(resolve(`/operacoes/${newBookingId}`));
 	}
@@ -410,8 +415,10 @@
 		showRejectDialog = false;
 
 		if (error) {
+			trackError('proposta_recusa_falhou', error);
 			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
 		} else {
+			track('proposta_recusada');
 			await loadNegotiation();
 		}
 	}

@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
+	import { track } from '$lib/telemetry';
 
 	let { productId = null, serviceId = null, class: className = '' } = $props();
 
@@ -67,6 +68,7 @@
 			const { error } = await query;
 
 			if (!error) {
+				track('favorito_removido');
 				isFavorited = false;
 			}
 		} else {
@@ -79,6 +81,7 @@
 			const { error } = await supabase.from('favorites').insert(payload);
 
 			if (!error) {
+				track('favorito_adicionado');
 				isFavorited = true;
 			}
 		}

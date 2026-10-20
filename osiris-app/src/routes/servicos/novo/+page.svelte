@@ -6,6 +6,7 @@
     import { resolve } from '$app/paths';
     import { supabase } from '$lib/supabase';
     import { requireUser } from '$lib/auth';
+    import { track, trackError } from '$lib/telemetry';
     import { onMount } from 'svelte';
     import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Users, Briefcase, MapPin } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
@@ -32,6 +33,7 @@
     // pede o login antes de a pessoa preencher as etapas, não só no envio
     onMount(async () => {
         if (!(await requireUser('/servicos/novo'))) return;
+        track('servico_iniciado');
         const municipio = await fetchMyMunicipio();
         if (municipio && !form.municipio) form.municipio = municipio;
     });
@@ -67,7 +69,10 @@
     }
 
     function nextStep() {
-        if (currentStep < totalSteps - 1 && canProceed()) currentStep++;
+        if (currentStep < totalSteps - 1 && canProceed()) {
+            currentStep++;
+            track('servico_etapa', { etapa: currentStep, tipo: form.service_type });
+        }
     }
 
     function prevStep() {
@@ -107,10 +112,11 @@
         });
 
         if (error) {
-            console.error("Erro ao salvar serviço:", error);
+            trackError('servico_falhou', error, { tipo: form.service_type });
             message = { text: 'Ocorreu um erro ao publicar o serviço. Tente novamente.', type: 'error' };
             loading = false;
         } else {
+            track('servico_publicado', { tipo: form.service_type, cobranca: form.pricing_model });
             showToast('Serviço publicado com sucesso!', 'success');
             await goto(resolve('/servicos'));
         }

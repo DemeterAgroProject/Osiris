@@ -4,6 +4,7 @@
 	import { Handshake, Send } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
+	import { track, trackError } from '$lib/telemetry';
 	import { userMessage } from '$lib/errors';
 
 	function parseCurrencyToNumber(value) {
@@ -142,6 +143,7 @@
 			.single();
 
 		if (insertError) {
+			trackError('proposta_falhou', insertError);
 			error = userMessage(insertError, 'Não foi possível enviar a proposta.');
 			sending = false;
 			return;
@@ -153,6 +155,7 @@
 			content: fullMessage
 		});
 
+		track('proposta_enviada', { alvo: serviceId ? 'servico' : 'produto', com_datas: Boolean(requiresDates) });
 		sending = false;
 		closeModal();
 		await goto(resolve(`/negociacoes/${negotiation.id}`));

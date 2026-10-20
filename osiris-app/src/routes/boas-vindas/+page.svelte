@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { markOnboardingSeen, safeRedirectPath } from '$lib/onboarding';
+	import { track } from '$lib/telemetry';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import OnboardingSlide from '$lib/components/OnboardingSlide.svelte';
@@ -45,6 +46,7 @@
 
 	// volta para onde a pessoa estava (ou a página inicial) e não mostra de novo neste aparelho
 	function finish() {
+		track('apresentacao_concluida', { ultimo_slide: currentSlide + 1, pulou: !isLastSlide });
 		markOnboardingSeen();
 		const target = safeRedirectPath(page.url.searchParams.get('redirect')) || '/';
 		goto(resolve(target), { replaceState: true });

@@ -45,6 +45,13 @@
 				<strong>Dados técnicos</strong> registrados automaticamente pelos serviços de hospedagem (como endereço
 				IP e data de acesso), usados para segurança e diagnóstico.
 			</li>
+			<li>
+				<strong>Registros de uso e de erros do app</strong>: quais telas você abre e quais ações faz (por
+				exemplo, iniciar ou publicar um anúncio, enviar uma proposta, termos buscados), com data e hora, e as
+				falhas que acontecem na sua tela. Esses registros ficam ligados a um identificador da sessão e, se
+				você estiver logado, à sua conta. <strong>Não</strong> registramos o texto das mensagens, e-mail,
+				telefone nem o que você digita nos formulários.
+			</li>
 		</ul>
 	</section>
 
@@ -55,7 +62,10 @@
 			<li>Publicar anúncios e permitir negociações, operações e avaliações entre usuários.</li>
 			<li>Enviar avisos sobre propostas, mensagens e mudanças nas suas operações.</li>
 			<li>Proteger o app contra uso indevido e corrigir falhas (legítimo interesse).</li>
-			<li>Avaliar a usabilidade do protótipo, de forma agregada, para fins acadêmicos.</li>
+			<li>
+				Avaliar a usabilidade do protótipo e corrigir falhas, a partir dos registros de uso e de erros, para
+				fins acadêmicos. Os resultados publicados são sempre agregados, sem identificar participantes.
+			</li>
 		</ul>
 		<p>Não vendemos dados pessoais e não usamos os seus dados para publicidade.</p>
 	</section>
@@ -86,9 +96,9 @@
 	<section>
 		<h2>5. Por quanto tempo guardamos</h2>
 		<p>
-			Mantemos os dados enquanto a sua conta existir ou enquanto forem necessários para as finalidades acima. Ao
-			final do projeto, ou a seu pedido, os dados pessoais serão excluídos ou anonimizados, exceto o que a lei
-			obrigar a guardar.
+			Mantemos os dados enquanto a sua conta existir ou enquanto forem necessários para as finalidades acima. Os
+			registros de uso e de erros são guardados até o fim do projeto. Ao final do projeto, ou a seu pedido, os
+			dados pessoais serão excluídos ou anonimizados, exceto o que a lei obrigar a guardar.
 		</p>
 	</section>
 

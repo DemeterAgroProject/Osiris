@@ -3,6 +3,7 @@
 	import { ArrowLeft, XCircle } from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
+	import { track, trackError } from '$lib/telemetry';
 
 	// valores aceitos por bookings_cancellation_reason_check
 	const REASONS = [
@@ -60,10 +61,12 @@
 		loading = false;
 
 		if (error) {
+			trackError('cancelamento_falhou', error, { motivo: reason });
 			errorMessage = userMessage(error, 'Não foi possível cancelar a operação.');
 			return;
 		}
 
+		track('operacao_cancelada', { motivo: reason });
 		open = false;
 		oncancelled();
 	}
