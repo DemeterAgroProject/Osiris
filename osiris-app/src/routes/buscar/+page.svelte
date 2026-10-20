@@ -10,6 +10,7 @@
 	import { CircleAlert, SearchX } from 'lucide-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import { supabase } from '$lib/supabase';
+	import { track } from '$lib/telemetry';
 	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
@@ -262,6 +263,8 @@
 		return sortListings(result, filterState.sort);
 	}
 
+	let lastTrackedTerm = '';
+
 	async function loadMarketplaceListings(searchTerm = '') {
 		const seq = ++loadSeq;
 		const term = escapeIlike(normalizeText(searchTerm));
@@ -340,6 +343,13 @@
 
 		loading = false;
 		fetching = false;
+
+		// o que as pessoas procuram (e se acham): termo curto, sem dados pessoais
+		// a página pode carregar duas vezes o mesmo termo ao abrir: registra uma vez por termo
+		if (useServerSearch && !error && term !== lastTrackedTerm) {
+			lastTrackedTerm = term;
+			track('busca', { termo: term.slice(0, 60), resultados: products.length + machinery.length + services.length });
+		}
 	}
 
 	const catalog = $derived(mergeListingGroups({ products, machinery, services }));

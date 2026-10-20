@@ -61,7 +61,11 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 ## Tempo real
 
-Tabelas na publicação `supabase_realtime`: `notifications`, `negotiation_messages`, `negotiations` e `bookings` (o Realtime aplica as policies de SELECT). Nas telas, use `watchChanges()` de `src/lib/realtime.js`: ele também chama o callback sem payload quando o app volta do segundo plano ou o canal reconecta, e a tela deve recarregar nesse caso (eventos com o celular bloqueado se perdem). Lembretes de avaliação: job `lembretes-de-avaliacao` do `pg_cron`, de hora em hora.
+Tabelas na publicação `supabase_realtime`: `notifications`, `negotiation_messages`, `negotiations` e `bookings` (o Realtime aplica as policies de SELECT). Nas telas, use `watchChanges()` de `src/lib/realtime.js`: ele também chama o callback sem payload quando o app volta do segundo plano ou o canal reconecta, e a tela deve recarregar nesse caso (eventos com o celular bloqueado se perdem). Jobs do `pg_cron`: `lembretes-de-avaliacao` (de hora em hora) e `limpeza-logs-de-teste` (domingos, apaga logs `dev`/`preview` com mais de 7 dias).
+
+## Logs de uso e de erros
+
+O app grava eventos e erros em `public.app_events` (só inserção pela API; leitura pelo SQL Editor via schema `analytics`). Use `track()` / `trackError()` de `src/lib/telemetry.js` nos fluxos novos, só com dados não pessoais (nada de e-mail, telefone ou texto digitado); `console.error`, exceções e erros de página já são capturados sozinhos. Catálogo de eventos e consultas prontas em `docs/logs.md`.
 
 ## Segredos
 
