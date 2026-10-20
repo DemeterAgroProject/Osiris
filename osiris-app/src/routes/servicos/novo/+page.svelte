@@ -30,10 +30,13 @@
     const labelClass = 'mb-1.5 block text-sm font-semibold text-surface-950-50';
     const fieldClass = 'input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
 
+    // id de cada abertura do formulário: separa desistência e publicação na mesma sessão
+    const tentativa = crypto.randomUUID().slice(0, 8);
+
     // pede o login antes de a pessoa preencher as etapas, não só no envio
     onMount(async () => {
         if (!(await requireUser('/servicos/novo'))) return;
-        track('servico_iniciado');
+        track('servico_iniciado', { tentativa });
         const municipio = await fetchMyMunicipio();
         if (municipio && !form.municipio) form.municipio = municipio;
     });
@@ -71,7 +74,7 @@
     function nextStep() {
         if (currentStep < totalSteps - 1 && canProceed()) {
             currentStep++;
-            track('servico_etapa', { etapa: currentStep, tipo: form.service_type });
+            track('servico_etapa', { tentativa, etapa: currentStep, tipo: form.service_type });
         }
     }
 
@@ -112,11 +115,11 @@
         });
 
         if (error) {
-            trackError('servico_falhou', error, { tipo: form.service_type });
+            trackError('servico_falhou', error, { tentativa, tipo: form.service_type });
             message = { text: 'Ocorreu um erro ao publicar o serviço. Tente novamente.', type: 'error' };
             loading = false;
         } else {
-            track('servico_publicado', { tipo: form.service_type, cobranca: form.pricing_model });
+            track('servico_publicado', { tentativa, tipo: form.service_type, cobranca: form.pricing_model });
             showToast('Serviço publicado com sucesso!', 'success');
             await goto(resolve('/servicos'));
         }

@@ -16,6 +16,11 @@ Cada linha tem: data e hora, `kind` (`event` ou `error`), `name`, a página (`pa
 agrupada (`route`, ex.: `/anuncio/[tipo]/[id]`), um id de **sessão** (por aba do navegador), o
 usuário (só se logado; vem do token, o app não consegue informar outro) e `props` com detalhes.
 
+O app envia os eventos em lotes a cada 4 s; cada um vai com o atraso até o envio
+(`client_delay_ms`) e `created_at` é a hora de chegada menos esse atraso, então a ordem e o
+horário são os do clique. `tentativa` (nos eventos de anúncio e serviço) identifica cada abertura
+do formulário: a mesma sessão pode desistir de um anúncio e publicar outro.
+
 `env` separa produção (`prod`, osiris-agro.vercel.app), previews da Vercel (`preview`) e o
 desenvolvimento local (`dev`). As views só olham `prod`.
 
@@ -28,15 +33,15 @@ trocados por `[email]` e `[número]` antes de gravar.
 | Evento | Quando | Detalhes (`props`) |
 |---|---|---|
 | `page_view` | abriu uma tela | `navegacao` (enter, link, popstate…) |
-| `busca` | buscou um termo (2+ letras) | `termo`, `resultados` |
+| `busca` | buscou um termo (2+ letras) e parou de digitar por 2 s (ou saiu da página) | `termo`, `resultados` |
 | `login_iniciado` | tocou em "Continuar com Google" | `provedor`, `com_destino` |
 | `apresentacao_concluida` | saiu da apresentação do primeiro acesso | `ultimo_slide`, `pulou` |
 | `notificacoes_ativadas` / `notificacoes_falharam` | tocou em "Ativar notificações" | `permissao`, `motivo`, `brave` |
 | `notificacoes_dispensadas` | fechou o aviso de notificações | |
-| `anuncio_iniciado` | abriu o formulário de anúncio | |
-| `anuncio_etapa` | avançou de etapa | `etapa` (1 = Detalhes, 2 = Preço), `categoria` |
-| `anuncio_publicado` | publicou máquina ou insumo | `categoria`, `negocio`, `cobranca` |
-| `servico_iniciado` / `servico_etapa` / `servico_publicado` | o mesmo para serviços | `etapa`, `tipo`, `cobranca` |
+| `anuncio_iniciado` | abriu o formulário de anúncio | `tentativa` |
+| `anuncio_etapa` | avançou de etapa | `tentativa`, `etapa` (1 = Detalhes, 2 = Preço), `categoria` |
+| `anuncio_publicado` | publicou máquina ou insumo | `tentativa`, `categoria`, `negocio`, `cobranca` |
+| `servico_iniciado` / `servico_etapa` / `servico_publicado` | o mesmo para serviços | `tentativa`, `etapa`, `tipo`, `cobranca` |
 | `favorito_adicionado` / `favorito_removido` | tocou no coração | |
 | `proposta_enviada` | enviou uma proposta | `alvo` (produto/servico), `com_datas` |
 | `mensagem_enviada` | mandou mensagem no chat (sem o texto) | `prestador` |
@@ -52,7 +57,7 @@ trocados por `[email]` e `[número]` antes de gravar.
 | `js_error` | exceção de JavaScript não tratada |
 | `promise_rejeitada` | promessa rejeitada sem tratamento |
 | `erro_de_pagina` | erro ao carregar uma página (o que leva à tela de erro) |
-| `console` | qualquer `console.error` do app (as telas já avisam falhas assim) |
+| `console` | qualquer `console.error` do app (as telas já avisam falhas assim). A recusa do serviço de push pelo navegador (Brave) não entra aqui: fica só no evento `notificacoes_falharam` |
 | `anuncio_falhou`, `servico_falhou`, `proposta_falhou`, `proposta_*_falhou`, `operacao_status_falhou`, `avaliacao_falhou`, `cancelamento_falhou` | falha ao salvar, com `message` e `code` do Supabase |
 
 Erros iguais em menos de 10 s viram um registro só, e cada sessão grava no máximo 50 erros.
@@ -101,14 +106,16 @@ group by session_id
 having max(created_at) filter (where name = 'anuncio_publicado') is not null;
 
 -- em que etapa as pessoas desistem do anúncio (0 = Categoria, 1 = Detalhes, 2 = Preço)
-select ultima_etapa, count(*) sessoes
+select ultima_etapa, count(*) tentativas
 from (
-  select session_id, coalesce(max((props ->> 'etapa')::int), 0) as ultima_etapa
+  select coalesce(props ->> 'tentativa', session_id) tentativa,
+         coalesce(max((props ->> 'etapa')::int), 0) as ultima_etapa,
+         bool_or(name = 'anuncio_publicado') publicou
   from analytics.eventos
-  where name in ('anuncio_iniciado', 'anuncio_etapa')
-    and session_id not in (select session_id from analytics.eventos where name = 'anuncio_publicado')
-  group by session_id
+  where name in ('anuncio_iniciado', 'anuncio_etapa', 'anuncio_publicado')
+  group by 1
 ) s
+where not publicou
 group by ultima_etapa order by ultima_etapa;
 ```
 

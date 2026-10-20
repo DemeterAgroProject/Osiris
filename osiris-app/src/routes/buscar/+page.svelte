@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import Header from '$lib/components/Header.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
@@ -16,6 +16,8 @@
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const FETCH_LIMIT = 60;
 	const DEBOUNCE_MS = 350;
+	// a busca roda enquanto a pessoa digita ("tra", "trat"...): o log espera o termo parar de mudar
+	const SEARCH_TRACK_MS = 2000;
 
 	function pickCoverImage(images = []) {
 		if (!images?.length) return null;
@@ -264,6 +266,19 @@
 	}
 
 	let lastTrackedTerm = '';
+	/** @type {{ termo: string, resultados: number } | null} */
+	let pendingSearch = null;
+	let searchTrackTimer;
+
+	function trackPendingSearch() {
+		clearTimeout(searchTrackTimer);
+		if (!pendingSearch) return;
+		lastTrackedTerm = pendingSearch.termo;
+		track('busca', pendingSearch);
+		pendingSearch = null;
+	}
+
+	onDestroy(trackPendingSearch);
 
 	async function loadMarketplaceListings(searchTerm = '') {
 		const seq = ++loadSeq;
@@ -346,9 +361,11 @@
 
 		// o que as pessoas procuram (e se acham): termo curto, sem dados pessoais
 		// a página pode carregar duas vezes o mesmo termo ao abrir: registra uma vez por termo
+		clearTimeout(searchTrackTimer);
+		pendingSearch = null;
 		if (useServerSearch && !error && term !== lastTrackedTerm) {
-			lastTrackedTerm = term;
-			track('busca', { termo: term.slice(0, 60), resultados: products.length + machinery.length + services.length });
+			pendingSearch = { termo: term.slice(0, 60), resultados: products.length + machinery.length + services.length };
+			searchTrackTimer = setTimeout(trackPendingSearch, SEARCH_TRACK_MS);
 		}
 	}
 
@@ -361,6 +378,11 @@
 	$effect(() => {
 		const term = searchQuery;
 		clearTimeout(debounceTimer);
+		// continuou digitando: o termo anterior era só parte do que a pessoa procura
+		if (pendingSearch && normalizeText(term) !== pendingSearch.termo) {
+			clearTimeout(searchTrackTimer);
+			pendingSearch = null;
+		}
 		debounceTimer = setTimeout(() => {
 			debouncedSearch = term;
 		}, DEBOUNCE_MS);
