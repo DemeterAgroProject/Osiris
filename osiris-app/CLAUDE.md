@@ -24,6 +24,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 
 ## Convenções do app
 
+- **Idiomas (pt, en, es)**: nenhum texto visível fixo no código. Textos em `messages/{pt,en,es}.json` (mesmas chaves nos três), usados com `import { m } from '$lib/paraglide/messages'` e `{m.chave()}`; datas, números e valores com `formatDate`/`formatNumber`/`formatBRL`/`intlLocale()` de `src/lib/i18n.js`, nunca `'pt-BR'` fixo. Nunca chame `m.x()` no topo de um módulo (SSR: o idioma é por requisição); guarde a função ou use getter. Valores do banco (status, categorias) continuam em português, só o rótulo traduz. Detalhes em `docs/i18n.md`.
 - Links e navegação sempre com `resolve()` de `$app/paths`: `href={resolve('/x')}`, `goto(resolve('/x'))` (exigido pelo ESLint).
 - Todo `{#each}` tem chave: `{#each items as item (item.id)}`.
 - Diálogo, gaveta, menu, popover, abas, toast e nota com estrelas vêm de `src/lib/components/ui/` (`AppDialog`, `AppConfirmDialog`, `AppMenu`, `AppPopover`, `AppTabs`/`AppTabsPanel`, `AppRating`, `AppSteps` para as etapas de assistentes), que envolvem o Skeleton já com as classes do app. As telas importam essas versões, não `@skeletonlabs/skeleton-svelte` direto. Toast: `showToast(mensagem)` de `$lib/components/ui/toast.js`.
@@ -42,7 +43,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - **Negociação** (`negotiations.status`): `solicitada` → `em_negociacao` → `aceita` | `recusada` | `cancelado`. Só o prestador (`provider_id`) aceita, recusa ou altera preço/datas. Participantes e alvo são imutáveis.
 - **Operação** (`bookings.status`): `pendente` → `em_operacao` → `em_avaliacao` → `finalizada`. O prestador avança as duas primeiras etapas; qualquer participante finaliza. Cancelamento só a partir de `pendente`/`em_operacao`, com motivo (`cancellation_reason`; `other` exige 15+ caracteres). Preço, datas e participantes são imutáveis.
 - **Permissões**: `account_type` (`cliente`/`admin`), `can_rent_out`, `can_offer_services` e `is_test_account` só mudam por admin. Todo usuário novo já pode anunciar (as duas permissões nascem `true`; um admin pode tirar). Admins (`current_user_is_admin()`) passam por cima das regras de transição.
-- Notificações são criadas por triggers (`create_notification`); o app não insere em `notifications`.
+- Notificações são criadas por triggers (`create_notification`); o app não insere em `notifications`. O texto exibido sai de `notificationText()` (`src/lib/notifications.js`) pelo `type` + `params`; tipo novo precisa de texto lá, em `messages/*` e na Edge Function `send-push`.
 
 ## Banco de dados (Supabase)
 

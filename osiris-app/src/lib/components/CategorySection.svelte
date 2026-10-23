@@ -1,17 +1,19 @@
 <script>
 	import { resolve } from '$app/paths';
 	import { ArrowRight, Tractor, Leaf, Users } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	// atalhos para a busca já filtrada pelo tipo de anúncio (ver filtersFromSearchParams em /buscar)
+	// label e hint guardam a função da mensagem, chamada no template
 	const categories = [
-		{ tipo: 'maquinario', label: 'Máquinas', hint: 'Tratores, colheitadeiras, plantadeiras e implementos', icon: Tractor, tone: 'preset-tonal-primary' },
-		{ tipo: 'produto', label: 'Produtos e insumos', hint: 'Sementes, fertilizantes, defensivos e mudas', icon: Leaf, tone: 'preset-tonal-tertiary' },
-		{ tipo: 'servico', label: 'Serviços', hint: 'Mão de obra e pacotes de serviço no campo', icon: Users, tone: 'preset-tonal-secondary' }
+		{ tipo: 'maquinario', label: m.busca_cat_maquinas, hint: m.busca_cat_maquinas_dica, icon: Tractor, tone: 'preset-tonal-primary' },
+		{ tipo: 'produto', label: m.busca_cat_produtos, hint: m.busca_cat_produtos_dica, icon: Leaf, tone: 'preset-tonal-tertiary' },
+		{ tipo: 'servico', label: m.busca_cat_servicos, hint: m.busca_cat_servicos_dica, icon: Users, tone: 'preset-tonal-secondary' }
 	];
 </script>
 
 <section class="mx-auto w-full max-w-7xl py-4" aria-labelledby="categories-title">
-	<h2 id="categories-title" class="px-4 sm:px-6 lg:px-8 preset-typo-title">Categorias</h2>
+	<h2 id="categories-title" class="px-4 sm:px-6 lg:px-8 preset-typo-title">{m.busca_categorias()}</h2>
 
 	<div class="mt-3 grid grid-cols-3 gap-3 px-4 sm:px-6 lg:gap-5 lg:px-8">
 		{#each categories as category (category.tipo)}
@@ -22,10 +24,10 @@
 				<span class="flex h-12 w-12 items-center justify-center rounded-container lg:h-16 lg:w-16 transition-transform duration-200 group-hover:scale-105 {category.tone}">
 					<category.icon class="h-6 w-6 lg:h-8 lg:w-8" aria-hidden="true" />
 				</span>
-				<span class="text-sm font-semibold leading-tight text-surface-950-50 lg:text-lg lg:font-bold">{category.label}</span>
-				<span class="hidden max-w-xs preset-typo-body-2 text-surface-800-200 lg:block">{category.hint}</span>
+				<span class="text-sm font-semibold leading-tight text-surface-950-50 lg:text-lg lg:font-bold">{category.label()}</span>
+				<span class="hidden max-w-xs preset-typo-body-2 text-surface-800-200 lg:block">{category.hint()}</span>
 				<span class="hidden items-center gap-1 text-sm font-semibold text-primary-700-300 lg:inline-flex">
-					Explorar
+					{m.busca_explorar()}
 					<ArrowRight size={16} />
 				</span>
 			</a>

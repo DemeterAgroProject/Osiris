@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 	import { track } from '$lib/telemetry';
+	import { m } from '$lib/paraglide/messages';
 
 	let { productId = null, serviceId = null, class: className = '' } = $props();
 
@@ -101,8 +102,8 @@
 	onclick={toggleFavorite}
 	disabled={loading || toggling || (!productId && !serviceId)}
 	class="btn-icon btn-icon-lg shrink-0 {isFavorited ? 'preset-tonal-error' : 'preset-tonal'}  {className}"
-	title={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
-	aria-label={isFavorited ? 'Remover dos salvos' : 'Salvar anúncio'}
+	title={isFavorited ? m.busca_remover_salvos() : m.busca_salvar_anuncio()}
+	aria-label={isFavorited ? m.busca_remover_salvos() : m.busca_salvar_anuncio()}
 	aria-pressed={isFavorited}
 >
 	<Heart

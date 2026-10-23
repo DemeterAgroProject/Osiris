@@ -7,11 +7,13 @@
 	 * 'list': linhas de inventário, serviços e negociações (linha larga no computador).
 	 * 'stats': cartões de resumo do topo (só no computador).
 	 */
+	import { m } from '$lib/paraglide/messages';
+
 	let {
 		variant = 'grid',
 		count = 6,
 		sections = 1,
-		label = 'Carregando conteúdo...'
+		label = m.busca_carregando_conteudo()
 	} = $props();
 
 	const sectionIndexes = $derived(Array.from({ length: sections }, (_, i) => i));

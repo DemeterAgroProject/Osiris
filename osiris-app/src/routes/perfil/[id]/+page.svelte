@@ -22,6 +22,7 @@
 		Star,
 		CircleAlert
 	} from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	function resolveDisplayName(profile, authUser = null) {
 		return (
@@ -29,7 +30,7 @@
 			authUser?.user_metadata?.full_name ||
 			authUser?.user_metadata?.name ||
 			authUser?.email?.split('@')[0] ||
-			'Usuário'
+			m.operacao_usuario()
 		);
 	}
 
@@ -152,16 +153,16 @@
 
 	function roleLabel(role) {
 		const map = {
-			client: 'Cliente',
-			cliente: 'Cliente',
-			provider: 'Anunciante',
-			provedor: 'Anunciante',
-			advertiser: 'Anunciante',
-			anunciante: 'Anunciante',
-			admin: 'Administrador'
+			client: m.operacao_cliente,
+			cliente: m.operacao_cliente,
+			provider: m.operacao_anunciante,
+			provedor: m.operacao_anunciante,
+			advertiser: m.operacao_anunciante,
+			anunciante: m.operacao_anunciante,
+			admin: m.operacao_administrador
 		};
-		if (!role) return 'Usuário';
-		return map[String(role).toLowerCase()] ?? role;
+		if (!role) return m.operacao_usuario();
+		return map[String(role).toLowerCase()]?.() ?? role;
 	}
 
 	let loading = $state(true);
@@ -208,7 +209,7 @@
 	// role é "client" para quase todos: o selo diz se a pessoa anuncia (tem anúncio ativo)
 	let hasActiveListings = $state(false);
 	const role = $derived(
-		profile?.role === 'admin' ? roleLabel('admin') : hasActiveListings ? 'Anunciante' : ''
+		profile?.role === 'admin' ? roleLabel('admin') : hasActiveListings ? m.operacao_anunciante() : ''
 	);
 
 	async function loadHasActiveListings(ownerId) {
@@ -224,7 +225,7 @@
 	const reviewCount = $derived(reviewStats.count);
 
 	const pageTitle = $derived(
-		view === 'edit' ? 'Editar perfil' : isOwner ? 'Meu perfil' : displayName
+		view === 'edit' ? m.operacao_editar_perfil() : isOwner ? m.operacao_meu_perfil() : displayName
 	);
 
 	async function loadReviews() {
@@ -252,7 +253,7 @@
 
 	async function loadProfile() {
 		if (!profileId) {
-			errorMessage = 'Perfil inválido.';
+			errorMessage = m.operacao_perfil_invalido();
 			loading = false;
 			return;
 		}
@@ -269,7 +270,7 @@
 		const { data, error } = await fetchProfile(profileId, user?.id);
 
 		if (error) {
-			errorMessage = userMessage(error, 'Não foi possível carregar o perfil.');
+			errorMessage = userMessage(error, m.operacao_erro_carregar_perfil());
 			console.error('Erro ao carregar perfil:', error.message, error.code, error.details);
 			profile = null;
 		} else if (!data) {
@@ -288,7 +289,7 @@
 					cpf: null
 				};
 			} else {
-				errorMessage = 'Perfil não encontrado.';
+				errorMessage = m.operacao_perfil_nao_encontrado();
 				profile = null;
 			}
 		} else {
@@ -318,13 +319,13 @@
 		saveMessage = { text: '', type: '' };
 
 		if (!isOwner || !authUser?.id) {
-			saveMessage = { text: 'Você só pode editar o seu próprio perfil.', type: 'error' };
+			saveMessage = { text: m.operacao_so_proprio_perfil(), type: 'error' };
 			return;
 		}
 
 		const display_name = form.displayName.trim();
 		if (!display_name) {
-			saveMessage = { text: 'Informe um nome de exibição.', type: 'error' };
+			saveMessage = { text: m.operacao_informe_nome(), type: 'error' };
 			return;
 		}
 
@@ -343,7 +344,7 @@
 			.maybeSingle();
 
 		if (error) {
-			saveMessage = { text: userMessage(error, 'Não foi possível salvar as alterações.'), type: 'error' };
+			saveMessage = { text: userMessage(error, m.operacao_erro_salvar_perfil()), type: 'error' };
 			saving = false;
 			return;
 		}
@@ -359,7 +360,7 @@
 		};
 		syncFormFromProfile();
 		imgError = false;
-		saveMessage = { text: 'Perfil atualizado com sucesso!', type: 'success' };
+		saveMessage = { text: m.operacao_perfil_atualizado(), type: 'success' };
 		saving = false;
 
 		setTimeout(() => {
@@ -380,7 +381,7 @@
 </svelte:head>
 
 <div class="min-h-screen pb-24 lg:pb-0">
-	<Header title="Perfil" />
+	<Header title={m.operacao_perfil()} />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
 		<div class="mb-4 flex items-center gap-3">
@@ -389,8 +390,8 @@
 					type="button"
 					onclick={goBack}
 					class="btn-icon btn-icon-lg preset-tonal"
-					title="Voltar"
-					aria-label="Voltar"
+					title={m.comum_voltar()}
+					aria-label={m.comum_voltar()}
 				>
 					<ArrowLeft size={18} />
 				</button>
@@ -402,7 +403,7 @@
 
 		{#if loading}
 			<div class="flex justify-center py-16">
-				<LoadingIndicator label="Carregando perfil..." />
+				<LoadingIndicator label={m.operacao_carregando_perfil()} />
 			</div>
 		{:else if errorMessage && !profile}
 			<div class="flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm"><CircleAlert class="h-5 w-5 shrink-0" />{errorMessage}</div>
@@ -445,20 +446,20 @@
 
 				<div>
 					<label for="photoUrl" class="mb-1.5 block text-sm font-semibold text-surface-950-50">
-						URL da foto
+						{m.operacao_url_foto()}
 					</label>
 					<input
 						id="photoUrl"
 						type="url"
 						bind:value={form.photoUrl}
-						placeholder="Cole o link da foto (https://...)"
+						placeholder={m.operacao_url_foto_placeholder()}
 						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					/>
 				</div>
 
 				<div>
 					<label for="displayName" class="mb-1.5 block text-sm font-semibold text-surface-950-50">
-						Nome de exibição
+						{m.operacao_nome_exibicao()}
 					</label>
 					<div class="relative">
 						<input
@@ -473,7 +474,7 @@
 				</div>
 
 				<div>
-					<label for="phone" class="mb-1.5 block text-sm font-semibold text-surface-950-50">Telefone</label>
+					<label for="phone" class="mb-1.5 block text-sm font-semibold text-surface-950-50">{m.operacao_telefone()}</label>
 					<div class="relative">
 						<input
 							id="phone"
@@ -488,8 +489,8 @@
 
 				<MunicipioPicker
 					id="perfil-municipio"
-					label="Sua cidade"
-					hint="Preenche a cidade dos seus anúncios. Não aparece no seu perfil público."
+					label={m.operacao_sua_cidade()}
+					hint={m.operacao_sua_cidade_dica()}
 					bind:value={form.municipio}
 				/>
 
@@ -499,7 +500,7 @@
 					class="btn btn-lg preset-filled-primary-500 w-full"
 				>
 					<Check size={18} />
-					<span>{saving ? 'Salvando...' : 'Salvar alterações'}</span>
+					<span>{saving ? m.comum_salvando() : m.operacao_salvar_alteracoes()}</span>
 				</button>
 			</form>
 		{:else if profile}
@@ -557,17 +558,17 @@
 										class="inline-flex shrink-0 items-center gap-1 rounded-full preset-tonal-primary px-2 py-0.5 uppercase text-xs font-bold tracking-wide"
 									>
 										<Check class="h-3 w-3" />
-										Verificado
+										{m.operacao_verificado()}
 									</span>
 								{/if}
 							</div>
 							<div class="flex items-start gap-2">
 								<Phone class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
-								<span class="truncate text-sm text-surface-900-100">{phone || 'Não informado'}</span>
+								<span class="truncate text-sm text-surface-900-100">{phone || m.operacao_nao_informado()}</span>
 							</div>
 							<div class="flex items-start gap-2">
 								<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-surface-900-100" />
-								<span class="truncate text-sm text-surface-900-100">{formatMunicipio(myMunicipio) || 'Cidade não informada'}</span>
+								<span class="truncate text-sm text-surface-900-100">{formatMunicipio(myMunicipio) || m.operacao_cidade_nao_informada()}</span>
 							</div>
 						</div>
 					{/if}
@@ -581,9 +582,9 @@
 							<SquarePen class="h-5 w-5 text-surface-900-100" />
 						</div>
 						<div class="flex-1">
-							<h3 class="font-semibold text-surface-950-50">Editar perfil</h3>
+							<h3 class="font-semibold text-surface-950-50">{m.operacao_editar_perfil()}</h3>
 							<p class="mt-0.5 text-sm text-surface-900-100">
-								Atualize nome, telefone, foto e a sua cidade.
+								{m.operacao_editar_perfil_dica()}
 							</p>
 						</div>
 					</div>
@@ -593,7 +594,7 @@
 						class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
 					>
 						<SquarePen size={18} />
-						<span>Editar perfil</span>
+						<span>{m.operacao_editar_perfil()}</span>
 					</button>
 				</section>
 			{/if}
@@ -605,9 +606,9 @@
 							<Star class="h-5 w-5" />
 						</div>
 						<div>
-							<h2 class="text-base font-semibold text-surface-950-50">Avaliações recebidas</h2>
+							<h2 class="text-base font-semibold text-surface-950-50">{m.operacao_avaliacoes_recebidas()}</h2>
 							<p class="mt-0.5 text-xs text-surface-900-100">
-								Feedback de outros usuários sobre {displayName}
+								{m.operacao_feedback_sobre({ nome: displayName })}
 							</p>
 						</div>
 					</div>
@@ -617,8 +618,8 @@
 				<ReviewList
 					{reviews}
 					loading={reviewsLoading}
-					emptyTitle="Nenhuma avaliação recebida"
-					emptyDescription="Este usuário ainda não recebeu avaliações no marketplace."
+					emptyTitle={m.operacao_nenhuma_avaliacao()}
+					emptyDescription={m.operacao_nenhuma_avaliacao_dica()}
 				/>
 			</section>
 		{/if}

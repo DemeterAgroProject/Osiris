@@ -11,28 +11,29 @@
 	import carIllustration from '$lib/images/car.png';
 	import chatIllustration from '$lib/images/chat.png';
 	import accountIllustration from '$lib/images/acount.png';
+	import { m } from '$lib/paraglide/messages';
 
 	let showSplash = $state(true);
 	let currentSlide = $state(0);
 
 	const slides = [
 		{
+			id: 'buscar',
 			imageSrc: carIllustration,
-			title: 'Encontre produtos ou serviços',
-			description:
-				'Pesquise e filtre tudo que você precisa: compra, aluguel ou serviço, diretamente no seu celular.'
+			title: m.app_bv_slide1_titulo(),
+			description: m.app_bv_slide1_desc()
 		},
 		{
+			id: 'negociar',
 			imageSrc: chatIllustration,
-			title: 'Negocie e converse com o anunciante',
-			description:
-				'Faça sua proposta de valor, ajuste quantidades e envie mensagens em tempo real pelo chat integrado.'
+			title: m.app_bv_slide2_titulo(),
+			description: m.app_bv_slide2_desc()
 		},
 		{
+			id: 'gerenciar',
 			imageSrc: accountIllustration,
-			title: 'Gerencie seus anúncios e perfil',
-			description:
-				'Cadastre produtos e serviços, acompanhe solicitações, edite seu estoque e receba notificações de novas negociações.'
+			title: m.app_bv_slide3_titulo(),
+			description: m.app_bv_slide3_desc()
 		}
 	];
 
@@ -59,11 +60,8 @@
 </script>
 
 <svelte:head>
-	<title>Bem-vindo — Osiris</title>
-	<meta
-		name="description"
-		content="Conheça o marketplace agro Osiris: busque ofertas, negocie e gerencie seus anúncios."
-	/>
+	<title>{m.app_bv_titulo()} — Osiris</title>
+	<meta name="description" content={m.app_bv_meta_desc()} />
 </svelte:head>
 
 {#if showSplash}
@@ -71,7 +69,7 @@
 		type="button"
 		class="relative flex min-h-screen w-full flex-col overflow-hidden bg-surface-50-950 text-left"
 		onclick={enterOnboarding}
-		aria-label="Continuar para apresentação do app"
+		aria-label={m.app_bv_continuar_aria()}
 	>
 		<div class="flex flex-1 flex-col items-center justify-center px-8">
 			<div class="flex items-center gap-3">
@@ -92,7 +90,7 @@
 				onclick={finish}
 				class="btn preset-tonal"
 			>
-				<span>Pular</span>
+				<span>{m.app_bv_pular()}</span>
 			</button>
 		</header>
 
@@ -105,7 +103,7 @@
 			class="flex min-h-0 flex-1 flex-col"
 		>
 			<Carousel.ItemGroup class="flex min-h-0 flex-1">
-				{#each slides as slide, index (slide.title)}
+				{#each slides as slide, index (slide.id)}
 					<Carousel.Item {index} class="flex min-h-0 flex-col">
 						<OnboardingSlide
 							imageSrc={slide.imageSrc}
@@ -117,11 +115,11 @@
 			</Carousel.ItemGroup>
 
 			<footer class="shrink-0 px-6 pb-10 pt-2">
-				<Carousel.IndicatorGroup class="mb-6 flex justify-center gap-2" aria-label="Progresso do onboarding">
-					{#each slides as slide, index (slide.title)}
+				<Carousel.IndicatorGroup class="mb-6 flex justify-center gap-2" aria-label={m.app_bv_progresso()}>
+					{#each slides as slide, index (slide.id)}
 						<Carousel.Indicator
 							{index}
-							aria-label="Slide {index + 1} de {totalSlides}"
+							aria-label={m.app_bv_slide_n({ n: index + 1, total: totalSlides })}
 							class="h-2 w-2 rounded-full bg-surface-400-600 transition-all duration-300 hover:preset-tonal data-[current]:w-8 data-[current]:bg-primary-500"
 						/>
 					{/each}
@@ -131,8 +129,8 @@
 					{#if currentSlide > 0}
 						<Carousel.PrevTrigger
 							class="btn-icon btn-icon-lg preset-tonal"
-							title="Slide anterior"
-							aria-label="Slide anterior"
+							title={m.app_bv_slide_anterior()}
+							aria-label={m.app_bv_slide_anterior()}
 						>
 							<ArrowLeft size={18} />
 						</Carousel.PrevTrigger>
@@ -146,14 +144,14 @@
 							onclick={finish}
 							class="btn btn-lg preset-filled-primary-500"
 						>
-							<span>Começar</span>
+							<span>{m.app_bv_comecar()}</span>
 							<ArrowRight size={18} />
 						</button>
 					{:else}
 						<Carousel.NextTrigger
 							class="btn-icon btn-icon-lg preset-filled-primary-500"
-							title="Próximo slide"
-							aria-label="Próximo slide"
+							title={m.app_bv_proximo_slide()}
+							aria-label={m.app_bv_proximo_slide()}
 						>
 							<ArrowRight size={18} />
 						</Carousel.NextTrigger>

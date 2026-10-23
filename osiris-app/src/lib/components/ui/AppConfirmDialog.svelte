@@ -1,12 +1,13 @@
 <script>
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let {
 		open = $bindable(false),
-		title = 'Confirmar',
+		title = m.comum_confirmar(),
 		message = '',
-		confirmLabel = 'Confirmar',
-		cancelLabel = 'Cancelar',
+		confirmLabel = m.comum_confirmar(),
+		cancelLabel = m.comum_cancelar(),
 		loading = false,
 		variant = 'default',
 		onconfirm = () => {},
@@ -57,7 +58,7 @@
 				disabled={loading}
 				class="btn btn-md w-full {confirmButtonClass}"
 			>
-				<span>{loading ? 'Aguarde...' : confirmLabel}</span>
+				<span>{loading ? m.app_aguarde() : confirmLabel}</span>
 			</button>
 		</div>
 	{/snippet}

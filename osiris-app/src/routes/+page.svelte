@@ -8,11 +8,15 @@
 	import { resolve } from '$app/paths';
 	import { ArrowRight, Briefcase, CircleAlert, Leaf, Search, SearchX, Sprout, Tractor } from 'lucide-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { intlLocale } from '$lib/i18n';
+	import { machineTypeLabel } from '$lib/pricing';
 
+	// label guarda a função da mensagem, chamada no template
 	const HERO_SHORTCUTS = [
-		{ tipo: 'maquinario', label: 'Máquinas', icon: Tractor },
-		{ tipo: 'produto', label: 'Insumos e sementes', icon: Leaf },
-		{ tipo: 'servico', label: 'Serviços', icon: Briefcase }
+		{ tipo: 'maquinario', label: m.busca_cat_maquinas, icon: Tractor },
+		{ tipo: 'produto', label: m.busca_insumos_sementes, icon: Leaf },
+		{ tipo: 'servico', label: m.busca_cat_servicos, icon: Briefcase }
 	];
 	import { supabase } from '$lib/supabase';
 	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
@@ -133,9 +137,9 @@
 
 	function mapMachineryListing(product, imagesByProductId) {
 		const machineryRaw = product.agricultural_machinery;
-		const m = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
-		const brandName = m?.brands?.name;
-		const typeName = m?.machinery_types?.name;
+		const mach = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
+		const brandName = mach?.brands?.name;
+		const typeName = machineTypeLabel(mach?.machinery_types?.name);
 
 		return {
 			id: `machinery-${product.id}`,
@@ -143,14 +147,14 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			pricingModel: m?.offer_type ?? null,
-			priceUnit: m?.rental_unit ?? null,
+			pricingModel: mach?.offer_type ?? null,
+			priceUnit: mach?.rental_unit ?? null,
 			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
-			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
+			subtitle: [brandName, mach?.model, typeName].filter(Boolean).join(' · ') || null,
 			href: `/anuncio/maquinario/${product.id}`
 		};
 	}
@@ -186,9 +190,9 @@
 			case 'preco-desc':
 				return items.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
 			case 'nome-asc':
-				return items.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+				return items.sort((a, b) => a.title.localeCompare(b.title, intlLocale()));
 			case 'nome-desc':
-				return items.sort((a, b) => b.title.localeCompare(a.title, 'pt-BR'));
+				return items.sort((a, b) => b.title.localeCompare(a.title, intlLocale()));
 			default:
 				return items.sort(
 					(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
@@ -337,7 +341,7 @@
 		const error = productsResult.error || machineryResult.error || servicesResult.error;
 
 		if (error) {
-			errorMessage = 'Não foi possível carregar os anúncios no momento.';
+			errorMessage = m.busca_erro_carregar_agora();
 			products = [];
 			machinery = [];
 			services = [];
@@ -410,28 +414,28 @@
 </script>
 
 <svelte:head>
-	<title>Osiris - Marketplace Agro</title>
+	<title>{m.busca_inicio_titulo_pagina()}</title>
 	<meta
 		name="description"
-		content="Encontre máquinas agrícolas, produtos e serviços no marketplace Osiris."
+		content={m.busca_inicio_meta()}
 	/>
 </svelte:head>
 
 <div class="min-h-screen w-full pb-24 lg:pb-0">
-	<Header title="Início" />
+	<Header title={m.nav_inicio()} />
 
 	{#if !hasDiscoveryMode}
 		<div class="mx-auto w-full max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
 			<div class="relative overflow-hidden rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md lg:p-10">
 				<Sprout class="pointer-events-none absolute -bottom-6 -right-6 h-36 w-36 opacity-10 lg:h-72 lg:w-72" aria-hidden="true" />
-				<span class="badge rounded-full bg-white/15 px-2.5 py-1 uppercase text-xs font-bold tracking-wide">Marketplace Osiris</span>
-				<h1 class="mt-3 preset-typo-headline lg:text-4xl">Máquinas, produtos e serviços em um só lugar</h1>
-				<p class="mt-2 text-sm opacity-90 sm:text-base lg:max-w-2xl lg:text-lg">Descubra oportunidades novas todos os dias.</p>
+				<span class="badge rounded-full bg-white/15 px-2.5 py-1 uppercase text-xs font-bold tracking-wide">{m.busca_hero_selo()}</span>
+				<h1 class="mt-3 preset-typo-headline lg:text-4xl">{m.busca_hero_titulo()}</h1>
+				<p class="mt-2 text-sm opacity-90 sm:text-base lg:max-w-2xl lg:text-lg">{m.busca_hero_texto()}</p>
 				<a
 					href={resolve('/buscar')}
 					class="btn btn-md preset-filled-surface-50-950 mt-4 lg:hidden"
 				>
-					<span>Ver todos os anúncios</span>
+					<span>{m.busca_ver_todos_anuncios()}</span>
 					<ArrowRight size={18} />
 				</a>
 
@@ -443,26 +447,26 @@
 					class="relative mt-6 hidden max-w-3xl items-center gap-2 rounded-container bg-surface-50-950 p-2 shadow-lg lg:flex"
 				>
 					<Search size={20} class="ml-2 shrink-0 text-primary-700-300" aria-hidden="true" />
-					<label for="hero-search" class="sr-only">O que você procura?</label>
+					<label for="hero-search" class="sr-only">{m.busca_placeholder()}</label>
 					<input
 						id="hero-search"
 						name="q"
 						type="search"
 						autocomplete="off"
-						placeholder="O que você procura? Ex: trator, sementes de soja, tratorista"
+						placeholder={m.busca_hero_placeholder()}
 						class="input h-12 min-w-0 flex-1 border-0 bg-transparent text-base text-surface-950-50 focus:ring-0"
 					/>
 					<button type="submit" class="btn btn-lg preset-filled-primary-500 shrink-0">
-						<span>Buscar</span>
+						<span>{m.nav_buscar()}</span>
 						<ArrowRight size={18} />
 					</button>
 				</form>
 				<div class="mt-4 hidden flex-wrap items-center gap-2 lg:flex">
-					<span class="preset-typo-label text-inherit opacity-90">Atalhos:</span>
+					<span class="preset-typo-label text-inherit opacity-90">{m.busca_atalhos()}</span>
 					{#each HERO_SHORTCUTS as shortcut (shortcut.tipo)}
 						<a href={resolve(`/buscar?tipo=${shortcut.tipo}`)} class="btn btn-sm rounded-full bg-white/15 text-white hover:bg-white/25">
 							<shortcut.icon size={16} />
-							<span>{shortcut.label}</span>
+							<span>{shortcut.label()}</span>
 						</a>
 					{/each}
 				</div>
@@ -471,7 +475,7 @@
 	{/if}
 
 	{#if loading}
-		<ListingSkeleton variant="carousel" count={3} sections={3} label="Carregando destaques..." />
+		<ListingSkeleton variant="carousel" count={3} sections={3} label={m.busca_carregando_destaques()} />
 	{:else if errorMessage}
 		<div class="mx-4 my-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
 			<CircleAlert class="h-5 w-5 shrink-0" />
@@ -483,45 +487,45 @@
 				class="mx-4 my-8 flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-12 text-center"
 			>
 				<SearchX class="h-10 w-10 text-surface-700-300" />
-				<p class="mt-3 text-base font-semibold">Nenhum anúncio encontrado</p>
+				<p class="mt-3 text-base font-semibold">{m.busca_nenhum_anuncio()}</p>
 				<p class="mt-1 text-sm text-surface-900-100">
-					Tente outra palavra ou limpe a busca.
+					{m.busca_tente_limpar()}
 				</p>
 			</div>
 		{:else}
 			<ProductSection
-				title="Resultados"
+				title={m.busca_resultados_titulo()}
 				products={homePreviewListings}
 				limit={HOME_CAROUSEL_LIMIT}
 				seeMoreHref={buildBuscarHref()}
-				seeMoreLabel="Ver todos na busca"
+				seeMoreLabel={m.busca_ver_todos_na_busca()}
 			/>
 		{/if}
 	{:else}
 		<ProductSection
-			title="Novidades"
+			title={m.busca_novidades()}
 			products={featuredListings}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref="/buscar"
 		/>
 		<CategorySection />
 		<ProductSection
-			title="Máquinas"
-			subtitle="Tratores, colheitadeiras e implementos"
+			title={m.busca_cat_maquinas()}
+			subtitle={m.busca_sub_maquinas()}
 			products={machineryHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'maquinario' })}
 		/>
 		<ProductSection
-			title="Produtos e insumos"
-			subtitle="Sementes, fertilizantes e defensivos"
+			title={m.busca_cat_produtos()}
+			subtitle={m.busca_sub_produtos()}
 			products={productHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'produto' })}
 		/>
 		<ProductSection
-			title="Serviços"
-			subtitle="Mão de obra e serviços no campo"
+			title={m.busca_cat_servicos()}
+			subtitle={m.busca_sub_servicos()}
 			products={serviceHighlights}
 			limit={HOME_CAROUSEL_LIMIT}
 			seeMoreHref={buildBuscarHref({ tipo: 'servico' })}

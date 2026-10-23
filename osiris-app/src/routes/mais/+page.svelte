@@ -20,11 +20,16 @@
         ChevronRight,
         Settings,
         Shield,
-        CircleHelp
+        CircleHelp,
+        Languages,
+        Check
     } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import { supabase } from '$lib/supabase';
+    import { m } from '$lib/paraglide/messages';
+    import { getLocale } from '$lib/paraglide/runtime';
+    import { LANGUAGES, changeLanguage } from '$lib/i18n';
 
     function resolveDisplayName(profile, authUser) {
         return (
@@ -32,7 +37,7 @@
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||
-            'Usuário'
+            m.app_usuario()
         );
     }
 
@@ -70,46 +75,56 @@
     const profileHref = $derived(authUser ? `/perfil/${authUser.id}` : '/login');
 
     const shortcuts = [
-        { icon: Home, label: 'Marketplace', href: '/' },
-        { icon: Search, label: 'Buscar ofertas', href: '/buscar' }
+        { icon: Home, label: m.app_mais_marketplace(), href: '/' },
+        { icon: Search, label: m.app_mais_buscar_ofertas(), href: '/buscar' }
     ];
 
     const activityItems = $derived(
         isLoggedIn
             ? [
-                  { icon: LayoutDashboard, label: 'Painel de controle', href: '/painel-de-controle' },
-                  { icon: Archive, label: 'Meu inventário', href: '/inventario' },
-                  { icon: Heart, label: 'Favoritos', href: '/favoritos' },
-                  { icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
-                  { icon: User, label: 'Meu perfil', href: profileHref },
-                  { icon: Megaphone, label: 'Anunciar produto ou máquina', href: '/anunciar' }
+                  { icon: LayoutDashboard, label: m.app_painel_controle(), href: '/painel-de-controle' },
+                  { icon: Archive, label: m.app_meu_inventario(), href: '/inventario' },
+                  { icon: Heart, label: m.app_favoritos(), href: '/favoritos' },
+                  { icon: MessageSquare, label: m.app_negociacoes(), href: '/negociacoes' },
+                  { icon: User, label: m.app_meu_perfil(), href: profileHref },
+                  { icon: Megaphone, label: m.app_mais_anunciar_produto(), href: '/anunciar' }
               ]
             : [
-                  { icon: LogIn, label: 'Entrar na conta', href: '/login' },
-                  { icon: Megaphone, label: 'Anunciar produto ou máquina', href: '/login?redirect=/anunciar' }
+                  { icon: LogIn, label: m.app_mais_entrar_conta(), href: '/login' },
+                  { icon: Megaphone, label: m.app_mais_anunciar_produto(), href: '/login?redirect=/anunciar' }
               ]
     );
 
     const discoverItems = [
-        { icon: Tractor, label: 'Maquinário e equipamentos', href: '/buscar?tipo=maquinario' },
-        { icon: Leaf, label: 'Insumos e produtos', href: '/buscar?tipo=produto' },
-        { icon: Briefcase, label: 'Serviços do agro', href: '/buscar?tipo=servico' }
+        { icon: Tractor, label: m.app_mais_maquinario(), href: '/buscar?tipo=maquinario' },
+        { icon: Leaf, label: m.app_mais_insumos(), href: '/buscar?tipo=produto' },
+        { icon: Briefcase, label: m.app_mais_servicos_agro(), href: '/buscar?tipo=servico' }
     ];
 
     const sellItems = $derived(
         isLoggedIn
             ? [
-                  { icon: PlusCircle, label: 'Anunciar no inventário', href: '/anunciar' },
-                  { icon: Briefcase, label: 'Cadastrar serviço', href: '/servicos/novo' },
-                  { icon: Settings, label: 'Configurações do perfil', href: profileHref }
+                  { icon: PlusCircle, label: m.app_mais_anunciar_inventario(), href: '/anunciar' },
+                  { icon: Briefcase, label: m.app_mais_cadastrar_servico(), href: '/servicos/novo' },
+                  { icon: Settings, label: m.app_config_perfil(), href: profileHref }
               ]
             : [
-                  { icon: PlusCircle, label: 'Começar a anunciar', href: '/login?redirect=/anunciar' },
-                  { icon: Briefcase, label: 'Oferecer serviços', href: '/login?redirect=/servicos/novo' }
+                  { icon: PlusCircle, label: m.app_mais_comecar_anunciar(), href: '/login?redirect=/anunciar' },
+                  { icon: Briefcase, label: m.app_mais_oferecer_servicos(), href: '/login?redirect=/servicos/novo' }
               ]
     );
 
-    const helpItems = [{ icon: CircleHelp, label: 'Central de ajuda', href: '/ajuda' }];
+    const helpItems = [{ icon: CircleHelp, label: m.app_central_ajuda(), href: '/ajuda' }];
+
+    // idioma: changeLanguage salva a escolha (cookie e perfil) e recarrega a página traduzida
+    const currentLocale = getLocale();
+    let changingLanguage = $state(false);
+
+    async function selectLanguage(code) {
+        if (code === currentLocale || changingLanguage) return;
+        changingLanguage = true;
+        await changeLanguage(code);
+    }
 
     async function refreshUser() {
         loading = true;
@@ -153,8 +168,8 @@
 </script>
 
 <svelte:head>
-    <title>Mais — Osiris</title>
-    <meta name="description" content="Atalhos, conta e descoberta no marketplace agro Osiris." />
+    <title>{m.nav_mais()} — Osiris</title>
+    <meta name="description" content={m.app_mais_meta_desc()} />
 </svelte:head>
 
 {#snippet badge(item)}
@@ -214,7 +229,7 @@
 {/snippet}
 
 <div class="min-h-screen pb-24">
-    <Header title="Mais" />
+    <Header title={m.nav_mais()} />
 
     <section class="bg-gradient-to-br from-primary-600 to-primary-800 px-4 pb-5 pt-3 text-primary-50">
         <div class="mx-auto max-w-3xl">
@@ -248,21 +263,21 @@
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-xl font-bold">{displayName}</p>
                         <p class="mt-0.5 flex items-center gap-1 text-sm font-medium opacity-90">
-                            Ver meu perfil
+                            {m.app_ver_meu_perfil()}
                             <ChevronRight class="h-4 w-4" />
                         </p>
                     </div>
                 </a>
             {:else}
                 <div class="py-3">
-                    <p class="text-xl font-bold">Olá, visitante</p>
-                    <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
+                    <p class="text-xl font-bold">{m.app_mais_ola_visitante()}</p>
+                    <p class="mt-1 text-sm opacity-90">{m.app_mais_visitante_desc()}</p>
                     <a
                         href={resolve('/login')}
                         class="btn btn-md preset-filled-surface-50-950 mt-4"
                     >
                         <LogIn size={18} />
-                        <span>Entrar com Google</span>
+                        <span>{m.app_mais_entrar_google()}</span>
                     </a>
                 </div>
             {/if}
@@ -274,8 +289,8 @@
                 >
                     <Megaphone class="h-6 w-6" />
                     <span>
-                        <span class="block text-sm font-bold">Anunciar</span>
-                        <span class="block text-xs opacity-90">Máquinas e insumos</span>
+                        <span class="block text-sm font-bold">{m.nav_anunciar()}</span>
+                        <span class="block text-xs opacity-90">{m.app_mais_anunciar_desc()}</span>
                     </span>
                 </a>
 
@@ -286,8 +301,8 @@
                     >
                         <LayoutDashboard class="h-6 w-6" />
                         <span>
-                            <span class="block text-sm font-bold">Painel</span>
-                            <span class="block text-xs opacity-80">Resumo dos anúncios</span>
+                            <span class="block text-sm font-bold">{m.app_mais_painel()}</span>
+                            <span class="block text-xs opacity-80">{m.app_mais_painel_desc()}</span>
                         </span>
                     </a>
                 {/if}
@@ -296,11 +311,42 @@
     </section>
 
     <main class="mx-auto max-w-3xl space-y-5 px-4 py-5">
-        {@render menuGroup('mais-atalhos', 'Atalhos', shortcuts)}
-        {@render menuGroup('mais-atividade', 'Minha atividade', activityItems)}
-        {@render menuGroup('mais-descubra', 'Descubra', discoverItems)}
-        {@render menuGroup('mais-vender', 'Vender e gerir', sellItems)}
-        {@render menuGroup('mais-ajuda', 'Ajuda', helpItems)}
+        {@render menuGroup('mais-atalhos', m.app_mais_atalhos(), shortcuts)}
+        {@render menuGroup('mais-atividade', m.app_mais_minha_atividade(), activityItems)}
+        {@render menuGroup('mais-descubra', m.app_mais_descubra(), discoverItems)}
+        {@render menuGroup('mais-vender', m.app_mais_vender_gerir(), sellItems)}
+        {@render menuGroup('mais-ajuda', m.app_mais_ajuda(), helpItems)}
+
+        <section aria-labelledby="mais-idioma">
+            <h2 id="mais-idioma" class="px-1 pb-2 preset-typo-label">{m.idioma_titulo()}</h2>
+            <div
+                role="radiogroup"
+                aria-labelledby="mais-idioma"
+                class="divide-y divide-surface-200-800 overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm"
+            >
+                {#each LANGUAGES as language (language.code)}
+                    {@const selected = language.code === currentLocale}
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        lang={language.code}
+                        disabled={changingLanguage}
+                        onclick={() => selectLanguage(language.code)}
+                        class="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left text-surface-950-50 transition-colors hover:preset-tonal disabled:opacity-60"
+                    >
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container {selected ? 'preset-filled-primary-500' : 'preset-tonal-primary'}">
+                            <Languages class="h-5 w-5" strokeWidth={2} />
+                        </span>
+                        <span class="flex-1 text-base {selected ? 'font-bold' : 'font-semibold'}">{language.label}</span>
+                        {#if selected}
+                            <Check class="h-5 w-5 shrink-0 text-primary-700-300" aria-hidden="true" />
+                            <span class="sr-only">{m.app_idioma_atual()}</span>
+                        {/if}
+                    </button>
+                {/each}
+            </div>
+        </section>
 
         {#if isLoggedIn}
             <button
@@ -310,19 +356,19 @@
                 class="btn btn-lg preset-tonal-error w-full"
             >
                 <LogOut size={18} />
-                <span>{signingOut ? 'Saindo...' : 'Sair da conta'}</span>
+                <span>{signingOut ? m.app_saindo() : m.app_sair_conta()}</span>
             </button>
         {/if}
 
         <section aria-labelledby="mais-info" class="px-1 pb-2">
-            <h2 id="mais-info" class="sr-only">Informações</h2>
+            <h2 id="mais-info" class="sr-only">{m.app_mais_informacoes()}</h2>
             <div class="flex items-center gap-2 text-sm text-surface-800-200">
                 <Shield class="h-4 w-4" />
-                <span>Osiris — compra e venda no campo</span>
+                <span>{m.app_mais_slogan()}</span>
             </div>
             <div class="mt-3 flex gap-4 text-sm">
-                <a href={resolve('/termos')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">Termos de uso</a>
-                <a href={resolve('/privacidade')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">Política de privacidade</a>
+                <a href={resolve('/termos')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">{m.app_termos_uso()}</a>
+                <a href={resolve('/privacidade')} class="font-semibold text-surface-900-100 underline hover:text-primary-700-300">{m.app_politica_privacidade()}</a>
             </div>
         </section>
     </main>

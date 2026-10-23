@@ -11,9 +11,15 @@
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
     import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
     import { fetchMyMunicipio } from '$lib/municipios';
-    import { DELIVERY_LABEL, listingPriceLabel, stockUnitLabel } from '$lib/pricing';
+    import { DELIVERY_LABEL, categoryLabel, listingPriceLabel, machineTypeLabel, MACHINE_CONDITION_LABEL, MACHINE_OFFER_LABEL, RENTAL_UNIT_LABEL, stockUnitLabel, stockUnitName, tractionLabel } from '$lib/pricing';
+    import { formatNumber } from '$lib/i18n';
+    import { m } from '$lib/paraglide/messages';
 
-    const RENTAL_HINT = { hora: 'por hora de uso', dia: 'por dia', hectare: 'por hectare trabalhado' };
+    const RENTAL_HINT = { hora: m.anunciar_periodo_hora, dia: m.anunciar_periodo_dia, hectare: m.anunciar_periodo_hectare };
+
+    // valores gravados em products.category (o texto visível vem de categoryLabel)
+    const PRODUCT_CATEGORIES = ['Sementes', 'Fertilizantes', 'Mudas', 'Defensivos', 'Corretivos', 'Grãos', 'Nutrição animal', 'Peças', 'Outros'];
+    const STOCK_UNITS = ['Sacas', 'Kg', 'Toneladas', 'Litros', 'Unidades'];
 
     // cultivar e safra só fazem sentido para sementes, mudas e grãos
     const SEED_CATEGORIES = ['Sementes', 'Mudas', 'Grãos'];
@@ -22,8 +28,8 @@
     import { showToast } from '$lib/components/ui/toast.js';
 
     const CATEGORY_OPTIONS = [
-        { value: 'maquinario', label: 'Máquina agrícola', hint: 'Tratores, colheitadeiras, plantadeiras', icon: Tractor, tone: 'preset-tonal-primary' },
-        { value: 'produto', label: 'Insumos ou produtos', hint: 'Sementes, fertilizantes, mudas', icon: Leaf, tone: 'preset-tonal-tertiary' }
+        { value: 'maquinario', label: m.anunciar_opcao_maquina, hint: m.anunciar_opcao_maquina_dica, icon: Tractor, tone: 'preset-tonal-primary' },
+        { value: 'produto', label: m.anunciar_opcao_insumo, hint: m.anunciar_opcao_insumo_dica, icon: Leaf, tone: 'preset-tonal-tertiary' }
     ];
 
     // campos do formulário: altos e com texto grande, fáceis de tocar no celular
@@ -172,15 +178,15 @@
 
     function formatSaveError(error) {
         if (error?.code === '23505' && String(error?.message ?? '').includes('serial_number')) {
-            return 'Este número de série já está cadastrado. Informe outro ou deixe o campo em branco.';
+            return m.anunciar_erro_serie();
         }
         if (
             (error?.code === '42501' || error?.status === 403) &&
             String(error?.message ?? '').includes('product_images')
         ) {
-            return 'Não foi possível salvar as imagens. Tente novamente.';
+            return m.anunciar_erro_imagens();
         }
-        return 'Ocorreu um erro ao publicar o anúncio. Tente novamente.';
+        return m.anunciar_erro_publicar();
     }
 
     async function rollbackMachineryAd(productId) {
@@ -199,7 +205,7 @@
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            message = { text: 'Você precisa estar logado para anunciar.', type: 'error' };
+            message = { text: m.anunciar_precisa_login(), type: 'error' };
             loading = false;
             return;
         }
@@ -295,7 +301,7 @@
                 negocio: form.category === 'maquinario' ? form.offer_type : undefined,
                 cobranca: form.category === 'maquinario' && form.offer_type === 'aluguel' ? form.rental_unit : undefined
             });
-            showToast('Anúncio publicado com sucesso!', 'success');
+            showToast(m.anunciar_publicado_sucesso(), 'success');
             await goto(resolve('/inventario'));
 
         } catch (error) {
@@ -308,18 +314,18 @@
 </script>
 
 <svelte:head>
-	<title>Novo anúncio — Osiris</title>
+	<title>{m.anunciar_novo_anuncio()} — Osiris</title>
 </svelte:head>
 
 <div class="flex min-h-screen flex-col pb-24">
-    <Header title="Novo anúncio" backHref="/inventario" />
+    <Header title={m.anunciar_novo_anuncio()} backHref="/inventario" />
 
     <main class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-4">
         <div class="mb-5 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
             <AppSteps
                 bind:step={currentStep}
-                labels={['Categoria', 'Detalhes', 'Preço']}
-                label="Etapas do novo anúncio"
+                labels={[m.anunciar_etapa_categoria(), m.anunciar_etapa_detalhes(), m.anunciar_etapa_preco()]}
+                label={m.anunciar_etapas_label()}
             />
         </div>
 
@@ -332,8 +338,8 @@
 
         {#if currentStep === 0}
             <div class="flex flex-1 flex-col">
-                <h1 class="preset-typo-headline">O que você deseja anunciar?</h1>
-                <p class="mt-1 preset-typo-subtitle">Toque em uma das opções.</p>
+                <h1 class="preset-typo-headline">{m.anunciar_o_que_anunciar()}</h1>
+                <p class="mt-1 preset-typo-subtitle">{m.anunciar_toque_opcao()}</p>
 
                 <div class="mt-5 space-y-3">
                     {#each CATEGORY_OPTIONS as option (option.value)}
@@ -348,8 +354,8 @@
                                 <option.icon class="h-7 w-7" />
                             </span>
                             <span class="min-w-0 flex-1">
-                                <span class="block text-lg font-bold text-surface-950-50">{option.label}</span>
-                                <span class="block text-sm text-surface-800-200">{option.hint}</span>
+                                <span class="block text-lg font-bold text-surface-950-50">{option.label()}</span>
+                                <span class="block text-sm text-surface-800-200">{option.hint()}</span>
                             </span>
                             <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 {selected ? 'border-primary-500 preset-filled-primary-500' : 'border-surface-300-700'}">
                                 {#if selected}<Check class="h-4 w-4" />{/if}
@@ -362,29 +368,29 @@
         {:else if currentStep === 1}
             <div class="flex flex-1 flex-col">
                 <h1 class="preset-typo-headline">
-                    Detalhes {form.category === 'maquinario' ? 'da máquina' : 'do produto'}
+                    {form.category === 'maquinario' ? m.anunciar_detalhes_maquina() : m.anunciar_detalhes_produto()}
                 </h1>
-                <p class="mt-1 preset-typo-subtitle">Quanto mais completo, mais fácil de negociar.</p>
+                <p class="mt-1 preset-typo-subtitle">{m.anunciar_detalhes_sub()}</p>
 
                 <div class="mt-5 space-y-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
                     <div>
-                        <label class={labelClass} for="name">Título do anúncio</label>
+                        <label class={labelClass} for="name">{m.anunciar_titulo_anuncio()}</label>
                         <input
                             type="text"
                             id="name"
                             bind:value={form.name}
-                            placeholder={form.category === 'maquinario' ? "Ex: Trator JD 6100J" : "Ex: Sementes de soja branca"}
+                            placeholder={form.category === 'maquinario' ? m.anunciar_ph_titulo_maquina() : m.anunciar_ph_titulo_produto()}
                             class={fieldClass}
                         />
                     </div>
 
                     <div>
-                        <label class={labelClass} for="description">Descrição</label>
+                        <label class={labelClass} for="description">{m.anunciar_descricao()}</label>
                         <textarea
                             id="description"
                             bind:value={form.description}
                             rows="4"
-                            placeholder="Adicione detalhes, estado de conservação, observações importantes..."
+                            placeholder={m.anunciar_ph_descricao()}
                             class="{fieldClass} h-auto py-3"
                         ></textarea>
                     </div>
@@ -392,18 +398,18 @@
                     {#if form.category === 'maquinario'}
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="type">Tipo</label>
+                                <label class={labelClass} for="type">{m.anunciar_tipo()}</label>
                                 <select id="type" bind:value={form.type_id} class={selectClass}>
-                                    <option value="" disabled>Selecione</option>
+                                    <option value="" disabled>{m.anunciar_selecione()}</option>
                                     {#each types as type (type.id)}
-                                        <option value={type.id}>{type.name}</option>
+                                        <option value={type.id}>{machineTypeLabel(type.name)}</option>
                                     {/each}
                                 </select>
                             </div>
                             <div>
-                                <label class={labelClass} for="brand">Marca</label>
+                                <label class={labelClass} for="brand">{m.anunciar_marca()}</label>
                                 <select id="brand" bind:value={form.brand_id} class={selectClass}>
-                                    <option value="" disabled>Selecione</option>
+                                    <option value="" disabled>{m.anunciar_selecione()}</option>
                                     {#each brands as brand (brand.id)}
                                         <option value={brand.id}>{brand.name}</option>
                                     {/each}
@@ -412,105 +418,97 @@
                         </div>
 
                         <div>
-                            <label class={labelClass} for="model">Modelo</label>
-                            <input type="text" id="model" bind:value={form.model} placeholder="Ex: 6100J" class={fieldClass} />
+                            <label class={labelClass} for="model">{m.anunciar_modelo()}</label>
+                            <input type="text" id="model" bind:value={form.model} placeholder={m.anunciar_exemplo({ valor: '6100J' })} class={fieldClass} />
                         </div>
 
                         <div>
-                            <label class={labelClass} for="serial_number">Número de série / chassi <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                            <input type="text" id="serial_number" bind:value={form.serial_number} placeholder="Ex: 123456789ABC" class={fieldClass} />
+                            <label class={labelClass} for="serial_number">{m.anunciar_numero_serie_chassi()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                            <input type="text" id="serial_number" bind:value={form.serial_number} placeholder={m.anunciar_exemplo({ valor: '123456789ABC' })} class={fieldClass} />
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="condition">Condição</label>
+                                <label class={labelClass} for="condition">{m.anunciar_condicao()}</label>
                                 <select id="condition" bind:value={form.condition} class={selectClass}>
-                                    <option value="" disabled>Selecione</option>
-                                    <option value="nova">Nova</option>
-                                    <option value="seminova">Seminova</option>
-                                    <option value="usada">Usada</option>
+                                    <option value="" disabled>{m.anunciar_selecione()}</option>
+                                    {#each Object.entries(MACHINE_CONDITION_LABEL) as [value, label] (value)}
+                                        <option {value}>{label}</option>
+                                    {/each}
                                 </select>
                             </div>
                             <div>
-                                <label class={labelClass} for="power">Potência (cv) <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                                <input type="number" inputmode="numeric" id="power" bind:value={form.power_hp} placeholder="Ex: 110" min="1" class={fieldClass} />
+                                <label class={labelClass} for="power">{m.anunciar_potencia()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                                <input type="number" inputmode="numeric" id="power" bind:value={form.power_hp} placeholder={m.anunciar_exemplo({ valor: '110' })} min="1" class={fieldClass} />
                             </div>
                         </div>
 
                         <div>
-                            <label class={labelClass} for="traction">Tração <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                            <label class={labelClass} for="traction">{m.anunciar_tracao()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
                             <select id="traction" bind:value={form.traction} class={selectClass}>
-                                <option value="">Não informar</option>
+                                <option value="">{m.anunciar_nao_informar()}</option>
                                 <option value="4x2">4x2</option>
                                 <option value="4x4">4x4</option>
-                                <option value="esteira">Esteira</option>
+                                <option value="esteira">{tractionLabel('esteira')}</option>
                             </select>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="year">Ano de fabricação</label>
-                                <input type="number" inputmode="numeric" id="year" bind:value={form.manufacture_year} placeholder="Ex: 2018" min="1950" class={fieldClass} />
+                                <label class={labelClass} for="year">{m.anunciar_ano_fabricacao()}</label>
+                                <input type="number" inputmode="numeric" id="year" bind:value={form.manufacture_year} placeholder={m.anunciar_exemplo({ valor: '2018' })} min="1950" class={fieldClass} />
                             </div>
                             <div>
-                                <label class={labelClass} for="horimeter">Horímetro (horas)</label>
-                                <input type="number" inputmode="numeric" id="horimeter" bind:value={form.current_horimeter} placeholder="Ex: 2500" class={fieldClass} />
+                                <label class={labelClass} for="horimeter">{m.anunciar_horimetro_horas()}</label>
+                                <input type="number" inputmode="numeric" id="horimeter" bind:value={form.current_horimeter} placeholder={m.anunciar_exemplo({ valor: '2500' })} class={fieldClass} />
                             </div>
                         </div>
 
                     {:else if form.category === 'produto'}
                         <div>
-                            <label class={labelClass} for="prod_category">Categoria do insumo</label>
+                            <label class={labelClass} for="prod_category">{m.anunciar_categoria_insumo()}</label>
                             <select id="prod_category" bind:value={form.product_category} class={selectClass}>
-                                <option value="" disabled>Selecione a categoria...</option>
-                                <option value="Sementes">Sementes</option>
-                                <option value="Fertilizantes">Fertilizantes</option>
-                                <option value="Mudas">Mudas </option>
-                                <option value="Defensivos">Defensivos Agrícolas</option>
-                                <option value="Corretivos">Corretivos (calcário, gesso)</option>
-                                <option value="Grãos">Grãos</option>
-                                <option value="Nutrição animal">Nutrição animal</option>
-                                <option value="Peças">Peças e acessórios</option>
-                                <option value="Outros">Outros</option>
+                                <option value="" disabled>{m.anunciar_selecione_categoria()}</option>
+                                {#each PRODUCT_CATEGORIES as value (value)}
+                                    <option {value}>{value === 'Corretivos' ? m.anunciar_cat_corretivos_opcao() : categoryLabel(value)}</option>
+                                {/each}
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="qty">Quantidade</label>
+                                <label class={labelClass} for="qty">{m.anunciar_quantidade()}</label>
                                 <input type="number" inputmode="numeric" id="qty" bind:value={form.quantity} min="1" class={fieldClass} />
                             </div>
                             <div>
-                                <label class={labelClass} for="unit">Unidade</label>
+                                <label class={labelClass} for="unit">{m.anunciar_unidade()}</label>
                                 <select id="unit" bind:value={form.stock_unit} class={selectClass}>
-                                    <option value="Sacas">Sacas</option>
-                                    <option value="Kg">Kg</option>
-                                    <option value="Toneladas">Toneladas</option>
-                                    <option value="Litros">Litros</option>
-                                    <option value="Unidades">Unidades</option>
+                                    {#each STOCK_UNITS as value (value)}
+                                        <option {value}>{stockUnitName(value)}</option>
+                                    {/each}
                                 </select>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="brand_name">Marca ou fabricante <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                                <input type="text" id="brand_name" bind:value={form.brand_name} maxlength="80" placeholder="Ex: Brasmax" class={fieldClass} />
+                                <label class={labelClass} for="brand_name">{m.anunciar_marca_fabricante()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                                <input type="text" id="brand_name" bind:value={form.brand_name} maxlength="80" placeholder={m.anunciar_exemplo({ valor: 'Brasmax' })} class={fieldClass} />
                             </div>
                             <div>
-                                <label class={labelClass} for="min_order">Pedido mínimo <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                                <input type="number" inputmode="numeric" id="min_order" bind:value={form.min_order} min="1" placeholder={`Em ${stockUnitLabel(form.stock_unit)}`} class={fieldClass} />
+                                <label class={labelClass} for="min_order">{m.anunciar_pedido_minimo()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                                <input type="number" inputmode="numeric" id="min_order" bind:value={form.min_order} min="1" placeholder={m.anunciar_em_unidade({ unidade: stockUnitLabel(form.stock_unit) })} class={fieldClass} />
                             </div>
                         </div>
                         {#if SEED_CATEGORIES.includes(form.product_category)}
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class={labelClass} for="cultivar">Cultivar <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                                    <input type="text" id="cultivar" bind:value={form.cultivar} maxlength="80" placeholder="Ex: BMX Zeus IPRO" class={fieldClass} />
+                                    <label class={labelClass} for="cultivar">{m.anunciar_cultivar()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                                    <input type="text" id="cultivar" bind:value={form.cultivar} maxlength="80" placeholder={m.anunciar_exemplo({ valor: 'BMX Zeus IPRO' })} class={fieldClass} />
                                 </div>
                                 <div>
-                                    <label class={labelClass} for="harvest">Safra <span class="font-normal text-surface-700-300">(opcional)</span></label>
-                                    <input type="text" id="harvest" bind:value={form.harvest} maxlength="7" placeholder="Ex: 2025/26" aria-invalid={harvestInvalid ? 'true' : undefined} class={fieldClass} />
+                                    <label class={labelClass} for="harvest">{m.anunciar_safra()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
+                                    <input type="text" id="harvest" bind:value={form.harvest} maxlength="7" placeholder={m.anunciar_exemplo({ valor: '2025/26' })} aria-invalid={harvestInvalid ? 'true' : undefined} class={fieldClass} />
                                     {#if harvestInvalid}
-                                        <p class="mt-1 text-xs text-error-600">Use o formato 2025/26 ou 2026.</p>
+                                        <p class="mt-1 text-xs text-error-600">{m.anunciar_safra_invalida()}</p>
                                     {/if}
                                 </div>
                             </div>
@@ -521,8 +519,8 @@
                 <div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
                     <MunicipioPicker
                         id="anuncio-municipio"
-                        label={form.category === 'maquinario' ? 'Cidade onde a máquina está' : 'Cidade onde o produto está'}
-                        hint="Só a cidade aparece no anúncio. Endereço e retirada você combina na negociação."
+                        label={form.category === 'maquinario' ? m.anunciar_cidade_maquina() : m.anunciar_cidade_produto()}
+                        hint={m.anunciar_cidade_dica()}
                         required
                         bind:value={form.municipio}
                     />
@@ -535,14 +533,14 @@
 
         {:else if currentStep === 2}
             <div class="flex flex-1 flex-col">
-                <h1 class="preset-typo-headline">Qual é o valor cobrado?</h1>
-                <p class="mt-1 preset-typo-subtitle">Você poderá mudar o preço depois.</p>
+                <h1 class="preset-typo-headline">{m.anunciar_valor_titulo()}</h1>
+                <p class="mt-1 preset-typo-subtitle">{m.anunciar_valor_sub()}</p>
 
                 {#if form.category === 'maquinario'}
                     <fieldset class="mt-5">
-                        <legend class="mb-2 text-sm font-semibold text-surface-950-50">Tipo de negócio</legend>
+                        <legend class="mb-2 text-sm font-semibold text-surface-950-50">{m.anunciar_tipo_negocio()}</legend>
                         <div class="grid grid-cols-2 gap-3">
-                            {#each [{ value: 'aluguel', label: 'Aluguel', hint: 'preço por hora, dia ou hectare', icon: Timer }, { value: 'venda', label: 'Venda', hint: 'preço da máquina', icon: Tag }] as option (option.value)}
+                            {#each [{ value: 'aluguel', label: MACHINE_OFFER_LABEL.aluguel, hint: m.anunciar_aluguel_dica(), icon: Timer }, { value: 'venda', label: MACHINE_OFFER_LABEL.venda, hint: m.anunciar_venda_dica(), icon: Tag }] as option (option.value)}
                                 {@const selected = form.offer_type === option.value}
                                 <label
                                     class="flex cursor-pointer flex-col gap-1 rounded-container border-2 p-4 shadow-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-500 {selected
@@ -563,23 +561,23 @@
                     {#if form.offer_type === 'aluguel'}
                         <div class="mt-4 grid grid-cols-2 gap-3">
                             <div>
-                                <label class={labelClass} for="rental_unit">Cobrança</label>
+                                <label class={labelClass} for="rental_unit">{m.anunciar_cobranca()}</label>
                                 <select id="rental_unit" bind:value={form.rental_unit} class={selectClass}>
-                                    <option value="hora">Por hora</option>
-                                    <option value="dia">Por dia</option>
-                                    <option value="hectare">Por hectare</option>
+                                    {#each Object.entries(RENTAL_UNIT_LABEL) as [value, label] (value)}
+                                        <option {value}>{label}</option>
+                                    {/each}
                                 </select>
                             </div>
                             <label class="flex cursor-pointer items-center gap-3 self-end rounded-container border border-surface-200-800 bg-surface-50-950 px-4 py-3 text-sm font-medium">
                                 <input type="checkbox" bind:checked={form.operator_included} class="checkbox" />
-                                Inclui operador
+                                {m.anunciar_inclui_operador()}
                             </label>
                         </div>
                     {/if}
                 {/if}
 
                 <div class="mt-5">
-                    <label class={labelClass} for="price">Valor</label>
+                    <label class={labelClass} for="price">{m.anunciar_valor()}</label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-surface-800-200">R$</span>
                         <input
@@ -587,23 +585,23 @@
                             type="number"
                             inputmode="decimal"
                             bind:value={form.price}
-                            placeholder="Ex: 500,00"
+                            placeholder={m.anunciar_exemplo({ valor: formatNumber(500, { minimumFractionDigits: 2 }) })}
                             class="input h-16 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-14 pr-4 text-2xl font-bold shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
                     <p class="mt-2 text-sm text-surface-800-200">
                         {form.category !== 'maquinario'
-                            ? `Valor por ${stockUnitLabel(form.stock_unit, 1)}.`
+                            ? m.anunciar_valor_por({ unidade: stockUnitLabel(form.stock_unit, 1) })
                             : form.offer_type === 'aluguel'
-                              ? `Valor do aluguel ${RENTAL_HINT[form.rental_unit]}${form.operator_included ? ', com operador' : ''}.`
-                              : 'Valor pedido pela máquina.'}
+                              ? (form.operator_included ? m.anunciar_valor_aluguel_operador : m.anunciar_valor_aluguel)({ periodo: (RENTAL_HINT[form.rental_unit] ?? RENTAL_HINT.hora)() })
+                              : m.anunciar_valor_maquina()}
                     </p>
                 </div>
 
                 <div class="mt-5">
-                    <label class={labelClass} for="delivery">Entrega <span class="font-normal text-surface-700-300">(opcional)</span></label>
+                    <label class={labelClass} for="delivery">{m.anunciar_entrega()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
                     <select id="delivery" bind:value={form.delivery} class={selectClass}>
-                        <option value="">Não informar</option>
+                        <option value="">{m.anunciar_nao_informar()}</option>
                         {#each Object.entries(DELIVERY_LABEL) as [value, label] (value)}
                             <option {value}>{label}</option>
                         {/each}
@@ -612,7 +610,7 @@
 
                 {#if form.price && form.price > 0}
                     <div class="mt-5 rounded-container border border-primary-500 preset-tonal-primary p-4">
-                        <p class="text-sm font-medium">Seu anúncio será publicado por:</p>
+                        <p class="text-sm font-medium">{m.anunciar_publicado_por()}</p>
                         <p class="mt-1 text-3xl font-bold">
                             {form.category === 'maquinario'
                                 ? listingPriceLabel('maquinario', form.price, form.offer_type, form.rental_unit)
@@ -635,11 +633,11 @@
                     class="btn btn-lg preset-filled-primary-500 w-full"
                 >
                     <CircleCheck size={18} />
-                    <span>{loading ? 'Publicando...' : 'Publicar anúncio'}</span>
+                    <span>{loading ? m.anunciar_publicando() : m.anunciar_publicar()}</span>
                 </button>
                 <button type="button" onclick={prevStep} disabled={loading} class="btn btn-lg preset-tonal w-full">
                     <ArrowLeft size={18} />
-                    <span>Voltar e revisar</span>
+                    <span>{m.anunciar_voltar_revisar()}</span>
                 </button>
             {:else}
                 <button
@@ -648,12 +646,12 @@
                     disabled={!canProceed()}
                     class="btn btn-lg preset-filled-primary-500 w-full"
                 >
-                    <span>Próximo</span>
+                    <span>{m.anunciar_proximo()}</span>
                     <ArrowRight size={18} />
                 </button>
                 <button type="button" onclick={prevStep} class="btn btn-lg preset-tonal w-full">
                     {#if currentStep > 0}<ArrowLeft size={18} />{/if}
-                    <span>{currentStep === 0 ? 'Cancelar' : 'Voltar'}</span>
+                    <span>{currentStep === 0 ? m.comum_cancelar() : m.comum_voltar()}</span>
                 </button>
             {/if}
         </div>

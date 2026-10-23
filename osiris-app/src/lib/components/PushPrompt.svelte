@@ -6,6 +6,7 @@
 	import { enablePush, isBrave, pushFailureReason, pushPermission, syncPushSubscription } from '$lib/push';
 	import { showToast } from '$lib/components/ui/toast.js';
 	import { track } from '$lib/telemetry';
+	import { m } from '$lib/paraglide/messages';
 
 	// Pede a permissão de notificação com um toque (celulares bloqueiam o pedido automático)
 	// e mantém a inscrição do aparelho em dia para quem já permitiu.
@@ -57,17 +58,15 @@
 		});
 
 		if (ok) {
-			showToast('Notificações ativadas neste aparelho.');
+			showToast(m.app_push_ativadas());
 		} else if (permission === 'denied') {
-			showToast('As notificações foram bloqueadas. Libere nas configurações do navegador.');
+			showToast(m.app_push_bloqueadas());
 		} else if (permission === 'granted' && pushFailureReason() === 'push-service') {
 			showToast(
-				isBrave()
-					? 'O Brave bloqueia notificações por padrão. Em brave://settings/privacy, ative “Usar os serviços do Google para mensagens push” e reinicie o navegador.'
-					: 'Este navegador recusou o serviço de notificações. Tente pelo Chrome.'
+				isBrave() ? m.app_push_brave() : m.app_push_servico_recusado()
 			);
 		} else if (permission === 'granted') {
-			showToast('Não foi possível ativar as notificações agora. Recarregue a página para tentar de novo.');
+			showToast(m.app_push_falhou());
 		}
 	}
 
@@ -103,14 +102,14 @@
 		<div
 			class="mx-auto flex max-w-md items-start gap-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-lg"
 			role="region"
-			aria-label="Ativar notificações"
+			aria-label={m.app_push_ativar()}
 		>
 			<div class="rounded-full preset-tonal-primary p-2">
 				<Bell class="h-5 w-5" />
 			</div>
 			<div class="flex-1">
-				<p class="text-sm font-semibold">Receba avisos no celular</p>
-				<p class="text-sm opacity-70">Saiba na hora quando chegar uma proposta, mensagem ou mudança na operação.</p>
+				<p class="text-sm font-semibold">{m.app_push_titulo()}</p>
+				<p class="text-sm opacity-70">{m.app_push_desc()}</p>
 				<button
 					type="button"
 					class="btn preset-filled-primary-500 mt-3"
@@ -118,15 +117,15 @@
 					disabled={enabling}
 				>
 					<Bell size={18} />
-					<span>{enabling ? 'Ativando...' : 'Ativar notificações'}</span>
+					<span>{enabling ? m.app_push_ativando() : m.app_push_ativar()}</span>
 				</button>
 				{#if permissionHint}
 					<p class="mt-2 text-xs opacity-80" role="status">
-						Não apareceu o pedido? Procure o ícone de sino ou de cadeado na barra de endereço do navegador e escolha <b>Permitir</b>.
+						{m.app_push_dica()} <b>{m.app_push_permitir()}</b>.
 					</p>
 				{/if}
 			</div>
-			<button type="button" class="btn-icon btn-icon-lg preset-tonal" title="Agora não" aria-label="Agora não" onclick={dismiss}>
+			<button type="button" class="btn-icon btn-icon-lg preset-tonal" title={m.app_push_agora_nao()} aria-label={m.app_push_agora_nao()} onclick={dismiss}>
 				<X size={18} />
 			</button>
 		</div>

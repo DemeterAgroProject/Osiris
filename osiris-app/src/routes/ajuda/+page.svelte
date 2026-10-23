@@ -3,13 +3,17 @@
 	import { ChevronRight, Mail } from 'lucide-svelte';
 	import HelpHeader from '$lib/components/HelpHeader.svelte';
 	import HelpNav from '$lib/components/HelpNav.svelte';
-	import { HELP_SECTIONS, helpArticlesIn } from '$lib/help';
+	import { getHelpSections, getHelpArticles, helpArticlesIn } from '$lib/help';
 	import { LEGAL } from '$lib/legal';
+	import { m } from '$lib/paraglide/messages';
+
+	const sections = getHelpSections();
+	const articles = getHelpArticles();
 </script>
 
 <svelte:head>
-	<title>Central de ajuda — Osiris</title>
-	<meta name="description" content="Passo a passo para buscar, anunciar, negociar e acompanhar operações no Osiris." />
+	<title>{m.ajuda_titulo()} — Osiris</title>
+	<meta name="description" content={m.ajuda_descricao()} />
 </svelte:head>
 
 <div class="min-h-screen pb-10">
@@ -21,13 +25,13 @@
 		</aside>
 
 		<div class="min-w-0 max-w-4xl">
-			<h1 class="preset-typo-headline">Central de ajuda</h1>
+			<h1 class="preset-typo-headline">{m.ajuda_titulo()}</h1>
 			<p class="mt-1 preset-typo-subtitle">
-				Passo a passo para usar o Osiris. Use a busca acima ou escolha um tema abaixo.
+				{m.ajuda_intro()}
 			</p>
 
 			<div class="mt-6 space-y-7">
-				{#each HELP_SECTIONS as section (section.id)}
+				{#each sections as section (section.id)}
 					<section aria-labelledby="ajuda-{section.id}">
 						<h2 id="ajuda-{section.id}" class="flex items-center gap-2 preset-typo-title">
 							<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-container preset-tonal-primary">
@@ -36,7 +40,7 @@
 							{section.title}
 						</h2>
 						<ul class="mt-3 grid gap-3 sm:grid-cols-2">
-							{#each helpArticlesIn(section.id) as article (article.slug)}
+							{#each helpArticlesIn(section.id, articles) as article (article.slug)}
 								<li>
 									<a
 										href={resolve(`/ajuda/${article.slug}`)}
@@ -57,12 +61,12 @@
 
 			<section class="mt-8 flex flex-col gap-3 rounded-container preset-tonal-primary p-5 sm:flex-row sm:items-center">
 				<div class="flex-1">
-					<h2 class="preset-typo-card-title">Não achou o que procurava?</h2>
-					<p class="mt-1 text-sm">Escreva para a equipe do Osiris. Respondemos por e-mail.</p>
+					<h2 class="preset-typo-card-title">{m.ajuda_nao_achou_titulo()}</h2>
+					<p class="mt-1 text-sm">{m.ajuda_nao_achou_texto()}</p>
 				</div>
 				<a href="mailto:{LEGAL.contato}" class="btn btn-md preset-filled-primary-500">
 					<Mail size={18} />
-					<span>Falar com a equipe</span>
+					<span>{m.ajuda_falar_equipe()}</span>
 				</a>
 			</section>
 		</div>

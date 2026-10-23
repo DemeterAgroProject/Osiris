@@ -12,13 +12,16 @@
 	import { userMessage } from '$lib/errors';
 	import { watchChanges } from '$lib/realtime';
 	import { track, trackError } from '$lib/telemetry';
+	import { m } from '$lib/paraglide/messages';
+	import { formatBRL, formatDate } from '$lib/i18n';
+	import { bookingStatusLabel as sharedBookingStatusLabel } from '$lib/notifications';
 
 	// etapas mostradas no topo (fluxo de bookings.status aplicado pelos triggers)
 	const OPERATION_STAGES = [
-		{ status: 'pendente', label: 'Aguardando', icon: Clock },
-		{ status: 'em_operacao', label: 'Em campo', icon: Tractor },
-		{ status: 'em_avaliacao', label: 'Avaliação', icon: Star },
-		{ status: 'finalizada', label: 'Finalizada', icon: Flag }
+		{ status: 'pendente', label: m.operacao_etapa_aguardando, icon: Clock },
+		{ status: 'em_operacao', label: m.operacao_etapa_em_campo, icon: Tractor },
+		{ status: 'em_avaliacao', label: m.operacao_etapa_avaliacao, icon: Star },
+		{ status: 'finalizada', label: m.operacao_etapa_finalizada, icon: Flag }
 	];
 
 	function stageIndex(status) {
@@ -26,27 +29,22 @@
 	}
 
 	function formatCurrency(value) {
-		if (value === null || value === undefined || value === '') return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+		if (value === null || value === undefined || value === '') return m.comum_preco_a_combinar();
+		return formatBRL(value);
 	}
 
 	function formatDbDate(dateString) {
 		if (!dateString) return '—';
 		const [year, month, day] = String(dateString).split('T')[0].split('-');
 		if (!year || !month || !day) return dateString;
-		return `${day}/${month}/${year}`;
+		// data local (sem fuso), para não voltar um dia
+		return formatDate(new Date(Number(year), Number(month) - 1, Number(day)));
 	}
 
 	function bookingStatusLabel(status) {
-		const map = {
-			pendente: 'Aguardando início',
-			em_operacao: 'Em operação',
-			em_avaliacao: 'Em avaliação',
-			finalizada: 'Finalizada',
-			cancelado: 'Cancelado',
-			bloqueado_prestador: 'Bloqueado'
-		};
-		return map[status] ?? status ?? '—';
+		if (!status) return '—';
+		if (status === 'bloqueado_prestador') return m.operacao_status_bloqueado();
+		return sharedBookingStatusLabel(status);
 	}
 
 	function bookingStatusTone(status) {
@@ -103,7 +101,7 @@
 	}
 
 	function listingTitle() {
-		return booking?.products?.name || booking?.services?.title || 'Operação';
+		return booking?.products?.name || booking?.services?.title || m.operacao_titulo();
 	}
 
 	function listingHref() {
@@ -143,7 +141,7 @@
 	function counterpartyName() {
 		if (!booking) return '—';
 		const profile = isProvider ? booking.client : booking.provider;
-		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
+		return profile?.display_name || (isProvider ? m.operacao_cliente() : m.operacao_anunciante());
 	}
 
 	function counterpartyPhoto() {
@@ -180,7 +178,7 @@
 
 		return rows.map((row) => ({
 			...row,
-			reviewerName: profilesById[row.reviewer_id]?.display_name || 'Usuário',
+			reviewerName: profilesById[row.reviewer_id]?.display_name || m.operacao_usuario(),
 			reviewerPhoto: profilesById[row.reviewer_id]?.photo_url || null
 		}));
 	}
@@ -214,7 +212,7 @@
 	/** @param {{ silent?: boolean }} [options] silent: atualiza sem esconder a tela (mudança vinda do tempo real) */
 	async function loadBooking(id, { silent = false } = {}) {
 		if (!id) {
-			errorMessage = 'Identificador da operação inválido.';
+			errorMessage = m.operacao_id_invalido();
 			booking = null;
 			loading = false;
 			return;
@@ -242,19 +240,19 @@
 
 		if (error) {
 			console.error('Erro ao carregar operação:', error);
-			errorMessage = userMessage(error, 'Erro ao carregar a operação.');
+			errorMessage = userMessage(error, m.operacao_erro_carregar());
 			loading = false;
 			return;
 		}
 
 		if (!data) {
-			errorMessage = 'Operação não encontrada ou sem permissão de leitura.';
+			errorMessage = m.operacao_nao_encontrada();
 			loading = false;
 			return;
 		}
 
 		if (data.client_id !== user.id && data.provider_id !== user.id) {
-			errorMessage = 'Você não tem acesso a esta operação.';
+			errorMessage = m.operacao_sem_acesso();
 			loading = false;
 			return;
 		}
@@ -303,7 +301,7 @@
 
 		if (error) {
 			trackError('operacao_status_falhou', error, { status: newStatus });
-			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
+			errorMessage = userMessage(error, m.operacao_erro_acao());
 		} else {
 			track(OPERATION_EVENT[newStatus] ?? 'operacao_status', { status: newStatus });
 			await loadBooking(id);
@@ -345,7 +343,7 @@
 
 		if (error) {
 			trackError('avaliacao_falhou', error);
-			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
+			errorMessage = userMessage(error, m.operacao_erro_acao());
 			return;
 		}
 		track('avaliacao_enviada', { nota: rating, com_comentario: Boolean(comment.trim()) });
@@ -357,21 +355,21 @@
 </script>
 
 <svelte:head>
-	<title>Operação — Osiris</title>
+	<title>{m.operacao_titulo()} — Osiris</title>
 </svelte:head>
 
 <div class="min-h-screen pb-24 lg:pb-0">
-	<Header title="Operação" backHref="/negociacoes" />
+	<Header title={m.operacao_titulo()} backHref="/negociacoes" />
 
 	<main class="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 lg:max-w-6xl lg:space-y-6 lg:px-8 lg:py-6">
 		{#if booking}
-			<nav class="hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+			<nav class="hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label={m.operacao_caminho()}>
 				<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 					<Home size={16} />
-					Início
+					{m.nav_inicio()}
 				</a>
 				<span class="text-surface-700-300">/</span>
-				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">Negociações</a>
+				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">{m.operacao_negociacoes()}</a>
 				<span class="text-surface-700-300">/</span>
 				<span class="truncate font-semibold text-surface-950-50" aria-current="page">{listingTitle()}</span>
 			</nav>
@@ -379,7 +377,7 @@
 
 		{#if loading}
 			<div class="space-y-4" role="status" aria-live="polite">
-				<span class="sr-only">Carregando operação...</span>
+				<span class="sr-only">{m.operacao_carregando()}</span>
 				<div class="placeholder h-24 w-full animate-pulse rounded-container"></div>
 				<div class="placeholder h-56 w-full animate-pulse rounded-container"></div>
 			</div>
@@ -391,7 +389,7 @@
 		{:else if booking}
 			<!-- etapas da operação (bookings.status) -->
 			{#if stageIndex(booking.status) >= 0}
-				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:px-10 lg:py-6" aria-label="Etapas da operação">
+				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:px-10 lg:py-6" aria-label={m.operacao_etapas()}>
 					<ol class="flex items-start">
 						{#each OPERATION_STAGES as stage, index (stage.status)}
 							{@const current = stageIndex(booking.status)}
@@ -415,7 +413,7 @@
 									</span>
 									<span class="h-0.5 flex-1 {index === OPERATION_STAGES.length - 1 ? 'opacity-0' : done ? 'bg-primary-500' : 'bg-surface-300-700'}"></span>
 								</div>
-								<span class="text-xs leading-tight {active || done ? 'font-bold text-surface-950-50' : 'font-medium text-surface-800-200'}">{stage.label}</span>
+								<span class="text-xs leading-tight {active || done ? 'font-bold text-surface-950-50' : 'font-medium text-surface-800-200'}">{stage.label()}</span>
 							</li>
 						{/each}
 					</ol>
@@ -434,7 +432,7 @@
 				{/if}
 
 				<div class="flex items-center justify-between gap-2">
-					<span class="preset-typo-label">Operação</span>
+					<span class="preset-typo-label">{m.operacao_titulo()}</span>
 					<span
 						class="badge rounded-full px-2.5 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(
 							bookingStatusTone(booking.status)
@@ -465,21 +463,21 @@
 							<h1 class="line-clamp-2 preset-typo-title">{listingTitle()}</h1>
 						{/if}
 						<p class="mt-0.5 text-sm text-surface-800-200">
-							{isProvider ? 'Cliente' : 'Anunciante'}: <span class="font-semibold text-surface-950-50">{counterpartyName()}</span>
+							{isProvider ? m.operacao_cliente() : m.operacao_anunciante()}: <span class="font-semibold text-surface-950-50">{counterpartyName()}</span>
 						</p>
 					</div>
 				</div>
 
 				<dl class="mt-4 grid grid-cols-2 gap-2">
 					<div class="rounded-container bg-surface-100-900 p-3">
-						<dt class="preset-typo-label">Valor acordado</dt>
+						<dt class="preset-typo-label">{m.operacao_valor_acordado()}</dt>
 						<dd class="mt-0.5 text-xl font-bold text-primary-700-300">{formatCurrency(booking.total_price)}</dd>
 					</div>
 					<div class="rounded-container bg-surface-100-900 p-3">
-						<dt class="preset-typo-label">Período</dt>
+						<dt class="preset-typo-label">{m.operacao_periodo()}</dt>
 						<dd class="mt-0.5 text-sm font-semibold text-surface-950-50">
 							{formatDbDate(booking.start_date)}
-							<span class="block text-surface-800-200">até {formatDbDate(booking.end_date)}</span>
+							<span class="block text-surface-800-200">{m.operacao_ate_data({ data: formatDbDate(booking.end_date) })}</span>
 						</dd>
 					</div>
 				</dl>
@@ -503,7 +501,7 @@
 							class="btn btn-lg preset-filled-primary-500 w-full"
 						>
 							<Play size={18} />
-							<span>Iniciar operação em campo</span>
+							<span>{m.operacao_iniciar()}</span>
 						</button>
 					{/if}
 
@@ -515,7 +513,7 @@
 							class="btn btn-lg preset-filled-secondary-500 w-full"
 						>
 							<Flag size={18} />
-							<span>Encerrar operação</span>
+							<span>{m.operacao_encerrar()}</span>
 						</button>
 					{/if}
 
@@ -528,19 +526,19 @@
 							class="btn btn-lg preset-tonal-error w-full"
 						>
 							<XCircle size={18} />
-							<span>Cancelar operação</span>
+							<span>{m.operacao_cancelar()}</span>
 						</button>
 					{/if}
 				</div>
 			{:else if booking.status === 'pendente'}
 				<div class="flex items-start gap-3 rounded-container preset-tonal-warning p-4 text-sm font-medium">
 					<Clock class="h-5 w-5 shrink-0" />
-					Aguardando o anunciante iniciar a operação em campo.
+					{m.operacao_aguardando_anunciante()}
 				</div>
 			{:else if booking.status === 'em_operacao'}
 				<div class="flex items-start gap-3 rounded-container preset-tonal-primary p-4 text-sm font-medium">
 					<Tractor class="h-5 w-5 shrink-0" />
-					Operação em andamento no campo.
+					{m.operacao_em_andamento()}
 				</div>
 			{/if}
 
@@ -548,23 +546,23 @@
 				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 					<h2 class="flex items-center gap-2 preset-typo-title">
 						<Star class="h-5 w-5 fill-current text-warning-500" />
-						Avaliar experiência
+						{m.operacao_avaliar_experiencia()}
 					</h2>
 
 					{#if myReview}
 						<div class="mt-3 flex items-center gap-2 rounded-container preset-tonal-success p-3 text-sm font-medium">
 							<CheckCircle2 class="h-5 w-5 shrink-0" />
-							Você já enviou sua avaliação ({myReview.rating}/5).
+							{m.operacao_ja_avaliou({ nota: myReview.rating })}
 						</div>
 					{:else if canReview}
 						<div class="mt-3">
-							<AppRating bind:value={rating} readOnly={false} label="Sua nota" />
+							<AppRating bind:value={rating} readOnly={false} label={m.operacao_sua_nota()} />
 						</div>
 						<textarea
 							rows="3"
 							bind:value={comment}
-							placeholder="Comentário (opcional)"
-							aria-label="Comentário"
+							placeholder={m.operacao_comentario_opcional()}
+							aria-label={m.operacao_comentario()}
 							class="textarea mt-3 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-2.5 text-base"
 						></textarea>
 						<button
@@ -574,12 +572,12 @@
 							class="btn btn-lg preset-filled-primary-500 mt-3 w-full"
 						>
 							<Send size={18} />
-							<span>{reviewSubmitting ? 'Enviando...' : 'Enviar avaliação'}</span>
+							<span>{reviewSubmitting ? m.operacao_enviando() : m.operacao_enviar_avaliacao()}</span>
 						</button>
 					{/if}
 
 					<p class="mt-3 text-sm text-surface-800-200">
-						A operação será finalizada automaticamente quando cliente e anunciante avaliarem.
+						{m.operacao_finaliza_automatico()}
 					</p>
 
 					{#if canManualFinalize}
@@ -590,7 +588,7 @@
 							class="btn btn-lg preset-tonal mt-4 w-full"
 						>
 							<CheckCircle2 size={18} />
-							<span>Encerrar operação manualmente</span>
+							<span>{m.operacao_encerrar_manual()}</span>
 						</button>
 					{/if}
 				</section>
@@ -600,9 +598,9 @@
 				<div class="flex items-center gap-3 rounded-container preset-tonal-success p-4 text-sm font-medium">
 					<CheckCircle2 class="h-6 w-6 shrink-0" />
 					{#if bothReviewed}
-						Operação finalizada. Obrigado por usar o Osiris.
+						{m.operacao_finalizada_obrigado()}
 					{:else}
-						Operação encerrada.
+						{m.operacao_encerrada()}
 					{/if}
 				</div>
 			{/if}
@@ -610,7 +608,7 @@
 			{#if reviews.length}
 				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 					<div class="flex items-center justify-between gap-2">
-						<h2 class="preset-typo-title">Avaliações desta operação</h2>
+						<h2 class="preset-typo-title">{m.operacao_avaliacoes_desta()}</h2>
 						<span class="badge rounded-full preset-tonal-surface px-2 py-0.5 text-xs font-semibold">{reviews.length}</span>
 					</div>
 					<ul class="mt-3 space-y-2">

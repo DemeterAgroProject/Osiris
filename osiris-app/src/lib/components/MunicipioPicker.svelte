@@ -1,6 +1,7 @@
 <script>
 	import { MapPin, X } from 'lucide-svelte';
 	import { formatMunicipio, searchMunicipios } from '$lib/municipios';
+	import { m } from '$lib/paraglide/messages';
 
 	// Campo "Cidade": busca no IBGE enquanto digita e guarda o município escolhido
 	// ({ codigo_ibge, nome, uf }). Texto digitado sem escolher da lista não vale.
@@ -8,10 +9,10 @@
 	let {
 		value = $bindable(null),
 		id = 'municipio',
-		label = 'Cidade',
+		label = m.anunciar_municipio_cidade(),
 		hint = '',
 		required = false,
-		placeholder = 'Digite o nome da cidade'
+		placeholder = m.anunciar_municipio_placeholder()
 	} = $props();
 
 	let text = $state(formatMunicipio(value));
@@ -120,7 +121,7 @@
 			<button
 				type="button"
 				class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-surface-600-400 hover:preset-tonal"
-				aria-label="Limpar cidade"
+				aria-label={m.anunciar_municipio_limpar()}
 				onclick={clear}
 			>
 				<X class="h-4 w-4" />
@@ -135,9 +136,9 @@
 			class="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-container border border-surface-200-800 bg-surface-50-950 py-1 shadow-lg"
 		>
 			{#if searching && results.length === 0}
-				<li class="px-4 py-2 text-sm text-surface-600-400">Buscando...</li>
+				<li class="px-4 py-2 text-sm text-surface-600-400">{m.anunciar_municipio_buscando()}</li>
 			{:else if showEmpty}
-				<li class="px-4 py-2 text-sm text-surface-600-400">Nenhuma cidade encontrada.</li>
+				<li class="px-4 py-2 text-sm text-surface-600-400">{m.anunciar_municipio_nenhuma()}</li>
 			{/if}
 			{#each results as municipio, index (municipio.codigo_ibge)}
 				<li
@@ -157,7 +158,7 @@
 	{/if}
 
 	{#if required && !value && text.trim() !== '' && !open}
-		<p class="mt-1 text-xs text-error-600">Escolha a cidade na lista.</p>
+		<p class="mt-1 text-xs text-error-600">{m.anunciar_municipio_escolha()}</p>
 	{:else if hint}
 		<p class="mt-1 text-xs text-surface-600-400">{hint}</p>
 	{/if}

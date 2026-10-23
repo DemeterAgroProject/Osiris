@@ -13,34 +13,42 @@
 	import { track, trackError } from '$lib/telemetry';
 	import { watchChanges } from '$lib/realtime';
 	import { userMessage } from '$lib/errors';
+	import { m } from '$lib/paraglide/messages';
+	import { formatBRL, formatDate, intlLocale } from '$lib/i18n';
+	import { stockUnitLabel } from '$lib/pricing';
 
+	// lê o valor digitado no formato do idioma atual ("1.500,00" em português, "1,500.00" em inglês)
 	function parseCurrencyToNumber(value) {
 		if (value === null || value === undefined || value === '') return null;
-		const normalized = String(value).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+		const decimal = (1.1).toLocaleString(intlLocale()).charAt(1);
+		const normalized = String(value)
+			.replace(new RegExp(`[^\\d${decimal === ',' ? ',' : '.'}-]`, 'g'), '')
+			.replace(',', '.');
 		const numeric = Number(normalized);
 		return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
 	}
 
 	function formatCurrency(value) {
-		if (value === null || value === undefined || value === '') return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+		if (value === null || value === undefined || value === '') return m.comum_preco_a_combinar();
+		return formatBRL(value);
 	}
 
 	function formatDbDate(dateString) {
 		if (!dateString) return '—';
 		const [year, month, day] = String(dateString).split('T')[0].split('-');
 		if (!year || !month || !day) return dateString;
-		return `${day}/${month}/${year}`;
+		return formatDate(`${year}-${month}-${day}T00:00:00`);
 	}
 
 	function negotiationStatusLabel(status) {
 		const map = {
-			solicitada: 'Solicitada',
-			em_negociacao: 'Em negociação',
-			aceita: 'Aceita',
-			recusada: 'Recusada'
+			solicitada: m.negociacao_status_solicitada,
+			em_negociacao: m.negociacao_status_em_negociacao,
+			aceita: m.negociacao_status_aceita,
+			recusada: m.negociacao_status_recusada,
+			cancelado: m.negociacao_status_cancelada
 		};
-		return map[status] ?? status ?? '—';
+		return map[status]?.() ?? status ?? '—';
 	}
 
 	function negotiationStatusTone(status) {
@@ -59,7 +67,7 @@
 	}
 
 	function resolveListingTitle(negotiation) {
-		return negotiation?.products?.name || negotiation?.services?.title || 'Anúncio';
+		return negotiation?.products?.name || negotiation?.services?.title || m.negociacao_anuncio();
 	}
 
 	function listingHref(negotiation) {
@@ -150,12 +158,13 @@
 	const canManage = $derived(isNegotiationOpen(negotiation?.status));
 	const chatDisabled = $derived(!canManage);
 
-	// o NegotiationPropose grava a quantidade no fim da mensagem ("Quantidade solicitada: N")
-	const QUANTITY_PATTERN = /\s*Quantidade solicitada:\s*([^\n]+?)\s*$/;
+	// o NegotiationPropose grava a quantidade no fim da mensagem ("Quantidade solicitada: N"), no
+	// idioma de quem enviou: reconhece os três (m.negociacao_quantidade_solicitada)
+	const QUANTITY_PATTERN = /\s*(?:Quantidade solicitada|Requested quantity|Cantidad solicitada):\s*([^\n]+?)\s*$/;
 	const proposalQuantityRaw = $derived(negotiation?.message?.match(QUANTITY_PATTERN)?.[1] ?? '');
 	const proposalQuantity = $derived(
 		proposalQuantityRaw
-			? `${proposalQuantityRaw} ${(negotiation?.products?.stock_unit ?? '').toLowerCase()}`.trim()
+			? `${proposalQuantityRaw} ${stockUnitLabel(negotiation?.products?.stock_unit, proposalQuantityRaw)}`.trim()
 			: ''
 	);
 	const proposalMessage = $derived((negotiation?.message ?? '').replace(QUANTITY_PATTERN, '').trim());
@@ -164,17 +173,15 @@
 		const quantity = Number(proposalQuantityRaw.replace(',', '.'));
 		const price = Number(negotiation?.proposed_price);
 		if (!(quantity > 1) || !(price > 0)) return '';
-		return `${formatCurrency(price / quantity)} cada`;
+		return m.negociacao_preco_cada({ valor: formatCurrency(price / quantity) });
 	});
 	const proposalSentLabel = $derived.by(() => {
 		const sent = negotiation?.created_at ? new Date(negotiation.created_at) : null;
 		if (!sent || Number.isNaN(sent.getTime())) return '';
-		const time = sent.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-		const day =
-			sent.toDateString() === new Date().toDateString()
-				? 'hoje'
-				: `em ${sent.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
-		return `Enviada ${day} às ${time}`;
+		const time = sent.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
+		if (sent.toDateString() === new Date().toDateString()) return m.negociacao_enviada_hoje({ hora: time });
+		const date = sent.toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+		return m.negociacao_enviada_em({ data: date, hora: time });
 	});
 
 	function statusBadgeClass(tone) {
@@ -190,7 +197,7 @@
 
 	function counterpartyName() {
 		const profile = isProvider ? negotiation?.client : negotiation?.provider;
-		return profile?.display_name || 'Participante';
+		return profile?.display_name || m.negociacao_participante();
 	}
 
 	// foto que não carregou (link quebrado): mostra a inicial no lugar
@@ -268,19 +275,19 @@
 		if (error) {
 			console.error('Erro ao carregar negociação:', error);
 			errorMessage =
-				userMessage(error, 'Não foi possível carregar a negociação.');
+				userMessage(error, m.negociacao_erro_carregar_negociacao());
 			loading = false;
 			return;
 		}
 
 		if (!data) {
-			errorMessage = 'Negociação não encontrada ou sem permissão de leitura.';
+			errorMessage = m.negociacao_erro_nao_encontrada();
 			loading = false;
 			return;
 		}
 
 		if (data.client_id !== user.id && data.provider_id !== user.id) {
-			errorMessage = 'Você não tem acesso a esta negociação.';
+			errorMessage = m.negociacao_erro_sem_acesso();
 			loading = false;
 			return;
 		}
@@ -342,7 +349,7 @@
 
 		const proposed_price = parseCurrencyToNumber(editPrice);
 		if (proposed_price === null) {
-			errorMessage = 'Informe um valor válido para a proposta.';
+			errorMessage = m.negociacao_erro_valor_invalido();
 			return;
 		}
 
@@ -360,7 +367,7 @@
 
 		if (error) {
 			trackError('proposta_alteracao_falhou', error);
-			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
+			errorMessage = userMessage(error, m.negociacao_erro_acao());
 		} else {
 			track('proposta_alterada');
 			await loadNegotiation();
@@ -378,7 +385,7 @@
 
 		if (error) {
 			trackError('proposta_aceite_falhou', error);
-			errorMessage = userMessage(error, 'Não foi possível aceitar a proposta.');
+			errorMessage = userMessage(error, m.negociacao_erro_aceitar());
 			actionLoading = false;
 			showAcceptDialog = false;
 			return;
@@ -386,7 +393,7 @@
 
 		const newBookingId = resolveBookingIdFromRpc(data);
 		if (!newBookingId) {
-			errorMessage = 'Proposta aceita, mas o contrato não foi retornado pela API.';
+			errorMessage = m.negociacao_erro_aceita_sem_operacao();
 			actionLoading = false;
 			showAcceptDialog = false;
 			return;
@@ -395,7 +402,7 @@
 		showAcceptDialog = false;
 		actionLoading = false;
 		track('proposta_aceita');
-		showToast('Proposta aceita. Contrato criado com sucesso.');
+		showToast(m.negociacao_toast_aceita());
 		await goto(resolve(`/operacoes/${newBookingId}`));
 	}
 
@@ -416,7 +423,7 @@
 
 		if (error) {
 			trackError('proposta_recusa_falhou', error);
-			errorMessage = userMessage(error, 'Não foi possível concluir a ação. Tente novamente.');
+			errorMessage = userMessage(error, m.negociacao_erro_acao());
 		} else {
 			track('proposta_recusada');
 			await loadNegotiation();
@@ -426,7 +433,7 @@
 </script>
 
 <svelte:head>
-	<title>Negociação — Osiris</title>
+	<title>{m.negociacao_titulo_pagina_detalhe()}</title>
 </svelte:head>
 
 {#snippet statusBadge()}
@@ -449,7 +456,7 @@
 			class="btn btn-lg preset-tonal-error w-full"
 		>
 			<XCircle size={18} />
-			<span>Recusar</span>
+			<span>{m.negociacao_recusar()}</span>
 		</button>
 		<button
 			type="button"
@@ -458,7 +465,7 @@
 			class="btn btn-lg preset-filled-primary-500 w-full"
 		>
 			<CheckCircle2 size={18} />
-			<span>Aceitar</span>
+			<span>{m.negociacao_aceitar()}</span>
 		</button>
 	</div>
 {/snippet}
@@ -470,8 +477,8 @@
 			<div class="flex items-center gap-3 rounded-container preset-tonal-success p-4">
 				<CheckCircle2 class="h-8 w-8 shrink-0" />
 				<div class="min-w-0 flex-1">
-					<p class="preset-typo-label text-inherit">Negociação concluída</p>
-					<p class="text-base font-bold">Proposta aceita</p>
+					<p class="preset-typo-label text-inherit">{m.negociacao_concluida()}</p>
+					<p class="text-base font-bold">{m.negociacao_proposta_aceita()}</p>
 				</div>
 			</div>
 		{/if}
@@ -489,7 +496,7 @@
 		<header class="space-y-3">
 			<div class="flex items-center justify-between gap-3">
 				<p class="preset-typo-label text-primary-700-300">
-					{isProvider ? 'Proposta recebida' : 'Proposta enviada'}
+					{isProvider ? m.negociacao_proposta_recebida() : m.negociacao_proposta_enviada()}
 				</p>
 				{@render statusBadge()}
 			</div>
@@ -519,17 +526,17 @@
 					</span>
 				{/if}
 				<div class="min-w-0">
-					<p class="preset-typo-caption">{isProvider ? 'Cliente' : 'Anunciante'}</p>
+					<p class="preset-typo-caption">{isProvider ? m.negociacao_cliente() : m.negociacao_anunciante()}</p>
 					<p class="truncate text-base font-semibold text-surface-950-50">{counterpartyName()}</p>
 				</div>
 			</div>
 		</header>
 
 		<!-- valor e condições -->
-		<section class="overflow-hidden rounded-container border border-primary-500/20 bg-primary-500/5" aria-label="Valor proposto">
+		<section class="overflow-hidden rounded-container border border-primary-500/20 bg-primary-500/5" aria-label={m.negociacao_valor_proposto()}>
 			<div class="p-4">
 				<div class="flex items-center justify-between gap-2">
-					<p class="preset-typo-label">Valor proposto</p>
+					<p class="preset-typo-label">{m.negociacao_valor_proposto()}</p>
 					{#if unitPriceLabel}
 						<span class="badge rounded-full preset-tonal-primary px-2.5 py-1 text-xs font-semibold">{unitPriceLabel}</span>
 					{/if}
@@ -545,7 +552,7 @@
 						<div class="flex items-center justify-between gap-3 px-4 py-3">
 							<dt class="flex items-center gap-2 text-surface-800-200">
 								<Package class="h-4 w-4 shrink-0" />
-								Quantidade solicitada
+								{m.negociacao_quantidade_solicitada_rotulo()}
 							</dt>
 							<dd class="text-right font-bold text-surface-950-50">{proposalQuantity}</dd>
 						</div>
@@ -554,10 +561,10 @@
 						<div class="flex items-center justify-between gap-3 px-4 py-3">
 							<dt class="flex items-center gap-2 text-surface-800-200">
 								<CalendarDays class="h-4 w-4 shrink-0" />
-								Período
+								{m.negociacao_periodo()}
 							</dt>
 							<dd class="text-right font-bold text-surface-950-50">
-								{formatDbDate(negotiation.proposed_start_date)} a {formatDbDate(negotiation.proposed_end_date)}
+								{m.negociacao_periodo_de_a({ inicio: formatDbDate(negotiation.proposed_start_date), fim: formatDbDate(negotiation.proposed_end_date) })}
 							</dd>
 						</div>
 					{/if}
@@ -585,7 +592,7 @@
 				href={resolve(`/operacoes/${linkedBooking.id}`)}
 				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
-				<span>Ver operação</span>
+				<span>{m.negociacao_ver_operacao()}</span>
 				<ArrowRight size={18} />
 			</a>
 		{/if}
@@ -599,24 +606,24 @@
 						<SlidersHorizontal class="h-5 w-5" />
 					</span>
 					<div>
-						<h2 id="{idPrefix}-ajustar" class="preset-typo-title">Ajustar termos</h2>
-						<p class="preset-typo-subtitle">Altere o valor ou as datas da proposta.</p>
+						<h2 id="{idPrefix}-ajustar" class="preset-typo-title">{m.negociacao_ajustar_termos()}</h2>
+						<p class="preset-typo-subtitle">{m.negociacao_ajustar_termos_dica()}</p>
 					</div>
 				</div>
 				<div>
-					<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-price">Valor (R$)</label>
+					<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-price">{m.negociacao_valor_reais()}</label>
 					<input
 						id="{idPrefix}-edit-price"
 						type="text"
 						inputmode="decimal"
 						bind:value={editPrice}
 						class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base font-semibold"
-						placeholder="Ex: 2.000,00"
+						placeholder={m.negociacao_valor_placeholder()}
 					/>
 				</div>
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-start">Início</label>
+						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-start">{m.negociacao_data_inicio()}</label>
 						<input
 							id="{idPrefix}-edit-start"
 							type="date"
@@ -625,7 +632,7 @@
 						/>
 					</div>
 					<div>
-						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-end">Término</label>
+						<label class="mb-1 block preset-typo-label" for="{idPrefix}-edit-end">{m.negociacao_data_termino()}</label>
 						<input
 							id="{idPrefix}-edit-end"
 							type="date"
@@ -641,7 +648,7 @@
 					class="btn btn-lg preset-tonal-primary w-full"
 				>
 					<Check size={18} />
-					<span>Salvar ajustes</span>
+					<span>{m.negociacao_salvar_ajustes()}</span>
 				</button>
 			</section>
 
@@ -656,12 +663,12 @@
 	Computador (md+): duas colunas, detalhes à esquerda e chat à direita.
 -->
 <div class="flex h-dvh flex-col md:block md:h-auto md:min-h-screen md:pb-24 lg:pb-0">
-	<Header title="Negociação" backHref="/negociacoes" />
+	<Header title={m.negociacao_negociacao()} backHref="/negociacoes" />
 
 	<main class="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col md:block md:px-4 md:py-4 lg:max-w-6xl lg:px-8 lg:py-6">
 		{#if loading}
 			<div class="space-y-4 p-4 md:p-0" role="status" aria-live="polite">
-				<span class="sr-only">Carregando negociação...</span>
+				<span class="sr-only">{m.negociacao_carregando_negociacao()}</span>
 				<div class="placeholder h-24 w-full animate-pulse rounded-container"></div>
 				<div class="placeholder h-64 w-full animate-pulse rounded-container"></div>
 			</div>
@@ -671,15 +678,15 @@
 				{errorMessage}
 			</div>
 		{:else if negotiation}
-			<h1 class="sr-only">Negociação: {resolveListingTitle(negotiation)}</h1>
+			<h1 class="sr-only">{m.negociacao_titulo_h1({ titulo: resolveListingTitle(negotiation) })}</h1>
 
-			<nav class="mb-4 hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+			<nav class="mb-4 hidden min-w-0 items-center gap-1.5 text-sm lg:flex" aria-label={m.negociacao_caminho()}>
 				<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 					<Home size={16} />
-					Início
+					{m.nav_inicio()}
 				</a>
 				<span class="text-surface-700-300">/</span>
-				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">Negociações</a>
+				<a href={resolve('/negociacoes')} class="text-surface-800-200 hover:text-primary-700-300">{m.negociacao_negociacoes()}</a>
 				<span class="text-surface-700-300">/</span>
 				<span class="truncate font-semibold text-surface-950-50" aria-current="page">{resolveListingTitle(negotiation)}</span>
 			</nav>
@@ -692,7 +699,7 @@
 			{/if}
 
 			<!-- resumo da proposta (só no celular) -->
-			<section class="shrink-0 border-b border-surface-200-800 bg-surface-50-950 px-4 py-3 md:hidden" aria-label="Resumo da proposta">
+			<section class="shrink-0 border-b border-surface-200-800 bg-surface-50-950 px-4 py-3 md:hidden" aria-label={m.negociacao_resumo_proposta()}>
 				<div class="flex items-center gap-3">
 					<div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-container preset-tonal-primary">
 						{#if negotiation.coverUrl}
@@ -706,11 +713,11 @@
 						<p class="truncate text-sm text-surface-800-200">
 							<span class="font-bold text-primary-700-300">{formatCurrency(negotiation.proposed_price)}</span>
 							{#if negotiation.proposed_start_date}
-								· {formatDbDate(negotiation.proposed_start_date)} a {formatDbDate(negotiation.proposed_end_date)}
+								· {m.negociacao_periodo_de_a({ inicio: formatDbDate(negotiation.proposed_start_date), fim: formatDbDate(negotiation.proposed_end_date) })}
 							{/if}
 						</p>
 						<p class="truncate text-xs text-surface-800-200">
-							{isProvider ? 'Cliente' : 'Anunciante'}: <span class="font-semibold">{counterpartyName()}</span>
+							{isProvider ? m.negociacao_cliente() : m.negociacao_anunciante()}: <span class="font-semibold">{counterpartyName()}</span>
 						</p>
 					</div>
 					{@render statusBadge()}
@@ -719,7 +726,7 @@
 				<div class="mt-3 flex gap-2">
 					<button type="button" onclick={() => (detailsOpen = true)} class="btn preset-tonal min-w-0 flex-1">
 						<FileText size={18} />
-						<span class="truncate">Detalhes</span>
+						<span class="truncate">{m.negociacao_detalhes()}</span>
 					</button>
 					{#if isProvider && canManage}
 						<button
@@ -729,11 +736,11 @@
 							class="btn preset-filled-primary-500 min-w-0 flex-1"
 						>
 							<CheckCircle2 size={18} />
-							<span class="truncate">Aceitar</span>
+							<span class="truncate">{m.negociacao_aceitar()}</span>
 						</button>
 					{:else if negotiation.status === 'aceita' && linkedBooking}
 						<a href={resolve(`/operacoes/${linkedBooking.id}`)} class="btn preset-filled-primary-500 flex-1">
-							<span>Ver operação</span>
+							<span>{m.negociacao_ver_operacao()}</span>
 							<ArrowRight size={18} />
 						</a>
 					{/if}
@@ -741,17 +748,17 @@
 			</section>
 
 			<div class="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2 md:items-start md:gap-4 lg:grid-cols-[24rem_minmax(0,1fr)] lg:gap-6">
-				<aside class="hidden md:block lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pr-1" aria-label="Detalhes da proposta">
+				<aside class="hidden md:block lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pr-1" aria-label={m.negociacao_detalhes_proposta()}>
 					{@render details('lado')}
 				</aside>
 
 				<section
 					class="flex min-h-0 flex-1 flex-col md:block md:rounded-container md:border md:border-surface-200-800 md:bg-surface-50-950 md:p-4 md:shadow-sm lg:sticky lg:top-20 lg:flex lg:h-[calc(100dvh-8rem)] lg:flex-col"
-					aria-label="Conversa"
+					aria-label={m.negociacao_conversa()}
 				>
 					<h2 class="mb-3 hidden items-center gap-2 preset-typo-title md:flex">
 						<MessagesSquare class="h-5 w-5 text-primary-700-300" />
-						Conversa com {isProvider ? 'o cliente' : 'o anunciante'}
+						{isProvider ? m.negociacao_conversa_com_cliente() : m.negociacao_conversa_com_anunciante()}
 					</h2>
 					<NegotiationChat
 						negotiationId={negotiation.id}
@@ -767,16 +774,16 @@
 	</main>
 
 	{#if negotiation}
-		<AppDialog bind:open={detailsOpen} title="Detalhes da proposta" variant="sheet" size="md" closeLabel="Fechar detalhes">
+		<AppDialog bind:open={detailsOpen} title={m.negociacao_detalhes_proposta()} variant="sheet" size="md" closeLabel={m.negociacao_fechar_detalhes()}>
 			{@render details('gaveta')}
 		</AppDialog>
 	{/if}
 
 	<AppConfirmDialog
 		bind:open={showAcceptDialog}
-		title="Aceitar proposta?"
-		message="Será criado um contrato ativo (agendamento) com os valores e datas acordados. Esta ação encerra a fase de proposta."
-		confirmLabel="Aceitar proposta"
+		title={m.negociacao_aceitar_titulo()}
+		message={m.negociacao_aceitar_mensagem()}
+		confirmLabel={m.negociacao_aceitar_proposta()}
 		variant="default"
 		loading={actionLoading}
 		onconfirm={confirmAccept}
@@ -785,9 +792,9 @@
 
 	<AppConfirmDialog
 		bind:open={showRejectDialog}
-		title="Recusar proposta?"
-		message="O cliente será informado e o chat será encerrado."
-		confirmLabel="Recusar"
+		title={m.negociacao_recusar_titulo()}
+		message={m.negociacao_recusar_mensagem()}
+		confirmLabel={m.negociacao_recusar()}
 		variant="danger"
 		loading={actionLoading}
 		onconfirm={confirmReject}

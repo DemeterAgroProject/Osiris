@@ -13,6 +13,7 @@
 	} from 'lucide-svelte';
     import { supabase } from '$lib/supabase';
     import AppMenu from '$lib/components/ui/AppMenu.svelte';
+    import { m } from '$lib/paraglide/messages';
 
     function resolveDisplayName(profile, authUser) {
         return (
@@ -20,7 +21,7 @@
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||
-            'Usuário'
+            m.app_usuario()
         );
     }
 
@@ -63,16 +64,16 @@
         !authUser && !loading
             ? []
             : [
-                  { value: 'perfil', icon: User, label: 'Meu perfil', href: profileHref },
-                  { value: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos' },
-                  { value: 'negociacoes', icon: MessageSquare, label: 'Negociações', href: '/negociacoes' },
-                  { value: 'inventario', icon: Archive, label: 'Meu inventário', href: '/inventario' },
-                  { value: 'anunciar', icon: Megaphone, label: 'Anunciar', href: '/anunciar' },
-                  { value: 'marketplace', icon: Leaf, label: 'Explorar marketplace', href: '/', separator: true },
+                  { value: 'perfil', icon: User, label: m.app_meu_perfil(), href: profileHref },
+                  { value: 'favoritos', icon: Heart, label: m.app_favoritos(), href: '/favoritos' },
+                  { value: 'negociacoes', icon: MessageSquare, label: m.app_negociacoes(), href: '/negociacoes' },
+                  { value: 'inventario', icon: Archive, label: m.app_meu_inventario(), href: '/inventario' },
+                  { value: 'anunciar', icon: Megaphone, label: m.nav_anunciar(), href: '/anunciar' },
+                  { value: 'marketplace', icon: Leaf, label: m.app_explorar_marketplace(), href: '/', separator: true },
                   {
                       value: 'sair',
                       icon: LogOut,
-                      label: signingOut ? 'Saindo...' : 'Sair da conta',
+                      label: signingOut ? m.app_saindo() : m.app_sair_conta(),
                       danger: true,
                       separator: true,
                       disabled: signingOut,
@@ -124,7 +125,7 @@
 <AppMenu
     bind:open
     items={menuItems}
-    label="Abrir menu do usuário"
+    label={m.app_abrir_menu_usuario()}
     variant="nav"
     {triggerClass}
     {trigger}
@@ -132,7 +133,7 @@
 >
     {#snippet header()}
         {#if !authUser && !loading}
-            <div class="px-4 py-6 text-center text-sm text-surface-800-200">Sessão encerrada.</div>
+            <div class="px-4 py-6 text-center text-sm text-surface-800-200">{m.app_sessao_encerrada()}</div>
         {:else}
             <div class="mb-1 flex items-center gap-3 border-b border-surface-200-800 px-4 py-4">
                 {#if avatarUrl && !imgError}
@@ -164,7 +165,7 @@
                     href={resolve(profileHref)}
                     onclick={closeMenu}
                     class="shrink-0 rounded-full p-2 text-surface-800-200 transition-colors hover:preset-tonal hover:text-surface-900-100"
-                    aria-label="Configurações do perfil"
+                    aria-label={m.app_config_perfil()}
                 >
                     <Settings class="h-5 w-5" />
                 </a>

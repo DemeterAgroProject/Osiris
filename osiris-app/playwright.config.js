@@ -20,6 +20,8 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html']] : [['list'], ['html', { open: 'never' }]],
 	use: {
 		baseURL,
+		// os testes procuram os textos em português; o app segue o idioma do navegador
+		locale: 'pt-BR',
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',
 		video: 'retain-on-failure'

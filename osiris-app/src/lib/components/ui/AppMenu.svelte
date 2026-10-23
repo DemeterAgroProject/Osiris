@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { Menu, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { ChevronRight } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	/**
 	 * Menu do Osiris sobre o Menu do Skeleton.
@@ -14,7 +15,7 @@
 	let {
 		items = [],
 		open = $bindable(false),
-		label = 'Abrir menu',
+		label = m.app_abrir_menu(),
 		placement = 'bottom-end',
 		variant = 'compact',
 		triggerClass = '',

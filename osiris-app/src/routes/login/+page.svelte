@@ -9,11 +9,12 @@
 	import { track } from '$lib/telemetry';
 	import { onboardingSeen, safeRedirectPath } from '$lib/onboarding';
 	import { ArrowRight, Archive, CircleAlert, Handshake, Tractor } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	const LOGIN_BENEFITS = [
-		{ label: 'Publique maquinário e insumos', icon: Tractor },
-		{ label: 'Gerencie anúncios no inventário', icon: Archive },
-		{ label: 'Negocie com outros produtores', icon: Handshake }
+		{ id: 'publicar', label: m.app_login_beneficio_publicar(), icon: Tractor },
+		{ id: 'gerenciar', label: m.app_login_beneficio_gerenciar(), icon: Archive },
+		{ id: 'negociar', label: m.app_login_beneficio_negociar(), icon: Handshake }
 	];
 
 	let loading = $state(true);
@@ -61,7 +62,7 @@
 		});
 
 		if (error) {
-			errorMessage = 'Não foi possível iniciar o login. Tente novamente.';
+			errorMessage = m.app_login_erro_iniciar();
 			console.error('Erro no login:', error.message);
 			signingIn = false;
 		}
@@ -83,12 +84,12 @@
 </script>
 
 <svelte:head>
-	<title>Entrar — Osiris</title>
-	<meta name="description" content="Faça login no marketplace Osiris com sua conta Google." />
+	<title>{m.nav_entrar()} — Osiris</title>
+	<meta name="description" content={m.app_login_meta_desc()} />
 </svelte:head>
 
 <div class="min-h-screen pb-24">
-	<Header title="Entrar" />
+	<Header title={m.nav_entrar()} />
 
 	<main class="mx-auto flex w-full max-w-md flex-col px-4 py-6">
 		{#if loading}
@@ -96,17 +97,17 @@
 				<div
 					class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
 				></div>
-				<p class="mt-4 text-sm text-surface-800-200">Verificando sessão...</p>
+				<p class="mt-4 text-sm text-surface-800-200">{m.app_login_verificando()}</p>
 			</div>
 		{:else}
 			<div class="flex flex-col items-center text-center">
 				<span class="flex h-24 w-24 items-center justify-center rounded-container border border-surface-200-800 bg-surface-50-950 shadow-md">
-					<img src="/logo_black.png" alt="Logo Osiris" class="h-16 w-16 object-contain" />
+					<img src="/logo_black.png" alt={m.app_logo_alt()} class="h-16 w-16 object-contain" />
 				</span>
-				<p class="mt-4 text-primary-700-300 preset-typo-label">Marketplace Osiris</p>
-				<h1 class="mt-1 preset-typo-headline">Entre no Osiris</h1>
+				<p class="mt-4 text-primary-700-300 preset-typo-label">{m.app_login_marca()}</p>
+				<h1 class="mt-1 preset-typo-headline">{m.app_login_titulo()}</h1>
 				<p class="mt-2 preset-typo-subtitle">
-					Entre para anunciar, negociar e gerenciar seu inventário no agro.
+					{m.app_login_subtitulo()}
 				</p>
 			</div>
 
@@ -128,7 +129,7 @@
 						<span
 							class="h-5 w-5 animate-spin rounded-full border-2 border-surface-200-800 border-t-primary-500"
 						></span>
-						<span>Conectando...</span>
+						<span>{m.app_login_conectando()}</span>
 					{:else}
 						<img
 							src="https://www.google.com/favicon.ico"
@@ -137,23 +138,24 @@
 							width="24"
 							height="24"
 						/>
-						<span>Continuar com Google</span>
+						<span>{m.app_login_continuar_google()}</span>
 					{/if}
 				</button>
 
 				<p class="mt-4 text-center text-sm leading-relaxed text-surface-800-200">
-					Ao continuar, você concorda com os
-					<a href={resolve('/termos')} class="font-semibold text-primary-700-300 underline">Termos de uso</a>
-					e a
-					<a href={resolve('/privacidade')} class="font-semibold text-primary-700-300 underline">Política de privacidade</a>
-					do Osiris.
+					{m.app_login_termos_antes()}
+					<a href={resolve('/termos')} class="font-semibold text-primary-700-300 underline">{m.app_termos_uso()}</a>
+					{m.app_login_termos_meio()}
+					<a href={resolve('/privacidade')} class="font-semibold text-primary-700-300 underline"
+						>{m.app_politica_privacidade()}</a
+					>{m.app_login_termos_depois()}
 				</p>
 			</div>
 
 			<div class="mt-5 rounded-container bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-primary-50 shadow-md">
-				<p class="opacity-90 preset-typo-label text-inherit">Por que entrar?</p>
+				<p class="opacity-90 preset-typo-label text-inherit">{m.app_login_por_que()}</p>
 				<ul class="mt-3 space-y-3">
-					{#each LOGIN_BENEFITS as benefit (benefit.label)}
+					{#each LOGIN_BENEFITS as benefit (benefit.id)}
 						<li class="flex items-center gap-3 text-sm font-medium">
 							<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-container bg-white/15">
 								<benefit.icon class="h-5 w-5" />
@@ -165,13 +167,13 @@
 			</div>
 
 			<a href={resolve('/')} class="btn preset-tonal-primary mx-auto mt-5">
-				<span>Continuar sem entrar</span>
+				<span>{m.app_login_continuar_sem()}</span>
 				<ArrowRight size={18} />
 			</a>
 
 			<p class="mt-4 text-center text-sm text-surface-800-200">
-				Ficou com dúvida?
-				<a href={resolve('/ajuda')} class="font-semibold text-primary-700-300 underline">Veja a central de ajuda</a>
+				{m.app_login_duvida()}
+				<a href={resolve('/ajuda')} class="font-semibold text-primary-700-300 underline">{m.app_login_ver_ajuda()}</a>
 			</p>
 		{/if}
 	</main>

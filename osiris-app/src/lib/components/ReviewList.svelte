@@ -1,13 +1,15 @@
 <script>
 	import { MessageSquare } from 'lucide-svelte';
 	import AppRating from '$lib/components/ui/AppRating.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { intlLocale } from '$lib/i18n';
 	function formatReviewDate(value) {
 		if (!value) return '';
 
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return '';
 
-		return new Intl.DateTimeFormat('pt-BR', {
+		return new Intl.DateTimeFormat(intlLocale(), {
 			day: '2-digit',
 			month: 'short',
 			year: 'numeric'
@@ -18,8 +20,8 @@
 		reviews = [],
 		loading = false,
 		showProductName = false,
-		emptyTitle = 'Nenhuma avaliação ainda',
-		emptyDescription = 'Quando houver avaliações, elas aparecerão aqui.'
+		emptyTitle = m.negociacao_avaliacoes_vazio_titulo(),
+		emptyDescription = m.negociacao_avaliacoes_vazio_descricao()
 	} = $props();
 </script>
 

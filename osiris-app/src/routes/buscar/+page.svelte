@@ -12,6 +12,9 @@
 	import { supabase } from '$lib/supabase';
 	import { track } from '$lib/telemetry';
 	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
+	import { m } from '$lib/paraglide/messages';
+	import { intlLocale } from '$lib/i18n';
+	import { machineTypeLabel } from '$lib/pricing';
 
 	const ACTIVE_STATUS_OR = 'status.eq.ativo,status.eq.Ativo';
 	const FETCH_LIMIT = 60;
@@ -136,9 +139,9 @@
 
 	function mapMachineryListing(product, imagesByProductId) {
 		const machineryRaw = product.agricultural_machinery;
-		const m = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
-		const brandName = m?.brands?.name;
-		const typeName = m?.machinery_types?.name;
+		const mach = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
+		const brandName = mach?.brands?.name;
+		const typeName = machineTypeLabel(mach?.machinery_types?.name);
 
 		return {
 			id: `machinery-${product.id}`,
@@ -146,14 +149,14 @@
 			tipo: 'maquinario',
 			title: product.name,
 			price: product.price,
-			pricingModel: m?.offer_type ?? null,
-			priceUnit: m?.rental_unit ?? null,
+			pricingModel: mach?.offer_type ?? null,
+			priceUnit: mach?.rental_unit ?? null,
 			location: formatMunicipio(pickMunicipio(product.municipio)) || null,
 			publishedAt: product.created_at,
 			imageUrl: coverUrlFromMap(imagesByProductId, product.id),
 			category: product.category || 'Maquinário',
 			description: product.description ?? '',
-			subtitle: [brandName, m?.model, typeName].filter(Boolean).join(' · ') || null,
+			subtitle: [brandName, mach?.model, typeName].filter(Boolean).join(' · ') || null,
 			href: `/anuncio/maquinario/${product.id}`
 		};
 	}
@@ -189,9 +192,9 @@
 			case 'preco-desc':
 				return items.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
 			case 'nome-asc':
-				return items.sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+				return items.sort((a, b) => a.title.localeCompare(b.title, intlLocale()));
 			case 'nome-desc':
-				return items.sort((a, b) => b.title.localeCompare(a.title, 'pt-BR'));
+				return items.sort((a, b) => b.title.localeCompare(a.title, intlLocale()));
 			default:
 				return items.sort(
 					(a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
@@ -339,7 +342,7 @@
 		const error = productsResult.error || machineryResult.error || servicesResult.error;
 
 		if (error) {
-			errorMessage = 'Não foi possível carregar os anúncios.';
+			errorMessage = m.busca_erro_carregar();
 			products = [];
 			machinery = [];
 			services = [];
@@ -408,11 +411,11 @@
 </script>
 
 <svelte:head>
-	<title>Buscar — Osiris</title>
+	<title>{m.nav_buscar()} — Osiris</title>
 </svelte:head>
 
 <div class="min-h-screen bg-surface-50-950 pb-24 lg:pb-0">
-	<Header title="Buscar" />
+	<Header title={m.nav_buscar()} />
 	<SearchBar bind:value={searchQuery} loading={fetching} />
 
 	<!-- celular: botão de filtros (gaveta) e atalhos de tipo -->
@@ -422,17 +425,19 @@
 
 	<!-- computador: filtros na coluna da esquerda, resultados à direita -->
 	<div class="mx-auto w-full max-w-7xl lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-8 lg:pt-4">
-		<aside class="sticky top-24 hidden lg:block" aria-label="Filtros">
+		<aside class="sticky top-24 hidden lg:block" aria-label={m.busca_filtros()}>
 			<FilterBar variant="sidebar" bind:filters locations={locationOptions} />
 		</aside>
 
 		<div class="min-w-0">
 			<div class="mb-4 hidden space-y-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:block">
 				<div class="flex items-center gap-2">
-					<h1 class="preset-typo-title">Resultados encontrados</h1>
+					<h1 class="preset-typo-title">{m.busca_resultados_encontrados()}</h1>
 					{#if !loading}
 						<span class="badge rounded-full preset-tonal-primary px-2.5 py-1 text-xs font-bold">
-							{visibleListings.length} {visibleListings.length === 1 ? 'anúncio' : 'anúncios'}
+							{visibleListings.length === 1
+								? m.busca_contagem_anuncio({ n: visibleListings.length })
+								: m.busca_contagem_anuncios({ n: visibleListings.length })}
 						</span>
 					{/if}
 				</div>
@@ -441,7 +446,7 @@
 
 			{#if loading}
 				<div class="px-4 py-5 lg:px-0 lg:py-0">
-					<ListingSkeleton variant="grid" count={6} label="Carregando anúncios..." />
+					<ListingSkeleton variant="grid" count={6} label={m.busca_carregando_anuncios()} />
 				</div>
 			{:else if errorMessage}
 				<div class="mx-4 my-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm lg:mx-0">
@@ -451,11 +456,11 @@
 			{:else if visibleListings.length === 0}
 				<div class="mx-4 my-8 flex flex-col items-center rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 px-4 py-12 text-center lg:mx-0 lg:my-0">
 					<SearchX class="h-10 w-10 text-surface-700-300" />
-					<p class="mt-3 text-base font-semibold">Nenhum anúncio encontrado</p>
-					<p class="mt-1 text-sm text-surface-900-100">Tente outra palavra ou toque em "Todos".</p>
+					<p class="mt-3 text-base font-semibold">{m.busca_nenhum_anuncio()}</p>
+					<p class="mt-1 text-sm text-surface-900-100">{m.busca_tente_todos()}</p>
 				</div>
 			{:else}
-				<ProductList title="Resultados da busca" products={visibleListings} />
+				<ProductList title={m.busca_resultados_da_busca()} products={visibleListings} />
 			{/if}
 		</div>
 	</div>

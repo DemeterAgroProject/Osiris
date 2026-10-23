@@ -2,6 +2,12 @@
 	import { Check } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
+	import { pricingModelLabel } from '$lib/pricing';
+	import { formatNumber } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
+
+	// valores aceitos por services_pricing_model_check (o texto visível vem de pricingModelLabel)
+	const PRICING_MODELS = ['Por Hora', 'Por Hectare', 'Empreitada/Fixo', 'A Combinar'];
 
 	let { open = $bindable(false), service = null, onsaved = () => {} } = $props();
 
@@ -43,7 +49,7 @@
 		const location = form.location.trim();
 
 		if (!title || !description || !location) {
-			errorMessage = 'Preencha título, descrição e localização.';
+			errorMessage = m.anunciar_servico_erro_campos();
 			return;
 		}
 
@@ -51,7 +57,7 @@
 		if (form.pricing_model !== 'A Combinar') {
 			const parsed = Number(form.price);
 			if (!Number.isFinite(parsed) || parsed <= 0) {
-				errorMessage = 'Informe um valor válido ou escolha "A Combinar".';
+				errorMessage = m.anunciar_servico_valor_invalido({ a_combinar: pricingModelLabel('A Combinar') });
 				return;
 			}
 			finalPrice = parsed;
@@ -74,7 +80,7 @@
 		saving = false;
 
 		if (error) {
-			errorMessage = 'Não foi possível salvar o serviço.';
+			errorMessage = m.anunciar_servico_erro_salvar();
 			return;
 		}
 
@@ -89,7 +95,7 @@
 
 <AppDialog
 	bind:open
-	title="Editar serviço"
+	title={m.anunciar_servico_editar()}
 	variant="sheet"
 	size="md"
 	dismissible={!saving}
@@ -103,11 +109,11 @@
 
 			<div>
 				<label for="edit-service-title-input" class="mb-1 block text-sm font-medium text-surface-900-100"
-					>Título</label
+					>{m.anunciar_titulo()}</label
 				>
 				<input
 					id="edit-service-title-input"
-					placeholder="Ex: Tratorista com experiência"
+					placeholder={m.anunciar_servico_ph_titulo_mao()}
 					type="text"
 					bind:value={form.title}
 					required
@@ -117,11 +123,11 @@
 
 			<div>
 				<label for="edit-service-description" class="mb-1 block text-sm font-medium text-surface-900-100"
-					>Descrição</label
+					>{m.anunciar_descricao()}</label
 				>
 				<textarea
 					id="edit-service-description"
-					placeholder="Ex: máquinas que opera, o que o pacote cobre..."
+					placeholder={m.anunciar_servico_ph_descricao_curta()}
 					rows="3"
 					bind:value={form.description}
 					required
@@ -131,11 +137,11 @@
 
 			<div>
 				<label for="edit-service-location" class="mb-1 block text-sm font-medium text-surface-900-100"
-					>Localização / raio</label
+					>{m.anunciar_servico_localizacao()}</label
 				>
 				<input
 					id="edit-service-location"
-					placeholder="Ex: Alegrete e região, RS"
+					placeholder={m.anunciar_servico_ph_localizacao()}
 					type="text"
 					bind:value={form.location}
 					required
@@ -145,28 +151,27 @@
 
 			<div>
 				<label for="edit-service-pricing" class="mb-1 block text-sm font-medium text-surface-900-100"
-					>Formato de cobrança</label
+					>{m.anunciar_formato_cobranca()}</label
 				>
 				<select
 					id="edit-service-pricing"
 					bind:value={form.pricing_model}
 					class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 				>
-					<option value="Por Hora">Por Hora</option>
-					<option value="Por Hectare">Por Hectare</option>
-					<option value="Empreitada/Fixo">Empreitada / Fixo</option>
-					<option value="A Combinar">A Combinar</option>
+					{#each PRICING_MODELS as value (value)}
+						<option {value}>{pricingModelLabel(value)}</option>
+					{/each}
 				</select>
 			</div>
 
 			{#if form.pricing_model !== 'A Combinar'}
 				<div>
 					<label for="edit-service-price" class="mb-1 block text-sm font-medium text-surface-900-100"
-						>Valor (R$)</label
+						>{m.anunciar_valor_rs()}</label
 					>
 					<input
 						id="edit-service-price"
-						placeholder="Ex: 150,00"
+						placeholder={m.anunciar_exemplo({ valor: formatNumber(150, { minimumFractionDigits: 2 }) })}
 						type="number"
 						min="0"
 						step="0.01"
@@ -187,7 +192,7 @@
 			class="btn btn-lg preset-filled-primary-500 w-full"
 		>
 			<Check size={18} />
-			<span>{saving ? 'Salvando...' : 'Salvar alterações'}</span>
+			<span>{saving ? m.comum_salvando() : m.anunciar_salvar_alteracoes()}</span>
 		</button>
 	{/snippet}
 </AppDialog>

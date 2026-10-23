@@ -8,6 +8,7 @@
 	import ListingSkeleton from '$lib/components/ListingSkeleton.svelte';
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
+	import { m } from '$lib/paraglide/messages';
 
 	function pickCoverImage(images = []) {
 		if (!images?.length) return null;
@@ -80,7 +81,7 @@
 				id: row.id,
 				adId: row.product_id,
 				tipo,
-				title: product?.name || 'Anúncio favoritado',
+				title: product?.name || m.busca_fav_anuncio_padrao(),
 				price: product?.price ?? null,
 				pricingModel: machinery?.offer_type ?? null,
 				priceUnit: tipo === 'maquinario' ? (machinery?.rental_unit ?? null) : (product?.stock_unit ?? null),
@@ -105,7 +106,7 @@
 				id: row.id,
 				adId: row.service_id,
 				tipo: 'servico',
-				title: service?.title || 'Serviço favoritado',
+				title: service?.title || m.busca_fav_servico_padrao(),
 				price: service?.price ?? null,
 				pricingModel: service?.pricing_model ?? null,
 				imageUrl: service?.image_url || null,
@@ -143,7 +144,7 @@
 
 		if (error) {
 			console.error('Erro ao carregar favoritos:', error);
-			errorMessage = userMessage(error, 'Não foi possível carregar os favoritos.');
+			errorMessage = userMessage(error, m.busca_fav_erro_carregar());
 			loading = false;
 			return;
 		}
@@ -166,21 +167,21 @@
 </script>
 
 <svelte:head>
-	<title>Favoritos — Osiris</title>
+	<title>{m.busca_favoritos()} — Osiris</title>
 </svelte:head>
 
 <div class="min-h-screen pb-24">
-	<Header title="Favoritos" />
+	<Header title={m.busca_favoritos()} />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-5">
 		<div>
-			<h1 class="preset-typo-headline">Favoritos</h1>
-			<p class="mt-1 preset-typo-subtitle">Anúncios que você guardou para ver depois.</p>
+			<h1 class="preset-typo-headline">{m.busca_favoritos()}</h1>
+			<p class="mt-1 preset-typo-subtitle">{m.busca_fav_subtitulo()}</p>
 		</div>
 
 		{#if loading}
 			<div class="mt-5">
-				<ListingSkeleton variant="grid" count={4} label="Carregando favoritos..." />
+				<ListingSkeleton variant="grid" count={4} label={m.busca_carregando_favoritos()} />
 			</div>
 		{:else if errorMessage}
 			<div class="mt-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
@@ -194,22 +195,22 @@
 				<span class="flex h-16 w-16 items-center justify-center rounded-full preset-tonal-error">
 					<Heart class="h-8 w-8" />
 				</span>
-				<p class="mt-3 text-base font-semibold text-surface-950-50">Nenhum anúncio favoritado</p>
+				<p class="mt-3 text-base font-semibold text-surface-950-50">{m.busca_fav_vazio()}</p>
 				<p class="mt-1 preset-typo-subtitle">
-					Toque no coração em um anúncio para guardá-lo aqui.
+					{m.busca_fav_vazio_texto()}
 				</p>
 				<a
 					href={resolve('/buscar')}
 					class="btn preset-filled-primary-500 mt-5"
 				>
 					<Search size={18} />
-					<span>Explorar marketplace</span>
+					<span>{m.busca_explorar_marketplace()}</span>
 				</a>
 			</div>
 		{:else}
 			<p class="mt-4 text-sm font-medium text-surface-900-100">
 				<strong class="text-surface-950-50">{favorites.length}</strong>
-				{favorites.length === 1 ? 'anúncio salvo' : 'anúncios salvos'}
+				{favorites.length === 1 ? m.busca_anuncio_salvo() : m.busca_anuncios_salvos()}
 			</p>
 			<div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
 				{#each favorites as favorite (favorite.id)}
