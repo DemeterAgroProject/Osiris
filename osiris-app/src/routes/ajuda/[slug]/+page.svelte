@@ -4,18 +4,20 @@
 	import { ChevronLeft, ChevronRight, ArrowRight, Lightbulb, Mail } from 'lucide-svelte';
 	import HelpHeader from '$lib/components/HelpHeader.svelte';
 	import HelpNav from '$lib/components/HelpNav.svelte';
-	import { HELP_ARTICLES, findHelpArticle, findHelpSection } from '$lib/help';
+	import { getHelpArticles, findHelpSection } from '$lib/help';
 	import { LEGAL } from '$lib/legal';
+	import { m } from '$lib/paraglide/messages';
 
-	const article = $derived(findHelpArticle(page.params.slug));
+	const articles = getHelpArticles();
+	const article = $derived(articles.find((item) => item.slug === page.params.slug) ?? null);
 	const sectionTitle = $derived(article ? (findHelpSection(article.section)?.title ?? '') : '');
-	const index = $derived(HELP_ARTICLES.findIndex((item) => item.slug === article?.slug));
-	const previous = $derived(index > 0 ? HELP_ARTICLES[index - 1] : null);
-	const next = $derived(index >= 0 && index < HELP_ARTICLES.length - 1 ? HELP_ARTICLES[index + 1] : null);
+	const index = $derived(articles.findIndex((item) => item.slug === article?.slug));
+	const previous = $derived(index > 0 ? articles[index - 1] : null);
+	const next = $derived(index >= 0 && index < articles.length - 1 ? articles[index + 1] : null);
 </script>
 
 <svelte:head>
-	<title>{article ? `${article.title} — Ajuda` : 'Ajuda'} — Osiris</title>
+	<title>{article ? m.ajuda_titulo_artigo({ titulo: article.title }) : m.ajuda_titulo_curto()} — Osiris</title>
 	{#if article}
 		<meta name="description" content={article.summary} />
 	{/if}
@@ -32,13 +34,13 @@
 		<div class="min-w-0 max-w-3xl">
 			{#if !article}
 				<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-6 text-center shadow-sm">
-					<h1 class="preset-typo-title">Artigo não encontrado</h1>
-					<p class="mt-1 text-sm text-surface-800-200">Esse tema de ajuda não existe ou mudou de endereço.</p>
-					<a href={resolve('/ajuda')} class="btn btn-lg preset-filled-primary-500 mt-4">Ver todos os temas</a>
+					<h1 class="preset-typo-title">{m.ajuda_nao_encontrado_titulo()}</h1>
+					<p class="mt-1 text-sm text-surface-800-200">{m.ajuda_nao_encontrado_texto()}</p>
+					<a href={resolve('/ajuda')} class="btn btn-lg preset-filled-primary-500 mt-4">{m.ajuda_ver_todos_temas()}</a>
 				</div>
 			{:else}
-				<nav class="mb-3 flex items-center gap-1.5 text-sm" aria-label="Caminho">
-					<a href={resolve('/ajuda')} class="text-surface-800-200 hover:text-primary-700-300">Ajuda</a>
+				<nav class="mb-3 flex items-center gap-1.5 text-sm" aria-label={m.ajuda_caminho()}>
+					<a href={resolve('/ajuda')} class="text-surface-800-200 hover:text-primary-700-300">{m.ajuda_titulo_curto()}</a>
 					<span class="text-surface-700-300">/</span>
 					<span class="truncate font-semibold text-surface-950-50" aria-current="page">{article.title}</span>
 				</nav>
@@ -49,7 +51,7 @@
 					<p class="mt-2 preset-typo-subtitle">{article.objetivo}</p>
 
 					<section class="mt-6" aria-labelledby="ajuda-onde">
-						<h2 id="ajuda-onde" class="preset-typo-title">Onde fica</h2>
+						<h2 id="ajuda-onde" class="preset-typo-title">{m.ajuda_onde_fica()}</h2>
 						<ul class="mt-3 divide-y divide-surface-200-800 overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm">
 							{#each article.onde as place (place.label)}
 								<li class="flex items-center gap-3 px-4 py-3">
@@ -59,7 +61,7 @@
 									</p>
 									{#if place.href}
 										<a href={resolve(place.href)} class="btn btn-sm preset-tonal-primary shrink-0">
-											<span>Abrir</span>
+											<span>{m.ajuda_abrir()}</span>
 											<ArrowRight size={16} />
 										</a>
 									{/if}
@@ -69,7 +71,7 @@
 					</section>
 
 					<section class="mt-6" aria-labelledby="ajuda-passos">
-						<h2 id="ajuda-passos" class="preset-typo-title">Passo a passo</h2>
+						<h2 id="ajuda-passos" class="preset-typo-title">{m.ajuda_passo_a_passo()}</h2>
 						<ol class="mt-3 space-y-3">
 							{#each article.passos as step, stepIndex (stepIndex)}
 								<li class="flex gap-3">
@@ -89,7 +91,7 @@
 						<section class="mt-6 rounded-container preset-tonal-warning p-4" aria-labelledby="ajuda-notas">
 							<h2 id="ajuda-notas" class="flex items-center gap-2 font-bold">
 								<Lightbulb size={18} />
-								Bom saber
+								{m.ajuda_bom_saber()}
 							</h2>
 							<ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
 								{#each article.notas as note (note)}
@@ -100,7 +102,7 @@
 					{/if}
 				</article>
 
-				<nav class="mt-8 grid gap-3 sm:grid-cols-2" aria-label="Outros temas">
+				<nav class="mt-8 grid gap-3 sm:grid-cols-2" aria-label={m.ajuda_outros_temas()}>
 					{#if previous}
 						<a
 							href={resolve(`/ajuda/${previous.slug}`)}
@@ -108,7 +110,7 @@
 						>
 							<ChevronLeft class="h-5 w-5 shrink-0 text-surface-700-300" />
 							<span class="min-w-0 flex-1">
-								<span class="block preset-typo-caption">Anterior</span>
+								<span class="block preset-typo-caption">{m.ajuda_anterior()}</span>
 								<span class="block truncate font-semibold">{previous.title}</span>
 							</span>
 						</a>
@@ -121,7 +123,7 @@
 							class="flex items-center justify-end gap-2 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 text-right shadow-sm transition-colors hover:border-primary-500"
 						>
 							<span class="min-w-0 flex-1">
-								<span class="block preset-typo-caption">Próximo</span>
+								<span class="block preset-typo-caption">{m.ajuda_proximo()}</span>
 								<span class="block truncate font-semibold">{next.title}</span>
 							</span>
 							<ChevronRight class="h-5 w-5 shrink-0 text-surface-700-300" />
@@ -131,7 +133,7 @@
 
 				<p class="mt-6 flex flex-wrap items-center gap-1.5 text-sm text-surface-800-200">
 					<Mail size={16} />
-					Ainda com dúvida? Escreva para
+					{m.ajuda_ainda_com_duvida()}
 					<a href="mailto:{LEGAL.contato}" class="font-semibold text-primary-700-300 underline">{LEGAL.contato}</a>
 				</p>
 			{/if}

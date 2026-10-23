@@ -16,14 +16,20 @@
 		MACHINE_CONDITION_LABEL,
 		MACHINE_OFFER_LABEL,
 		RENTAL_UNIT_LABEL,
-		stockUnitLabel
+		stockUnitLabel,
+		categoryLabel,
+		machineTypeLabel,
+		serviceTypeLabel
 	} from '$lib/pricing';
 	import { formatMunicipio, MUNICIPIO_EMBED, pickMunicipio } from '$lib/municipios';
 	import { ChevronLeft, ChevronRight, CircleAlert, CircleUser, Handshake, Home, ImageOff, Images, LogIn } from 'lucide-svelte';
 	import { Carousel } from '@skeletonlabs/skeleton-svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { formatNumber } from '$lib/i18n';
 
-	const TYPE_LABEL = { maquinario: 'Máquina', produto: 'Produto', servico: 'Serviço' };
+	// guarda a função da mensagem: o texto sai no idioma atual
+	const TYPE_LABEL = { maquinario: m.comum_maquina, produto: m.negociacao_tipo_produto, servico: m.comum_servico };
 
 	function resolveDisplayName(profile, authUser) {
 		return (
@@ -31,7 +37,7 @@
 			authUser?.user_metadata?.full_name ||
 			authUser?.user_metadata?.name ||
 			authUser?.email?.split('@')[0] ||
-			'Usuário'
+			m.negociacao_usuario()
 		);
 	}
 
@@ -178,7 +184,7 @@
 	let errorMessage = $state('');
 	let item = $state(null);
 	let seller = $state({
-		name: 'Anunciante',
+		name: m.negociacao_anunciante(),
 		avatarUrl: null
 	});
 	let showNegotiationModal = $state(false);
@@ -210,7 +216,7 @@
 	function resolveSellerName(profile) {
 		return (
 			profile?.display_name ||
-			'Anunciante'
+			m.negociacao_anunciante()
 		);
 	}
 
@@ -225,7 +231,7 @@
 	}
 
 	async function loadSeller(ownerId) {
-		seller = { name: 'Anunciante', avatarUrl: null, id: ownerId ?? null };
+		seller = { name: m.negociacao_anunciante(), avatarUrl: null, id: ownerId ?? null };
 		if (!ownerId) return;
 
 		const { data, error } = await supabase
@@ -291,12 +297,12 @@
 		errorMessage = '';
 		item = null;
 		galleryImages = [];
-		seller = { name: 'Anunciante', avatarUrl: null, id: null };
+		seller = { name: m.negociacao_anunciante(), avatarUrl: null, id: null };
 		reviews = [];
 		sellerReviewStats = { average: 0, count: 0 };
 
 		if (!routeTipo || !routeId) {
-			errorMessage = 'Anúncio inválido.';
+			errorMessage = m.negociacao_erro_anuncio_invalido();
 			loading = false;
 			return;
 		}
@@ -309,7 +315,7 @@
 				.maybeSingle();
 
 			if (error || !data) {
-				errorMessage = 'Produto não encontrado.';
+				errorMessage = m.negociacao_erro_produto_nao_encontrado();
 				loading = false;
 				return;
 			}
@@ -322,14 +328,14 @@
 				description: data.description?.trim() || '',
 				// opcionais só aparecem quando preenchidos
 				details: [
-					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
-					{ label: 'Categoria', value: data.category || 'Não informado' },
-					data.brand_name && { label: 'Marca', value: data.brand_name },
-					data.cultivar && { label: 'Cultivar', value: data.cultivar },
-					data.harvest && { label: 'Safra', value: data.harvest },
-					{ label: 'Quantidade disponível', value: data.quantity != null ? `${Number(data.quantity).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.quantity)}`.trim() : 'Não informado' },
-					data.min_order && { label: 'Pedido mínimo', value: `${Number(data.min_order).toLocaleString('pt-BR')} ${stockUnitLabel(data.stock_unit, data.min_order)}` },
-					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
+					{ label: m.negociacao_detalhe_local(), value: formatMunicipio(pickMunicipio(data.municipio)) || m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_categoria(), value: data.category ? categoryLabel(data.category) : m.negociacao_nao_informado() },
+					data.brand_name && { label: m.negociacao_detalhe_marca(), value: data.brand_name },
+					data.cultivar && { label: m.negociacao_detalhe_cultivar(), value: data.cultivar },
+					data.harvest && { label: m.negociacao_detalhe_safra(), value: data.harvest },
+					{ label: m.negociacao_detalhe_quantidade_disponivel(), value: data.quantity != null ? `${formatNumber(data.quantity)} ${stockUnitLabel(data.stock_unit, data.quantity)}`.trim() : m.negociacao_nao_informado() },
+					data.min_order && { label: m.negociacao_detalhe_pedido_minimo(), value: `${formatNumber(data.min_order)} ${stockUnitLabel(data.stock_unit, data.min_order)}` },
+					data.delivery && { label: m.negociacao_detalhe_entrega(), value: DELIVERY_LABEL[data.delivery] }
 				].filter(Boolean)
 			};
 
@@ -374,7 +380,7 @@
 				.maybeSingle();
 
 			if (error || !data) {
-				errorMessage = 'Maquinário não encontrado.';
+				errorMessage = m.negociacao_erro_maquinario_nao_encontrado();
 				loading = false;
 				return;
 			}
@@ -383,7 +389,7 @@
 			const machinery = Array.isArray(machineryRaw) ? machineryRaw[0] : machineryRaw;
 
 			if (!machinery) {
-				errorMessage = 'Detalhes do maquinário não encontrados.';
+				errorMessage = m.negociacao_erro_maquinario_detalhes();
 				loading = false;
 				return;
 			}
@@ -397,26 +403,26 @@
 				// opcionais só aparecem quando preenchidos
 				details: [
 					{
-						label: 'Negócio',
+						label: m.negociacao_detalhe_negocio(),
 						value:
 							machinery.offer_type === 'aluguel'
-								? `Aluguel ${(RENTAL_UNIT_LABEL[machinery.rental_unit] ?? 'por hora').toLowerCase()}`
-								: (MACHINE_OFFER_LABEL[machinery.offer_type] ?? 'Não informado')
+								? m.negociacao_negocio_aluguel({ unidade: (RENTAL_UNIT_LABEL[machinery.rental_unit] ?? RENTAL_UNIT_LABEL.hora).toLowerCase() })
+								: (MACHINE_OFFER_LABEL[machinery.offer_type] ?? m.negociacao_nao_informado())
 					},
 					machinery.offer_type === 'aluguel' && {
-						label: 'Operador',
-						value: machinery.operator_included ? 'Incluso no preço' : 'Não incluso'
+						label: m.negociacao_detalhe_operador(),
+						value: machinery.operator_included ? m.negociacao_operador_incluso() : m.negociacao_operador_nao_incluso()
 					},
-					machinery.condition && { label: 'Condição', value: MACHINE_CONDITION_LABEL[machinery.condition] },
-					{ label: 'Local', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
-					{ label: 'Tipo', value: machinery.machinery_types?.name || 'Não informado' },
-					{ label: 'Marca', value: machinery.brands?.name || 'Não informado' },
-					{ label: 'Modelo', value: machinery.model || 'Não informado' },
-					machinery.power_hp && { label: 'Potência', value: `${machinery.power_hp} cv` },
-					machinery.traction && { label: 'Tração', value: machinery.traction === 'esteira' ? 'Esteira' : machinery.traction },
-					{ label: 'Ano', value: machinery.manufacture_year || 'Não informado' },
-					{ label: 'Horímetro', value: machinery.current_horimeter != null ? `${Number(machinery.current_horimeter).toLocaleString('pt-BR')} h` : 'Não informado' },
-					data.delivery && { label: 'Entrega', value: DELIVERY_LABEL[data.delivery] }
+					machinery.condition && { label: m.negociacao_detalhe_condicao(), value: MACHINE_CONDITION_LABEL[machinery.condition] },
+					{ label: m.negociacao_detalhe_local(), value: formatMunicipio(pickMunicipio(data.municipio)) || m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_tipo(), value: machinery.machinery_types?.name ? machineTypeLabel(machinery.machinery_types.name) : m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_marca(), value: machinery.brands?.name || m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_modelo(), value: machinery.model || m.negociacao_nao_informado() },
+					machinery.power_hp && { label: m.negociacao_detalhe_potencia(), value: m.negociacao_potencia_cv({ cv: formatNumber(machinery.power_hp) }) },
+					machinery.traction && { label: m.negociacao_detalhe_tracao(), value: machinery.traction === 'esteira' ? m.negociacao_tracao_esteira() : machinery.traction },
+					{ label: m.negociacao_detalhe_ano(), value: machinery.manufacture_year || m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_horimetro(), value: machinery.current_horimeter != null ? `${formatNumber(machinery.current_horimeter)} h` : m.negociacao_nao_informado() },
+					data.delivery && { label: m.negociacao_detalhe_entrega(), value: DELIVERY_LABEL[data.delivery] }
 				].filter(Boolean)
 			};
 
@@ -433,7 +439,7 @@
 				.maybeSingle();
 
 			if (error || !data) {
-				errorMessage = 'Serviço não encontrado.';
+				errorMessage = m.negociacao_erro_servico_nao_encontrado();
 				loading = false;
 				return;
 			}
@@ -445,18 +451,18 @@
 				priceLabel: listingPriceLabel('servico', data.price, data.pricing_model),
 				description: data.description?.trim() || '',
 				details: [
-					{ label: 'Tipo', value: data.service_type || 'Não informado' },
-					{ label: 'Cidade', value: formatMunicipio(pickMunicipio(data.municipio)) || 'Não informado' },
-					{ label: 'Área de atendimento', value: data.location || 'Não informado' },
-					data.service_radius_km && { label: 'Atende até', value: `${data.service_radius_km} km da cidade` },
-					data.equipment && { label: 'Equipamento incluso', value: data.equipment }
+					{ label: m.negociacao_detalhe_tipo(), value: data.service_type ? serviceTypeLabel(data.service_type) : m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_cidade(), value: formatMunicipio(pickMunicipio(data.municipio)) || m.negociacao_nao_informado() },
+					{ label: m.negociacao_detalhe_area_atendimento(), value: data.location || m.negociacao_nao_informado() },
+					data.service_radius_km && { label: m.negociacao_detalhe_atende_ate(), value: m.negociacao_km_da_cidade({ km: formatNumber(data.service_radius_km) }) },
+					data.equipment && { label: m.negociacao_detalhe_equipamento(), value: data.equipment }
 				].filter(Boolean)
 			};
 
 			galleryImages = data.image_url ? [data.image_url] : [];
 			await Promise.all([loadSeller(data.owner_id), loadListingReviews({ serviceId: data.id })]);
 		} else {
-			errorMessage = 'Tipo de anúncio não suportado.';
+			errorMessage = m.negociacao_erro_tipo_nao_suportado();
 		}
 
 		loading = false;
@@ -470,7 +476,7 @@
 </script>
 
 <svelte:head>
-	<title>{item?.title ? `${item.title} — Osiris` : 'Anúncio — Osiris'}</title>
+	<title>{item?.title ? `${item.title} — Osiris` : m.negociacao_titulo_pagina_anuncio()}</title>
 </svelte:head>
 
 {#snippet sellerCard(extraClass)}
@@ -488,7 +494,7 @@
 			</div>
 		{/if}
 		<div class="min-w-0 flex-1">
-			<p class="text-primary-700-300 preset-typo-label">Anunciante</p>
+			<p class="text-primary-700-300 preset-typo-label">{m.negociacao_anunciante()}</p>
 			<p class="truncate text-lg font-bold text-surface-950-50">{seller.name}</p>
 			<AppRating
 				value={sellerReviewStats.average}
@@ -502,7 +508,7 @@
 
 
 <div class="min-h-screen bg-surface-100-900 pb-28 lg:pb-0">
-	<Header title="Anúncio" backHref="/buscar" backUsesHistory />
+	<Header title={m.negociacao_anuncio()} backHref="/buscar" backUsesHistory />
 
 	<main class="mx-auto w-full max-w-3xl lg:max-w-6xl">
 		{#if loading}
@@ -513,7 +519,7 @@
 				aria-live="polite"
 				aria-busy="true"
 			>
-				<span class="sr-only">Carregando anúncio...</span>
+				<span class="sr-only">{m.negociacao_carregando_anuncio()}</span>
 				<div class="space-y-4" aria-hidden="true">
 					<div class="placeholder aspect-[16/10] w-full animate-pulse rounded-container"></div>
 					<div class="hidden space-y-3 rounded-container border border-surface-200-800 bg-surface-50-950 p-6 shadow-sm lg:block">
@@ -541,13 +547,13 @@
 				{errorMessage}
 			</div>
 		{:else if item}
-			<nav class="hidden min-w-0 items-center gap-1.5 px-8 pt-6 text-sm lg:flex" aria-label="Caminho">
+			<nav class="hidden min-w-0 items-center gap-1.5 px-8 pt-6 text-sm lg:flex" aria-label={m.negociacao_caminho()}>
 				<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 					<Home size={16} />
-					Início
+					{m.nav_inicio()}
 				</a>
 				<span class="text-surface-700-300">/</span>
-				<a href={resolve('/buscar')} class="text-surface-800-200 hover:text-primary-700-300">Buscar</a>
+				<a href={resolve('/buscar')} class="text-surface-800-200 hover:text-primary-700-300">{m.nav_buscar()}</a>
 				<span class="text-surface-700-300">/</span>
 				<span class="truncate font-semibold text-surface-950-50" aria-current="page">{item.title}</span>
 			</nav>
@@ -577,7 +583,7 @@
 										<Carousel.Item {index}>
 											<img
 												src={imageUrl}
-												alt={`${item.title} — imagem ${index + 1}`}
+												alt={m.negociacao_imagem_n({ titulo: item.title, n: index + 1 })}
 												draggable="false"
 												class="aspect-[16/10] w-full select-none object-cover"
 											/>
@@ -587,27 +593,27 @@
 
 								<Carousel.PrevTrigger
 									class="btn-icon btn-icon-lg preset-filled-surface-50-950 absolute left-3 top-1/2 -translate-y-1/2 shadow-md"
-									title="Foto anterior"
-									aria-label="Foto anterior"
+									title={m.negociacao_foto_anterior()}
+									aria-label={m.negociacao_foto_anterior()}
 								>
 									<ChevronLeft size={18} />
 								</Carousel.PrevTrigger>
 								<Carousel.NextTrigger
 									class="btn-icon btn-icon-lg preset-filled-surface-50-950 absolute right-3 top-1/2 -translate-y-1/2 shadow-md"
-									title="Próxima foto"
-									aria-label="Próxima foto"
+									title={m.negociacao_proxima_foto()}
+									aria-label={m.negociacao_proxima_foto()}
 								>
 									<ChevronRight size={18} />
 								</Carousel.NextTrigger>
 
 								<Carousel.IndicatorGroup
 									class="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1.5"
-									aria-label="Fotos do anúncio"
+									aria-label={m.negociacao_fotos_anuncio()}
 								>
 									{#each galleryImages as imageUrl, index (imageUrl + index)}
 										<Carousel.Indicator
 											{index}
-											aria-label="Foto {index + 1} de {galleryImages.length}"
+											aria-label={m.negociacao_foto_n_de({ n: index + 1, total: galleryImages.length })}
 											class="h-2 w-2 rounded-full bg-white/60 transition-all data-[current]:w-5 data-[current]:bg-white"
 										/>
 									{/each}
@@ -621,13 +627,13 @@
 					{:else}
 						<div class="flex aspect-[16/10] flex-col items-center justify-center gap-2 preset-tonal-primary text-sm font-medium">
 							<ImageOff class="h-10 w-10" strokeWidth={1.5} />
-							Sem foto
+							{m.negociacao_sem_foto()}
 						</div>
 					{/if}
 
 					{#if TYPE_LABEL[item.type]}
 						<span class="badge absolute left-3 top-3 rounded-full preset-filled-primary-500 px-3 py-1 text-xs font-bold shadow-sm">
-							{TYPE_LABEL[item.type]}
+							{TYPE_LABEL[item.type]()}
 						</span>
 					{/if}
 				</section>
@@ -644,19 +650,19 @@
 						/>
 					</div>
 
-					<p class="mt-3 preset-typo-label">Preço</p>
+					<p class="mt-3 preset-typo-label">{m.negociacao_preco()}</p>
 					<p class="text-3xl font-bold leading-tight text-primary-700-300">{item.priceLabel}</p>
 
 					{#if isOwnListing}
 						<div class="mt-4 flex items-center gap-3 rounded-container preset-tonal-primary p-4 text-sm">
 							<CircleUser class="h-6 w-6 shrink-0" />
 							<div class="min-w-0 flex-1">
-								<p class="font-semibold">Este anúncio é seu.</p>
+								<p class="font-semibold">{m.negociacao_anuncio_seu()}</p>
 								<a
 									href={resolve(page.params.tipo === 'servico' ? '/servicos' : '/inventario')}
 									class="anchor mt-1 inline-block font-medium text-primary-700-300"
 								>
-									<span>Gerenciar meus anúncios</span>
+									<span>{m.negociacao_gerenciar_anuncios()}</span>
 								</a>
 							</div>
 						</div>
@@ -667,7 +673,7 @@
 							class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
 						>
 							<LogIn size={18} />
-							<span>Entrar para negociar</span>
+							<span>{m.negociacao_entrar_para_negociar()}</span>
 						</a>
 					{:else}
 						<button
@@ -676,7 +682,7 @@
 							class="btn btn-lg preset-filled-primary-500 mt-4 w-full"
 						>
 							<Handshake size={18} />
-							<span>Negociar</span>
+							<span>{m.negociacao_negociar()}</span>
 						</button>
 					{/if}
 				</section>
@@ -686,14 +692,14 @@
 
 				{#if item.description}
 					<section class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm lg:col-start-1 lg:p-6">
-						<h2 class="preset-typo-title">Descrição</h2>
+						<h2 class="preset-typo-title">{m.negociacao_descricao()}</h2>
 						<p class="mt-2 whitespace-pre-line preset-typo-body-1 text-surface-900-100">{item.description}</p>
 					</section>
 				{/if}
 
-				<AppAccordion title="Mais informações" class="lg:col-start-1">
+				<AppAccordion title={m.negociacao_mais_informacoes()} class="lg:col-start-1">
 					<table class="w-full border-separate border-spacing-0 text-base">
-						<caption class="sr-only">Detalhes do anúncio</caption>
+						<caption class="sr-only">{m.negociacao_detalhes_anuncio()}</caption>
 						<tbody>
 							{#each item.details as detail (detail.label)}
 								<tr class="odd:bg-surface-100-900">
@@ -718,7 +724,7 @@
 
 				<section class="rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm lg:col-start-1">
 					<div class="border-b border-surface-200-800 px-4 py-3">
-						<h2 class="preset-typo-title">Avaliações do anúncio</h2>
+						<h2 class="preset-typo-title">{m.negociacao_avaliacoes_anuncio()}</h2>
 						<div class="mt-1">
 							<AppRating
 								value={productReviewStats.average}
@@ -731,8 +737,8 @@
 						<ReviewList
 							{reviews}
 							loading={reviewsLoading}
-							emptyTitle="Este anúncio ainda não tem avaliações"
-							emptyDescription="Seja o primeiro a avaliar após uma negociação."
+							emptyTitle={m.negociacao_avaliacoes_anuncio_vazio_titulo()}
+							emptyDescription={m.negociacao_avaliacoes_anuncio_vazio_descricao()}
 						/>
 					</div>
 				</section>
@@ -742,8 +748,8 @@
 
 	<NegotiationPropose
 		bind:open={showNegotiationModal}
-		title={item?.title || 'Anúncio'}
-		priceLabel={item?.priceLabel || 'Preço a combinar'}
+		title={item?.title || m.negociacao_anuncio()}
+		priceLabel={item?.priceLabel || m.comum_preco_a_combinar()}
 		sellerName={seller.name}
 		type={item?.type || 'produto'}
 		providerId={seller.id}

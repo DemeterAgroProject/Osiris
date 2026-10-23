@@ -10,28 +10,31 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import { supabase } from '$lib/supabase';
+	import { m } from '$lib/paraglide/messages';
+	import { formatBRL, formatDate } from '$lib/i18n';
+	import { bookingStatusLabel as bookingStatusText } from '$lib/notifications';
 
 	function formatCurrency(value) {
-		if (value === null || value === undefined || value === '') return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+		if (value === null || value === undefined || value === '') return m.comum_preco_a_combinar();
+		return formatBRL(value);
 	}
 
 	function formatDbDate(dateString) {
 		if (!dateString) return '—';
 		const [year, month, day] = String(dateString).split('T')[0].split('-');
 		if (!year || !month || !day) return dateString;
-		return `${day}/${month}/${year}`;
+		return formatDate(`${year}-${month}-${day}T00:00:00`);
 	}
 
 	function negotiationStatusLabel(status) {
 		const map = {
-			solicitada: 'Solicitada',
-			em_negociacao: 'Em negociação',
-			aceita: 'Aceita',
-			recusada: 'Recusada',
-			cancelado: 'Cancelada'
+			solicitada: m.negociacao_status_solicitada,
+			em_negociacao: m.negociacao_status_em_negociacao,
+			aceita: m.negociacao_status_aceita,
+			recusada: m.negociacao_status_recusada,
+			cancelado: m.negociacao_status_cancelada
 		};
-		return map[status] ?? status ?? '—';
+		return map[status]?.() ?? status ?? '—';
 	}
 
 	function negotiationStatusTone(status) {
@@ -52,14 +55,14 @@
 
 	function bookingStatusLabel(status) {
 		const map = {
-			pendente: 'Aguardando início',
-			em_operacao: 'Em operação',
-			em_avaliacao: 'Em avaliação',
-			finalizada: 'Finalizada',
-			cancelado: 'Cancelado',
-			bloqueado_prestador: 'Bloqueado'
+			pendente: m.negociacao_operacao_aguardando_inicio,
+			em_operacao: () => bookingStatusText('em_operacao'),
+			em_avaliacao: () => bookingStatusText('em_avaliacao'),
+			finalizada: () => bookingStatusText('finalizada'),
+			cancelado: () => bookingStatusText('cancelado'),
+			bloqueado_prestador: m.negociacao_operacao_bloqueada
 		};
-		return map[status] ?? status ?? '—';
+		return map[status]?.() ?? status ?? '—';
 	}
 
 	function bookingStatusTone(status) {
@@ -81,7 +84,7 @@
 	}
 
 	function resolveListingTitle(row) {
-		return row?.products?.name || row?.services?.title || 'Anúncio';
+		return row?.products?.name || row?.services?.title || m.negociacao_anuncio();
 	}
 
 	function pickCoverImage(images = []) {
@@ -188,8 +191,8 @@
 	let bookings = $state([]);
 	let errorMessage = $state('');
 	const negotiationTabs = [
-		{ value: 'propostas', label: 'Propostas' },
-		{ value: 'operacoes', label: 'Operações' }
+		{ value: 'propostas', label: m.negociacao_aba_propostas() },
+		{ value: 'operacoes', label: m.negociacao_aba_operacoes() }
 	];
 
 	let activeTab = $state('propostas');
@@ -210,23 +213,23 @@
 	// resumo do topo (computador)
 	const dealStats = $derived([
 		{
-			label: 'Propostas em andamento',
+			label: m.negociacao_resumo_propostas(),
 			value: openNegotiations.length,
-			hint: 'aguardando acordo',
+			hint: m.negociacao_resumo_propostas_dica(),
 			icon: MessageSquare,
 			tone: 'preset-tonal-warning'
 		},
 		{
-			label: 'Operações ativas',
+			label: m.negociacao_resumo_operacoes(),
 			value: activeBookings.length,
-			hint: 'aguardando início ou em campo',
+			hint: m.negociacao_resumo_operacoes_dica(),
 			icon: Tractor,
 			tone: 'preset-tonal-primary'
 		},
 		{
-			label: 'Encerradas',
+			label: m.negociacao_resumo_encerradas(),
 			value: closedNegotiations.length + closedBookings.length,
-			hint: 'propostas e operações',
+			hint: m.negociacao_resumo_encerradas_dica(),
 			icon: Archive,
 			tone: 'preset-tonal-surface'
 		}
@@ -235,7 +238,7 @@
 	function resolveBookingCounterparty(booking) {
 		const isProvider = authUserId === booking.provider_id;
 		const profile = isProvider ? booking.client : booking.provider;
-		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
+		return profile?.display_name || (isProvider ? m.negociacao_cliente() : m.negociacao_anunciante());
 	}
 
 	function statusBadgeClass(tone) {
@@ -253,7 +256,7 @@
 	function resolveCounterpartyName(row) {
 		const isProvider = authUserId === row.provider_id;
 		const profile = isProvider ? row.client : row.provider;
-		return profile?.display_name || (isProvider ? 'Cliente' : 'Anunciante');
+		return profile?.display_name || (isProvider ? m.negociacao_cliente() : m.negociacao_anunciante());
 	}
 
 	function listingIcon(row) {
@@ -295,7 +298,7 @@
 		if (negRes.error) {
 			console.error('Erro ao listar negociações:', negRes.error);
 			errorMessage =
-				'Não foi possível carregar as negociações. Tente novamente.';
+				m.negociacao_erro_carregar_negociacoes();
 			negotiations = [];
 		} else {
 			negotiations = await enrichNegotiations(negRes.data ?? []);
@@ -304,7 +307,7 @@
 		if (bookRes.error) {
 			console.error('Erro ao listar operações:', bookRes.error);
 			if (!errorMessage) {
-				errorMessage = 'Não foi possível carregar as operações.';
+				errorMessage = m.negociacao_erro_carregar_operacoes();
 			}
 			bookings = [];
 		} else {
@@ -326,7 +329,7 @@
 </script>
 
 <svelte:head>
-	<title>Negociações — Osiris</title>
+	<title>{m.negociacao_titulo_pagina()}</title>
 </svelte:head>
 
 {#snippet dealCard(card)}
@@ -369,7 +372,7 @@
 		{#if card.price || card.dates}
 			<div class="hidden shrink-0 text-right lg:block">
 				{#if card.price}
-					<p class="preset-typo-label">{card.href.startsWith('/operacoes') ? 'Valor acordado' : 'Valor proposto'}</p>
+					<p class="preset-typo-label">{card.href.startsWith('/operacoes') ? m.negociacao_valor_acordado() : m.negociacao_valor_proposto()}</p>
 					<p class="text-2xl font-bold leading-tight text-primary-700-300">{card.price}</p>
 				{/if}
 				{#if card.dates}
@@ -381,7 +384,7 @@
 			</div>
 		{/if}
 		<span class="btn preset-tonal hidden shrink-0 lg:inline-flex" aria-hidden="true">
-			<span>{card.href.startsWith('/operacoes') ? 'Ver operação' : 'Abrir conversa'}</span>
+			<span>{card.href.startsWith('/operacoes') ? m.negociacao_ver_operacao() : m.negociacao_abrir_conversa()}</span>
 			<ChevronRight size={18} />
 		</span>
 	</a>
@@ -398,21 +401,21 @@
 {/snippet}
 
 <div class="min-h-screen pb-24">
-	<Header title="Negociações" />
+	<Header title={m.negociacao_negociacoes()} />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
-		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label={m.negociacao_caminho()}>
 			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 				<Home size={16} />
-				Início
+				{m.nav_inicio()}
 			</a>
 			<span class="text-surface-700-300">/</span>
-			<span class="font-semibold text-surface-950-50" aria-current="page">Negociações</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">{m.negociacao_negociacoes()}</span>
 		</nav>
 
 		<div>
-			<h1 class="preset-typo-headline">Negociações</h1>
-			<p class="mt-1 preset-typo-subtitle">Propostas, conversas e operações no campo.</p>
+			<h1 class="preset-typo-headline">{m.negociacao_negociacoes()}</h1>
+			<p class="mt-1 preset-typo-subtitle">{m.negociacao_subtitulo()}</p>
 		</div>
 
 		<!-- computador: resumo (contagens do que já foi carregado) -->
@@ -433,14 +436,14 @@
 			</div>
 		{:else if loading}
 			<div class="mt-5 hidden lg:block">
-				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+				<ListingSkeleton variant="stats" count={3} label={m.negociacao_carregando_resumo()} />
 			</div>
 		{/if}
 
-		<AppTabs bind:value={activeTab} items={negotiationTabs} label="Negociações" class="mt-4">
+		<AppTabs bind:value={activeTab} items={negotiationTabs} label={m.negociacao_negociacoes()} class="mt-4">
 			{#if loading}
 				<div class="mt-5">
-					<ListingSkeleton variant="list" count={3} label="Carregando negociações..." />
+					<ListingSkeleton variant="list" count={3} label={m.negociacao_carregando_negociacoes()} />
 				</div>
 			{:else if errorMessage}
 				<div class="mt-4 flex items-start gap-3 rounded-container preset-tonal-error p-4 text-sm">
@@ -451,7 +454,7 @@
 				<AppTabsPanel value="propostas">
 					<section class="mt-5 space-y-6">
 						<div>
-							<h2 class="preset-typo-label">Em andamento</h2>
+							<h2 class="preset-typo-label">{m.negociacao_em_andamento()}</h2>
 							<div class="mt-2 space-y-2">
 								{#each openNegotiations as row (row.id)}
 									{@render dealCard({
@@ -459,7 +462,7 @@
 										coverUrl: row.coverUrl,
 										icon: listingIcon(row),
 										title: resolveListingTitle(row),
-										subtitle: `${authUserId === row.provider_id ? 'Cliente' : 'Anunciante'}: ${resolveCounterpartyName(row)}`,
+										subtitle: `${authUserId === row.provider_id ? m.negociacao_cliente() : m.negociacao_anunciante()}: ${resolveCounterpartyName(row)}`,
 										price: formatCurrency(row.proposed_price),
 										dates: row.proposed_start_date
 											? `${formatDbDate(row.proposed_start_date)} — ${formatDbDate(row.proposed_end_date)}`
@@ -468,14 +471,14 @@
 										tone: negotiationStatusTone(row.status)
 									})}
 								{:else}
-									{@render emptyCard('Nenhuma proposta em andamento', 'Abra um anúncio e toque em "Negociar".')}
+									{@render emptyCard(m.negociacao_vazio_propostas(), m.negociacao_vazio_propostas_dica())}
 								{/each}
 							</div>
 						</div>
 
 						{#if closedNegotiations.length}
 							<div>
-								<h2 class="preset-typo-label">Encerradas</h2>
+								<h2 class="preset-typo-label">{m.negociacao_encerradas()}</h2>
 								<div class="mt-2 space-y-2">
 									{#each closedNegotiations as row (row.id)}
 										{@render dealCard({
@@ -497,7 +500,7 @@
 				<AppTabsPanel value="operacoes">
 					<section class="mt-5 space-y-6">
 						<div>
-							<h2 class="preset-typo-label">Ativas</h2>
+							<h2 class="preset-typo-label">{m.negociacao_ativas()}</h2>
 							<div class="mt-2 space-y-2">
 								{#each activeBookings as booking (booking.id)}
 									{@render dealCard({
@@ -512,14 +515,14 @@
 										tone: bookingStatusTone(booking.status)
 									})}
 								{:else}
-									{@render emptyCard('Nenhuma operação ativa', 'Quando uma proposta for aceita, a operação aparece aqui.')}
+									{@render emptyCard(m.negociacao_vazio_operacoes(), m.negociacao_vazio_operacoes_dica())}
 								{/each}
 							</div>
 						</div>
 
 						{#if closedBookings.length}
 							<div>
-								<h2 class="preset-typo-label">Encerradas</h2>
+								<h2 class="preset-typo-label">{m.negociacao_encerradas()}</h2>
 								<div class="mt-2 space-y-2">
 									{#each closedBookings as booking (booking.id)}
 										{@render dealCard({

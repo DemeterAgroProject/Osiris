@@ -1,5 +1,6 @@
 <script>
 	import ProductCard from './ProductCard.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let { title, products } = $props();
 </script>
@@ -12,7 +13,7 @@
 			<ProductCard {...product} />
 		{:else}
 			<p class="col-span-full rounded-container border border-dashed border-surface-300-700 p-8 text-center text-sm font-medium text-surface-900-100">
-				Nenhum anúncio encontrado.
+				{m.busca_nenhum_anuncio()}
 			</p>
 		{/each}
 	</div>

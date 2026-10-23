@@ -4,15 +4,17 @@
     import { supabase } from '$lib/supabase';
     import { watchChanges } from '$lib/realtime';
     import { track } from '$lib/telemetry';
+    import { m } from '$lib/paraglide/messages';
+    import { intlLocale } from '$lib/i18n';
 
     // hora da mensagem; de outro dia, mostra também a data
     function formatMessageTime(value) {
         if (!value) return '';
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return '';
-        const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const time = date.toLocaleTimeString(intlLocale(), { hour: '2-digit', minute: '2-digit' });
         if (date.toDateString() === new Date().toDateString()) return time;
-        return `${date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${time}`;
+        return `${date.toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit' })} · ${time}`;
     }
 
     let {
@@ -43,7 +45,7 @@
     const profileCache = new Map();
 
     function resolveSenderName(msg) {
-        return msg.sender?.display_name || 'Participante';
+        return msg.sender?.display_name || m.negociacao_participante();
     }
 
     function isOwnMessage(msg) {
@@ -96,7 +98,7 @@
     // Adiciona uma única mensagem nova ao array, sem recarregar tudo
     async function appendMessage(row) {
         // evita duplicar se já existe (ex: a própria mensagem otimista)
-        if (messages.some((m) => m.id === row.id)) return;
+        if (messages.some((msg) => msg.id === row.id)) return;
 
         const sender = await fetchSenderProfile(row.sender_id);
         messages = [...messages, { ...row, sender }];
@@ -156,11 +158,11 @@
 <div class="flex flex-col overflow-hidden bg-surface-100-900 {frameClass}">
     <div bind:this={chatContainer} class="flex-1 space-y-3 overflow-y-auto overscroll-contain scroll-smooth {listClass}">
         {#if loading}
-            <p class="py-8 text-center text-sm text-surface-900-100">Carregando mensagens...</p>
+            <p class="py-8 text-center text-sm text-surface-900-100">{m.negociacao_chat_carregando()}</p>
         {:else if messages.length === 0}
             <div class="flex flex-col items-center py-8 text-center text-surface-800-200">
                 <MessageCircle class="h-8 w-8 opacity-60" />
-                <p class="mt-2 text-sm">Nenhuma mensagem ainda. Envie a primeira!</p>
+                <p class="mt-2 text-sm">{m.negociacao_chat_vazio()}</p>
             </div>
         {:else}
             {#each messages as msg (msg.id)}
@@ -194,16 +196,16 @@
             <input
                 type="text"
                 bind:value={draft}
-                placeholder="Digite sua mensagem..."
-                aria-label="Mensagem"
+                placeholder={m.negociacao_chat_placeholder()}
+                aria-label={m.negociacao_chat_mensagem()}
                 class="input h-12 min-w-0 flex-1 rounded-full border border-surface-200-800 bg-surface-100-900 px-4 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             />
             <button
                 type="submit"
                 disabled={sending || !draft.trim()}
                 class="btn-icon btn-icon-lg preset-filled-primary-500 shrink-0"
-                title="Enviar mensagem"
-                aria-label="Enviar mensagem"
+                title={m.negociacao_chat_enviar()}
+                aria-label={m.negociacao_chat_enviar()}
             >
                 <Send size={18} />
             </button>
@@ -211,7 +213,7 @@
     {:else}
         <p class="flex shrink-0 items-center justify-center gap-2 border-t border-surface-200-800 bg-surface-50-950 p-3 text-center text-sm text-surface-900-100 {fillOnMobile ? 'pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3' : ''}">
             <Lock class="h-4 w-4" />
-            Chat encerrado para esta negociação.
+            {m.negociacao_chat_encerrado()}
         </p>
     {/if}
 </div>

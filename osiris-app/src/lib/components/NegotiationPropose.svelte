@@ -6,19 +6,25 @@
 	import { supabase } from '$lib/supabase';
 	import { track, trackError } from '$lib/telemetry';
 	import { userMessage } from '$lib/errors';
+	import { m } from '$lib/paraglide/messages';
+	import { formatBRL, intlLocale } from '$lib/i18n';
 
+	// lê o valor digitado no formato do idioma atual ("1.500,00" em português, "1,500.00" em inglês)
 	function parseCurrencyToNumber(value) {
 		if (value === null || value === undefined || value === '') return null;
-		const normalized = String(value).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+		const decimal = (1.1).toLocaleString(intlLocale()).charAt(1);
+		const normalized = String(value)
+			.replace(new RegExp(`[^\\d${decimal === ',' ? ',' : '.'}-]`, 'g'), '')
+			.replace(',', '.');
 		const numeric = Number(normalized);
 		return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
 	}
 
 	let {
 		open = $bindable(false),
-		title = 'Anúncio',
-		priceLabel = 'Preço a combinar',
-		sellerName = 'Anunciante',
+		title = m.negociacao_anuncio(),
+		priceLabel = m.comum_preco_a_combinar(),
+		sellerName = m.negociacao_anunciante(),
 		type = 'produto',
 		providerId = null,
 		productId = null,
@@ -54,43 +60,43 @@
 	function formatCurrencyInput(value) {
 		const numeric = parseCurrencyToNumber(value);
 		if (numeric === null) return '';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numeric);
+		return formatBRL(numeric);
 	}
 
 	function validateForm() {
 		error = '';
 		if (!providerId) {
-			error = 'Anunciante indisponível para negociação.';
+			error = m.negociacao_erro_anunciante_indisponivel();
 			return false;
 		}
 		if (!productId && !serviceId) {
-			error = 'Item do anúncio não identificado.';
+			error = m.negociacao_erro_item_nao_identificado();
 			return false;
 		}
 		if (!proposalValue.trim()) {
-			error = 'Informe o valor da proposta.';
+			error = m.negociacao_erro_informe_valor();
 			return false;
 		}
 		if (parseCurrencyToNumber(proposalValue) === null) {
-			error = 'Informe um valor válido.';
+			error = m.negociacao_erro_valor_invalido();
 			return false;
 		}
 		if (requiresDates) {
 			if (!startDate || !endDate) {
-				error = 'Informe as datas de início e fim.';
+				error = m.negociacao_erro_informe_datas();
 				return false;
 			}
 			if (startDate > endDate) {
-				error = 'A data de início deve ser anterior à data de fim.';
+				error = m.negociacao_erro_ordem_datas();
 				return false;
 			}
 		}
 		if (showQuantity && (!quantity || Number(quantity) <= 0)) {
-			error = 'Informe uma quantidade válida.';
+			error = m.negociacao_erro_quantidade();
 			return false;
 		}
 		if (!message.trim() || message.trim().length < 10) {
-			error = 'Escreva uma mensagem com pelo menos 10 caracteres.';
+			error = m.negociacao_erro_mensagem_curta();
 			return false;
 		}
 		return true;
@@ -108,14 +114,14 @@
 		} = await supabase.auth.getUser();
 
 		if (!user) {
-			error = 'Faça login para enviar uma proposta.';
+			error = m.negociacao_erro_login();
 			sending = false;
 			goto(resolve('/login?redirect=' + encodeURIComponent(window.location.pathname)));
 			return;
 		}
 
 		if (user.id === providerId) {
-			error = 'Você não pode negociar com o próprio anúncio.';
+			error = m.negociacao_erro_proprio_anuncio();
 			sending = false;
 			return;
 		}
@@ -144,7 +150,7 @@
 
 		if (insertError) {
 			trackError('proposta_falhou', insertError);
-			error = userMessage(insertError, 'Não foi possível enviar a proposta.');
+			error = userMessage(insertError, m.negociacao_erro_enviar_proposta());
 			sending = false;
 			return;
 		}
@@ -164,8 +170,8 @@
 
 <AppDialog
 	bind:open
-	title="Fazer proposta"
-	description="Envie para {sellerName}"
+	title={m.negociacao_fazer_proposta()}
+	description={m.negociacao_envie_para({ nome: sellerName })}
 	variant="sheet"
 	size="md"
 	dismissible={!sending}
@@ -189,7 +195,7 @@
 						for="startDate"
 						class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 					>
-						Início
+						{m.negociacao_data_inicio()}
 					</label>
 					<input
 						id="startDate"
@@ -203,7 +209,7 @@
 						for="endDate"
 						class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 					>
-						Fim
+						{m.negociacao_data_fim()}
 					</label>
 					<input
 						id="endDate"
@@ -220,13 +226,13 @@
 				for="proposalValue"
 				class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 			>
-				Valor proposto
+				{m.negociacao_valor_proposto()}
 			</label>
 			<input
 				id="proposalValue"
 				type="text"
 				bind:value={proposalValue}
-				placeholder="Ex: 1.500,00"
+				placeholder={m.negociacao_valor_placeholder()}
 				class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				onblur={() => (proposalValue = formatCurrencyInput(proposalValue))}
 			/>
@@ -238,7 +244,7 @@
 					for="quantity"
 					class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 				>
-					Quantidade
+					{m.negociacao_quantidade()}
 				</label>
 				<input
 					id="quantity"
@@ -256,13 +262,13 @@
 				for="message"
 				class="mb-1.5 block text-sm font-semibold text-surface-950-50"
 			>
-				Mensagem
+				{m.negociacao_mensagem()}
 			</label>
 			<textarea
 				id="message"
 				rows="4"
 				bind:value={message}
-				placeholder="Ex: preciso para a colheita, entrega na fazenda..."
+				placeholder={m.negociacao_mensagem_placeholder()}
 				class="textarea w-full resize-none rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			></textarea>
 		</div>
@@ -280,7 +286,7 @@
 				disabled={sending}
 				class="btn btn-lg preset-tonal w-full"
 			>
-				<span>Cancelar</span>
+				<span>{m.comum_cancelar()}</span>
 			</button>
 			<button
 				type="submit"
@@ -289,7 +295,7 @@
 				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
 				<Send size={18} />
-				<span>{sending ? 'Enviando...' : 'Enviar proposta'}</span>
+				<span>{sending ? m.negociacao_enviando() : m.negociacao_enviar_proposta()}</span>
 			</button>
 		</div>
 	{/snippet}

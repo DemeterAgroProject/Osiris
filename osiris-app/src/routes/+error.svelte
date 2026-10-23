@@ -2,19 +2,20 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { AlertTriangle, ArrowLeft, Tractor } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	const status = $derived($page.status);
 	const errorMessage = $derived($page.error?.message);
 	const isNotFound = $derived(status === 404);
 
 	const headline = $derived(
-		isNotFound ? 'Página não encontrada' : 'Ops, algo deu errado'
+		isNotFound ? m.app_erro_nao_encontrada_titulo() : m.app_erro_generico_titulo()
 	);
 
 	const description = $derived(
 		isNotFound
-			? 'Parece que você se perdeu no campo.'
-			: 'Ops, tivemos um problema técnico na colheita dos dados.'
+			? m.app_erro_nao_encontrada_desc()
+			: m.app_erro_generico_desc()
 	);
 </script>
 
@@ -39,7 +40,7 @@
 		<p class="text-primary-700 preset-typo-label">Osiris</p>
 
 		{#if status}
-			<p class="mt-2 text-sm font-medium text-surface-800-200">Erro {status}</p>
+			<p class="mt-2 text-sm font-medium text-surface-800-200">{m.app_erro_codigo({ status })}</p>
 		{/if}
 
 		<h1 class="mt-3 preset-typo-headline">{headline}</h1>
@@ -56,7 +57,7 @@
 			class="btn btn-lg preset-filled-primary-500 mt-8 w-full sm:w-auto"
 		>
 			<ArrowLeft size={18} />
-			<span>Voltar para o Início</span>
+			<span>{m.app_erro_voltar_inicio()}</span>
 		</a>
 	</div>
 </div>

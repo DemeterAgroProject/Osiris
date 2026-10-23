@@ -2,13 +2,14 @@
 	import { resolve } from '$app/paths';
 	import { Mail } from 'lucide-svelte';
 	import { LEGAL } from '$lib/legal';
+	import { m } from '$lib/paraglide/messages';
 
 	// rodapé do computador; no celular a navegação fica na barra inferior
 	const NAV_LINKS = [
-		{ href: '/', label: 'Início' },
-		{ href: '/buscar', label: 'Buscar anúncios' },
-		{ href: '/inventario', label: 'Meu inventário' },
-		{ href: '/painel-de-controle', label: 'Painel de controle' }
+		{ href: '/', label: m.nav_inicio },
+		{ href: '/buscar', label: m.app_footer_buscar_anuncios },
+		{ href: '/inventario', label: m.app_meu_inventario },
+		{ href: '/painel-de-controle', label: m.app_painel_controle }
 	];
 </script>
 
@@ -20,33 +21,33 @@
 				<span class="text-lg font-bold text-surface-950-50">Osiris</span>
 			</a>
 			<p class="mt-3 max-w-xs preset-typo-body-2 text-surface-800-200">
-				Máquinas, produtos e serviços do campo em um só lugar.
+				{m.app_footer_slogan()}
 			</p>
 		</div>
 
-		<nav aria-label="Navegação do rodapé">
-			<p class="preset-typo-label">Navegação</p>
+		<nav aria-label={m.app_footer_navegacao_aria()}>
+			<p class="preset-typo-label">{m.app_footer_navegacao()}</p>
 			<ul class="mt-3 space-y-2">
 				{#each NAV_LINKS as link (link.href)}
 					<li>
-						<a href={resolve(link.href)} class="text-sm text-surface-900-100 hover:text-primary-700-300">{link.label}</a>
+						<a href={resolve(link.href)} class="text-sm text-surface-900-100 hover:text-primary-700-300">{link.label()}</a>
 					</li>
 				{/each}
 			</ul>
 		</nav>
 
 		<div>
-			<p class="preset-typo-label">Ajuda e termos</p>
+			<p class="preset-typo-label">{m.app_footer_ajuda_termos()}</p>
 			<ul class="mt-3 space-y-2 text-sm">
-				<li><a href={resolve('/ajuda')} class="text-surface-900-100 hover:text-primary-700-300">Central de ajuda</a></li>
+				<li><a href={resolve('/ajuda')} class="text-surface-900-100 hover:text-primary-700-300">{m.app_central_ajuda()}</a></li>
 				<li>
 					<a href="mailto:{LEGAL.contato}" class="inline-flex items-center gap-2 text-surface-900-100 hover:text-primary-700-300">
 						<Mail size={16} />
 						{LEGAL.contato}
 					</a>
 				</li>
-				<li><a href={resolve('/termos')} class="text-surface-900-100 underline hover:text-primary-700-300">Termos de uso</a></li>
-				<li><a href={resolve('/privacidade')} class="text-surface-900-100 underline hover:text-primary-700-300">Política de privacidade</a></li>
+				<li><a href={resolve('/termos')} class="text-surface-900-100 underline hover:text-primary-700-300">{m.app_termos_uso()}</a></li>
+				<li><a href={resolve('/privacidade')} class="text-surface-900-100 underline hover:text-primary-700-300">{m.app_politica_privacidade()}</a></li>
 			</ul>
 		</div>
 	</div>

@@ -1,16 +1,20 @@
 <script>
 	import { resolve } from '$app/paths';
-	import { HELP_SECTIONS, helpArticlesIn } from '$lib/help';
+	import { getHelpSections, getHelpArticles, helpArticlesIn } from '$lib/help';
+	import { m } from '$lib/paraglide/messages';
 
 	// lista de temas da ajuda: coluna lateral no computador e gaveta do menu no celular
 	let { current = '', onnavigate = undefined } = $props();
+
+	const sections = getHelpSections();
+	const articles = getHelpArticles();
 </script>
 
-<nav aria-label="Temas da ajuda">
-	{#each HELP_SECTIONS as section (section.id)}
+<nav aria-label={m.ajuda_temas()}>
+	{#each sections as section (section.id)}
 		<p class="mb-1.5 mt-5 px-3 preset-typo-label first:mt-0">{section.title}</p>
 		<ul class="space-y-0.5">
-			{#each helpArticlesIn(section.id) as article (article.slug)}
+			{#each helpArticlesIn(section.id, articles) as article (article.slug)}
 				{@const active = article.slug === current}
 				<li>
 					<a

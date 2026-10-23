@@ -5,7 +5,19 @@
 	import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
 	import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
 	import { pickMunicipio } from '$lib/municipios';
-	import { DELIVERY_LABEL, MACHINE_CONDITION_LABEL, RENTAL_UNIT_LABEL, stockUnitLabel } from '$lib/pricing';
+	import {
+		DELIVERY_LABEL,
+		MACHINE_CONDITION_LABEL,
+		MACHINE_OFFER_LABEL,
+		RENTAL_UNIT_LABEL,
+		categoryLabel,
+		machineTypeLabel,
+		stockUnitLabel,
+		stockUnitName,
+		tractionLabel
+	} from '$lib/pricing';
+	import { formatNumber } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
 
 	function createEmptyImageRow(isCover = false) {
 		return { id: null, url: '', is_cover: isCover, removed: false };
@@ -24,9 +36,9 @@
 
 	function formatImageError(error) {
 		if (error?.code === '42501' || error?.status === 403) {
-			return 'Não foi possível salvar as imagens. Tente novamente.';
+			return m.anunciar_erro_imagens();
 		}
-		return 'Anúncio salvo, mas falhou ao atualizar as imagens.';
+		return m.anunciar_edit_imagens_parcial();
 	}
 
 	function normalizeImageRows(rows) {
@@ -171,13 +183,17 @@
 	// cultivar e safra só fazem sentido para sementes, mudas e grãos
 	const SEED_CATEGORIES = ['Sementes', 'Mudas', 'Grãos'];
 
-	const RENTAL_PRICE_LABEL = { hora: 'Preço por hora (R$)', dia: 'Preço por dia (R$)', hectare: 'Preço por hectare (R$)' };
+	// valores gravados em products.category e stock_unit (o texto visível vem de pricing.js)
+	const PRODUCT_CATEGORIES = ['Sementes', 'Fertilizantes', 'Mudas', 'Defensivos', 'Corretivos', 'Grãos', 'Nutrição animal', 'Peças', 'Insumo', 'Outros'];
+	const STOCK_UNITS = ['Sacas', 'Kg', 'Toneladas', 'Litros', 'Unidades'];
+
+	const RENTAL_PRICE_LABEL = { hora: m.anunciar_preco_por_hora, dia: m.anunciar_preco_por_dia, hectare: m.anunciar_preco_por_hectare };
 	const priceLabel = $derived(
 		isMachinery
 			? form.offer_type === 'aluguel'
-				? RENTAL_PRICE_LABEL[form.rental_unit]
-				: 'Preço da máquina (R$)'
-			: `Preço por ${stockUnitLabel(form.stock_unit, 1) || 'unidade'} (R$)`
+				? (RENTAL_PRICE_LABEL[form.rental_unit] ?? RENTAL_PRICE_LABEL.hora)()
+				: m.anunciar_preco_maquina()
+			: m.anunciar_preco_por_unidade({ unidade: stockUnitLabel(form.stock_unit || 'Unidades', 1) })
 	);
 	const machinery = $derived(product ? getMachineryFromProduct(product) : null);
 
@@ -197,7 +213,7 @@
 	function resetForm() {
 		if (!product) return;
 
-		const m = getMachineryFromProduct(product);
+		const mach = getMachineryFromProduct(product);
 
 		form = {
 			name: product.name ?? '',
@@ -206,18 +222,18 @@
 			category: product.category ?? '',
 			quantity: product.quantity ?? 1,
 			stock_unit: product.stock_unit ?? 'Sacas',
-			brand_id: m?.brand_id ?? '',
-			type_id: m?.type_id ?? '',
-			model: m?.model ?? '',
-			serial_number: m?.serial_number ?? '',
-			manufacture_year: m?.manufacture_year != null ? String(m.manufacture_year) : '',
-			current_horimeter: m?.current_horimeter != null ? String(m.current_horimeter) : '',
-			offer_type: m?.offer_type ?? 'aluguel',
-			rental_unit: m?.rental_unit ?? 'hora',
-			operator_included: Boolean(m?.operator_included),
-			condition: m?.condition ?? '',
-			power_hp: m?.power_hp != null ? String(m.power_hp) : '',
-			traction: m?.traction ?? '',
+			brand_id: mach?.brand_id ?? '',
+			type_id: mach?.type_id ?? '',
+			model: mach?.model ?? '',
+			serial_number: mach?.serial_number ?? '',
+			manufacture_year: mach?.manufacture_year != null ? String(mach.manufacture_year) : '',
+			current_horimeter: mach?.current_horimeter != null ? String(mach.current_horimeter) : '',
+			offer_type: mach?.offer_type ?? 'aluguel',
+			rental_unit: mach?.rental_unit ?? 'hora',
+			operator_included: Boolean(mach?.operator_included),
+			condition: mach?.condition ?? '',
+			power_hp: mach?.power_hp != null ? String(mach.power_hp) : '',
+			traction: mach?.traction ?? '',
 			cultivar: product.cultivar ?? '',
 			harvest: product.harvest ?? '',
 			brand_name: product.brand_name ?? '',
@@ -236,26 +252,26 @@
 
 	function validate() {
 		if (!form.name.trim()) {
-			errorMessage = 'Informe o título do anúncio.';
+			errorMessage = m.anunciar_edit_informe_titulo();
 			return false;
 		}
 
 		const price = Number(form.price);
 		if (!Number.isFinite(price) || price <= 0) {
-			errorMessage = 'Informe um preço válido.';
+			errorMessage = m.anunciar_edit_preco_invalido();
 			return false;
 		}
 
 		if (isMachinery) {
 			if (!form.brand_id || !form.type_id || !form.model.trim()) {
-				errorMessage = 'Preencha marca, tipo e modelo.';
+				errorMessage = m.anunciar_edit_marca_tipo_modelo();
 				return false;
 			}
 		} else if (!form.category) {
-			errorMessage = 'Selecione a categoria do produto.';
+			errorMessage = m.anunciar_edit_selecione_categoria();
 			return false;
 		} else if (form.harvest.trim() && !/^\d{4}(\/\d{2})?$/.test(form.harvest.trim())) {
-			errorMessage = 'Informe a safra no formato 2025/26 ou 2026.';
+			errorMessage = m.anunciar_edit_safra_invalida();
 			return false;
 		}
 
@@ -292,7 +308,7 @@
 		});
 
 		if (productError) {
-			errorMessage = 'Não foi possível salvar o anúncio.';
+			errorMessage = m.anunciar_edit_erro_salvar();
 			saving = false;
 			return;
 		}
@@ -314,7 +330,7 @@
 			});
 
 			if (machineryError) {
-				errorMessage = 'Produto salvo, mas falhou ao atualizar detalhes do maquinário.';
+				errorMessage = m.anunciar_edit_erro_maquinario();
 				saving = false;
 				return;
 			}
@@ -339,7 +355,7 @@
 
 <AppDialog
 	bind:open
-	title="Editar anúncio"
+	title={m.anunciar_edit_titulo()}
 	variant="sheet"
 	size="md"
 	dismissible={!saving}
@@ -352,10 +368,10 @@
 			{/if}
 
 			<div>
-				<label for="edit-name" class="mb-1 block text-sm font-medium text-surface-900-100">Título</label>
+				<label for="edit-name" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_titulo()}</label>
 				<input
 					id="edit-name"
-					placeholder="Ex: Trator JD 6100J"
+					placeholder={m.anunciar_ph_titulo_maquina()}
 					type="text"
 					bind:value={form.name}
 					required
@@ -365,11 +381,11 @@
 
 			<div>
 				<label for="edit-description" class="mb-1 block text-sm font-medium text-surface-900-100"
-					>Descrição</label
+					>{m.anunciar_descricao()}</label
 				>
 				<textarea
 					id="edit-description"
-					placeholder="Ex: estado de conservação, revisões, observações..."
+					placeholder={m.anunciar_ph_descricao_curta()}
 					rows="3"
 					bind:value={form.description}
 					class="textarea w-full resize-none rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
@@ -378,21 +394,21 @@
 
 			{#if isMachinery}
 				<div>
-					<label for="edit-offer-type" class="mb-1 block text-sm font-medium text-surface-900-100">Tipo de negócio</label>
+					<label for="edit-offer-type" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_tipo_negocio()}</label>
 					<select
 						id="edit-offer-type"
 						bind:value={form.offer_type}
 						class="select w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 					>
-						<option value="aluguel">Aluguel</option>
-						<option value="venda">Venda (preço da máquina)</option>
+						<option value="aluguel">{MACHINE_OFFER_LABEL.aluguel}</option>
+						<option value="venda">{m.anunciar_venda_preco_maquina()}</option>
 					</select>
 				</div>
 
 				{#if form.offer_type === 'aluguel'}
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="edit-rental-unit" class="mb-1 block text-sm font-medium text-surface-900-100">Cobrança</label>
+							<label for="edit-rental-unit" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_cobranca()}</label>
 							<select
 								id="edit-rental-unit"
 								bind:value={form.rental_unit}
@@ -405,7 +421,7 @@
 						</div>
 						<label class="flex cursor-pointer items-center gap-3 self-end rounded-container border border-surface-200-800 px-3 py-3 text-sm font-medium">
 							<input type="checkbox" bind:checked={form.operator_included} class="checkbox" />
-							Inclui operador
+							{m.anunciar_inclui_operador()}
 						</label>
 					</div>
 				{/if}
@@ -417,7 +433,7 @@
 				</label>
 				<input
 					id="edit-price"
-					placeholder="Ex: 500,00"
+					placeholder={m.anunciar_exemplo({ valor: formatNumber(500, { minimumFractionDigits: 2 }) })}
 					type="number"
 					min="0"
 					step="0.01"
@@ -430,26 +446,26 @@
 			{#if isMachinery}
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-type" class="mb-1 block text-sm font-medium text-surface-900-100">Tipo</label>
+						<label for="edit-type" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_tipo()}</label>
 						<select
 							id="edit-type"
 							bind:value={form.type_id}
 							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
-							<option value="" disabled>Selecione</option>
+							<option value="" disabled>{m.anunciar_selecione()}</option>
 							{#each types as type (type.id)}
-								<option value={type.id}>{type.name}</option>
+								<option value={type.id}>{machineTypeLabel(type.name)}</option>
 							{/each}
 						</select>
 					</div>
 					<div>
-						<label for="edit-brand" class="mb-1 block text-sm font-medium text-surface-900-100">Marca</label>
+						<label for="edit-brand" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_marca()}</label>
 						<select
 							id="edit-brand"
 							bind:value={form.brand_id}
 							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
-							<option value="" disabled>Selecione</option>
+							<option value="" disabled>{m.anunciar_selecione()}</option>
 							{#each brands as brand (brand.id)}
 								<option value={brand.id}>{brand.name}</option>
 							{/each}
@@ -458,10 +474,10 @@
 				</div>
 
 				<div>
-					<label for="edit-model" class="mb-1 block text-sm font-medium text-surface-900-100">Modelo</label>
+					<label for="edit-model" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_modelo()}</label>
 					<input
 						id="edit-model"
-						placeholder="Ex: 6100J"
+						placeholder={m.anunciar_exemplo({ valor: '6100J' })}
 						type="text"
 						bind:value={form.model}
 						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -470,11 +486,11 @@
 
 				<div>
 					<label for="edit-serial" class="mb-1 block text-sm font-medium text-surface-900-100"
-						>Número de série</label
+						>{m.anunciar_numero_serie()}</label
 					>
 					<input
 						id="edit-serial"
-						placeholder="Ex: 123456789ABC"
+						placeholder={m.anunciar_exemplo({ valor: '123456789ABC' })}
 						type="text"
 						bind:value={form.serial_number}
 						class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -483,23 +499,23 @@
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-condition" class="mb-1 block text-sm font-medium text-surface-900-100">Condição</label>
+						<label for="edit-condition" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_condicao()}</label>
 						<select
 							id="edit-condition"
 							bind:value={form.condition}
 							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
-							<option value="">Não informada</option>
+							<option value="">{m.anunciar_nao_informada()}</option>
 							{#each Object.entries(MACHINE_CONDITION_LABEL) as [value, label] (value)}
 								<option {value}>{label}</option>
 							{/each}
 						</select>
 					</div>
 					<div>
-						<label for="edit-power" class="mb-1 block text-sm font-medium text-surface-900-100">Potência (cv)</label>
+						<label for="edit-power" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_potencia()}</label>
 						<input
 							id="edit-power"
-							placeholder="Ex: 110"
+							placeholder={m.anunciar_exemplo({ valor: '110' })}
 							type="number"
 							min="1"
 							bind:value={form.power_hp}
@@ -509,25 +525,25 @@
 				</div>
 
 				<div>
-					<label for="edit-traction" class="mb-1 block text-sm font-medium text-surface-900-100">Tração</label>
+					<label for="edit-traction" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_tracao()}</label>
 					<select
 						id="edit-traction"
 						bind:value={form.traction}
 						class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 					>
-						<option value="">Não informada</option>
+						<option value="">{m.anunciar_nao_informada()}</option>
 						<option value="4x2">4x2</option>
 						<option value="4x4">4x4</option>
-						<option value="esteira">Esteira</option>
+						<option value="esteira">{tractionLabel('esteira')}</option>
 					</select>
 				</div>
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-900-100">Ano</label>
+						<label for="edit-year" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_ano()}</label>
 						<input
 							id="edit-year"
-							placeholder="Ex: 2018"
+							placeholder={m.anunciar_exemplo({ valor: '2018' })}
 							type="number"
 							min="1950"
 							bind:value={form.manufacture_year}
@@ -536,11 +552,11 @@
 					</div>
 					<div>
 						<label for="edit-horimeter" class="mb-1 block text-sm font-medium text-surface-900-100"
-							>Horímetro</label
+							>{m.anunciar_horimetro()}</label
 						>
 						<input
 							id="edit-horimeter"
-							placeholder="Ex: 2500"
+							placeholder={m.anunciar_exemplo({ valor: '2500' })}
 							type="number"
 							bind:value={form.current_horimeter}
 							class="input w-full rounded-container border border-surface-200-800 px-3 py-3 text-sm outline-none focus:border-primary-500"
@@ -550,35 +566,28 @@
 			{:else}
 				<div>
 					<label for="edit-category" class="mb-1 block text-sm font-medium text-surface-900-100"
-						>Categoria</label
+						>{m.anunciar_categoria()}</label
 					>
 					<select
 						id="edit-category"
 						bind:value={form.category}
 						class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 					>
-						<option value="" disabled>Selecione</option>
-						<option value="Sementes">Sementes</option>
-						<option value="Fertilizantes">Fertilizantes</option>
-						<option value="Mudas">Mudas</option>
-						<option value="Defensivos">Defensivos Agrícolas</option>
-						<option value="Corretivos">Corretivos (calcário, gesso)</option>
-						<option value="Grãos">Grãos</option>
-						<option value="Nutrição animal">Nutrição animal</option>
-						<option value="Peças">Peças e acessórios</option>
-						<option value="Insumo">Insumo</option>
-						<option value="Outros">Outros</option>
+						<option value="" disabled>{m.anunciar_selecione()}</option>
+						{#each PRODUCT_CATEGORIES as value (value)}
+							<option {value}>{value === 'Corretivos' ? m.anunciar_cat_corretivos_opcao() : categoryLabel(value)}</option>
+						{/each}
 					</select>
 				</div>
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
 						<label for="edit-qty" class="mb-1 block text-sm font-medium text-surface-900-100"
-							>Quantidade</label
+							>{m.anunciar_quantidade()}</label
 						>
 						<input
 							id="edit-qty"
-							placeholder="Ex: 100"
+							placeholder={m.anunciar_exemplo({ valor: '100' })}
 							type="number"
 							min="1"
 							bind:value={form.quantity}
@@ -586,27 +595,25 @@
 						/>
 					</div>
 					<div>
-						<label for="edit-unit" class="mb-1 block text-sm font-medium text-surface-900-100">Unidade</label>
+						<label for="edit-unit" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_unidade()}</label>
 						<select
 							id="edit-unit"
 							bind:value={form.stock_unit}
 							class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 						>
-							<option value="Sacas">Sacas</option>
-							<option value="Kg">Kg</option>
-							<option value="Toneladas">Toneladas</option>
-							<option value="Litros">Litros</option>
-							<option value="Unidades">Unidades</option>
+							{#each STOCK_UNITS as value (value)}
+								<option {value}>{stockUnitName(value)}</option>
+							{/each}
 						</select>
 					</div>
 				</div>
 
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="edit-brand-name" class="mb-1 block text-sm font-medium text-surface-900-100">Marca ou fabricante</label>
+						<label for="edit-brand-name" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_marca_fabricante()}</label>
 						<input
 							id="edit-brand-name"
-							placeholder="Ex: Brasmax"
+							placeholder={m.anunciar_exemplo({ valor: 'Brasmax' })}
 							type="text"
 							maxlength="80"
 							bind:value={form.brand_name}
@@ -614,10 +621,10 @@
 						/>
 					</div>
 					<div>
-						<label for="edit-min-order" class="mb-1 block text-sm font-medium text-surface-900-100">Pedido mínimo</label>
+						<label for="edit-min-order" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_pedido_minimo()}</label>
 						<input
 							id="edit-min-order"
-							placeholder={`Em ${stockUnitLabel(form.stock_unit)}`}
+							placeholder={m.anunciar_em_unidade({ unidade: stockUnitLabel(form.stock_unit) })}
 							type="number"
 							min="1"
 							bind:value={form.min_order}
@@ -629,10 +636,10 @@
 				{#if SEED_CATEGORIES.includes(form.category)}
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="edit-cultivar" class="mb-1 block text-sm font-medium text-surface-900-100">Cultivar</label>
+							<label for="edit-cultivar" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_cultivar()}</label>
 							<input
 								id="edit-cultivar"
-								placeholder="Ex: BMX Zeus IPRO"
+								placeholder={m.anunciar_exemplo({ valor: 'BMX Zeus IPRO' })}
 								type="text"
 								maxlength="80"
 								bind:value={form.cultivar}
@@ -640,10 +647,10 @@
 							/>
 						</div>
 						<div>
-							<label for="edit-harvest" class="mb-1 block text-sm font-medium text-surface-900-100">Safra</label>
+							<label for="edit-harvest" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_safra()}</label>
 							<input
 								id="edit-harvest"
-								placeholder="Ex: 2025/26"
+								placeholder={m.anunciar_exemplo({ valor: '2025/26' })}
 								type="text"
 								maxlength="7"
 								bind:value={form.harvest}
@@ -655,13 +662,13 @@
 			{/if}
 
 			<div>
-				<label for="edit-delivery" class="mb-1 block text-sm font-medium text-surface-900-100">Entrega</label>
+				<label for="edit-delivery" class="mb-1 block text-sm font-medium text-surface-900-100">{m.anunciar_entrega()}</label>
 				<select
 					id="edit-delivery"
 					bind:value={form.delivery}
 					class="select w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 py-3 text-sm outline-none focus:border-primary-500"
 				>
-					<option value="">Não informar</option>
+					<option value="">{m.anunciar_nao_informar()}</option>
 					{#each Object.entries(DELIVERY_LABEL) as [value, label] (value)}
 						<option {value}>{label}</option>
 					{/each}
@@ -670,7 +677,7 @@
 
 			<MunicipioPicker
 				id="edit-municipio"
-				label={isMachinery ? 'Cidade onde a máquina está' : 'Cidade onde o produto está'}
+				label={isMachinery ? m.anunciar_cidade_maquina() : m.anunciar_cidade_produto()}
 				bind:value={form.municipio}
 			/>
 
@@ -686,7 +693,7 @@
 				disabled={saving}
 				class="btn btn-lg preset-tonal w-full"
 			>
-				<span>Cancelar</span>
+				<span>{m.comum_cancelar()}</span>
 			</button>
 			<button
 				type="submit"
@@ -695,7 +702,7 @@
 				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
 				<Check size={18} />
-				<span>{saving ? 'Salvando...' : 'Salvar'}</span>
+				<span>{saving ? m.comum_salvando() : m.comum_salvar()}</span>
 			</button>
 		</div>
 	{/snippet}

@@ -1,10 +1,11 @@
 <script>
 	import { Search, X } from 'lucide-svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let {
 		value = $bindable(''),
-		placeholder = 'O que você procura?',
+		placeholder = m.busca_placeholder(),
 		loading = false,
 		inputId = 'marketplace-search'
 	} = $props();
@@ -22,7 +23,7 @@
 	<div class="relative mx-auto max-w-7xl">
 		{#if loading}
 			<LoadingIndicator
-				label="Atualizando resultados..."
+				label={m.busca_atualizando()}
 				size="1.25rem"
 				showLabel={false}
 				className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -47,8 +48,8 @@
 				type="button"
 				onclick={clearSearch}
 				class="btn-icon preset-tonal absolute right-2 top-1/2 -translate-y-1/2"
-				title="Limpar busca"
-				aria-label="Limpar busca"
+				title={m.busca_limpar_busca()}
+				aria-label={m.busca_limpar_busca()}
 			>
 				<X size={18} />
 			</button>

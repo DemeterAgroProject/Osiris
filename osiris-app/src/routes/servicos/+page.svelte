@@ -28,10 +28,12 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { formatBRL } from '$lib/i18n';
 
 	const serviceTabs = [
-		{ value: 'mao_de_obra', label: 'Mão de Obra', icon: Users },
-		{ value: 'pacote_completo', label: 'Pacote Completo', icon: Briefcase }
+		{ value: 'mao_de_obra', label: m.busca_mao_de_obra(), icon: Users },
+		{ value: 'pacote_completo', label: m.busca_pacote_completo(), icon: Briefcase }
 	];
 
 	let activeTab = $state('mao_de_obra');
@@ -61,11 +63,11 @@
 
 		return {
 			nextStatus,
-			title: isPausing ? 'Pausar serviço?' : 'Ativar serviço?',
+			title: isPausing ? m.busca_srv_pausar_titulo() : m.busca_srv_ativar_titulo(),
 			message: isPausing
-				? `"${statusConfirmItem.title}" deixará de aparecer na busca até você ativá-lo novamente.`
-				: `"${statusConfirmItem.title}" voltará a aparecer na busca do marketplace.`,
-			confirmLabel: isPausing ? 'Pausar serviço' : 'Ativar serviço',
+				? m.busca_srv_pausar_msg({ titulo: statusConfirmItem.title })
+				: m.busca_srv_ativar_msg({ titulo: statusConfirmItem.title }),
+			confirmLabel: isPausing ? m.busca_srv_pausar() : m.busca_srv_ativar(),
 			variant: isPausing ? 'warning' : 'default'
 		};
 	});
@@ -74,9 +76,9 @@
 		if (!deleteConfirmItem) return null;
 
 		return {
-			title: 'Excluir serviço?',
-			message: `Tem certeza que deseja excluir "${deleteConfirmItem.title}"? Esta ação não pode ser desfeita.`,
-			confirmLabel: 'Excluir serviço',
+			title: m.busca_srv_excluir_titulo(),
+			message: m.busca_srv_excluir_msg({ titulo: deleteConfirmItem.title }),
+			confirmLabel: m.busca_srv_excluir(),
 			variant: 'danger'
 		};
 	});
@@ -108,8 +110,8 @@
 	}
 
 	function getStatusLabel(status) {
-		if (isActiveStatus(status)) return 'Ativo';
-		if (isPausedStatus(status)) return 'Pausado';
+		if (isActiveStatus(status)) return m.busca_status_ativo();
+		if (isPausedStatus(status)) return m.busca_status_pausado();
 		return status || '—';
 	}
 
@@ -131,25 +133,35 @@
 		return `/anuncio/servico/${service.id}`;
 	}
 
+	// unidade depois do valor, conforme o modelo de cobrança gravado no banco (em português)
+	const PRICE_SUFFIX = {
+		'Por Hora': () => ` / ${m.busca_unidade_hora()}`,
+		'Por Hectare': () => ' / ha'
+	};
+
 	function formatPrice(price, model) {
-		if (!price) return 'A combinar';
-		const formatted = new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: 'BRL'
-		}).format(price);
-		return `${formatted}${model !== 'Fixo' && model !== 'Empreitada/Fixo' && model !== 'A Combinar' ? ` / ${model}` : ''}`;
+		if (!price) return m.busca_a_combinar();
+		const formatted = formatCurrencyOnly(price);
+		if (!model || model === 'Fixo' || model === 'Empreitada/Fixo' || model === 'A Combinar') return formatted;
+		return `${formatted}${PRICE_SUFFIX[model]?.() ?? ` / ${model}`}`;
 	}
 
-	// rótulo do valor no computador, conforme o modelo de cobrança (services_pricing_model_check)
+	// rótulo do valor no computador, conforme o modelo de cobrança (services_pricing_model_check);
+	// guarda a função da mensagem
 	const PRICING_CAPTION = {
-		'Por Hora': 'Por hora',
-		'Por Hectare': 'Por hectare',
-		'Empreitada/Fixo': 'Valor fechado',
-		'A Combinar': 'A combinar'
+		'Por Hora': m.busca_cobranca_por_hora,
+		'Por Hectare': m.busca_cobranca_por_hectare,
+		'Empreitada/Fixo': m.busca_cobranca_valor_fechado,
+		'A Combinar': m.busca_a_combinar
 	};
 
 	function formatCurrencyOnly(price) {
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+		return formatBRL(price);
+	}
+
+	function activeCountLabel(list) {
+		const n = list.filter((serv) => isActiveStatus(serv.status)).length;
+		return n === 1 ? m.busca_n_ativo({ n }) : m.busca_n_ativos({ n });
 	}
 
 	// resumo do topo (computador), só com o que já foi carregado
@@ -158,23 +170,23 @@
 		const packages = allServices.filter((serv) => serv.service_type === 'Pacote Completo');
 		return [
 			{
-				label: 'Mão de obra',
+				label: m.busca_mao_de_obra(),
 				value: labor.length,
-				hint: `${labor.filter((serv) => isActiveStatus(serv.status)).length} ativos`,
+				hint: activeCountLabel(labor),
 				icon: Users,
 				tone: 'preset-tonal-primary'
 			},
 			{
-				label: 'Pacote completo',
+				label: m.busca_pacote_completo(),
 				value: packages.length,
-				hint: `${packages.filter((serv) => isActiveStatus(serv.status)).length} ativos`,
+				hint: activeCountLabel(packages),
 				icon: Briefcase,
 				tone: 'preset-tonal-secondary'
 			},
 			{
-				label: 'Pausados',
+				label: m.busca_pausados(),
 				value: allServices.filter((serv) => isPausedStatus(serv.status)).length,
-				hint: 'não aparecem na busca',
+				hint: m.busca_nao_aparecem_busca(),
 				icon: Pause,
 				tone: 'preset-tonal-warning'
 			}
@@ -207,18 +219,18 @@
 	function serviceMenuItems(service) {
 		const active = isActiveStatus(service.status);
 		return [
-			{ value: 'ver', label: 'Ver anúncio', icon: ExternalLink, href: getServiceHref(service) },
-			{ value: 'editar', label: 'Editar', icon: Edit, onselect: () => openEdit(service) },
+			{ value: 'ver', label: m.busca_ver_anuncio(), icon: ExternalLink, href: getServiceHref(service) },
+			{ value: 'editar', label: m.comum_editar(), icon: Edit, onselect: () => openEdit(service) },
 			{
 				value: 'status',
-				label: active ? 'Pausar serviço' : 'Ativar serviço',
+				label: active ? m.busca_srv_pausar() : m.busca_srv_ativar(),
 				icon: active ? Pause : Play,
 				disabled: togglingId === service.id,
 				onselect: () => requestToggleStatus(service)
 			},
 			{
 				value: 'excluir',
-				label: 'Excluir',
+				label: m.comum_excluir(),
 				icon: Trash2,
 				danger: true,
 				separator: true,
@@ -245,7 +257,7 @@
 
 		if (error) {
 			console.error('Erro ao buscar serviços:', error);
-			statusMessage = { text: 'Não foi possível carregar seus serviços.', type: 'error' };
+			statusMessage = { text: m.busca_srv_erro_carregar(), type: 'error' };
 			allServices = [];
 		} else {
 			allServices = data ?? [];
@@ -310,9 +322,9 @@
 
 	function formatDeleteError(error) {
 		if (error?.code === '23503' || error?.status === 409) {
-			return 'Não foi possível excluir: este serviço ainda possui vínculos (negociações ou reservas).';
+			return m.busca_srv_erro_vinculos();
 		}
-		return 'Erro ao excluir o serviço.';
+		return m.busca_srv_erro_excluir();
 	}
 
 	async function confirmToggleStatus() {
@@ -328,7 +340,7 @@
 
 		if (error) {
 			statusMessage = {
-				text: nextStatus === 'pausado' ? 'Erro ao pausar o serviço.' : 'Erro ao ativar o serviço.',
+				text: nextStatus === 'pausado' ? m.busca_srv_erro_pausar() : m.busca_srv_erro_ativar(),
 				type: 'error'
 			};
 		} else {
@@ -336,7 +348,7 @@
 				serv.id === item.id ? { ...serv, status: nextStatus } : serv
 			);
 			statusMessage = {
-				text: nextStatus === 'pausado' ? 'Serviço pausado com sucesso.' : 'Serviço ativado com sucesso.',
+				text: nextStatus === 'pausado' ? m.busca_srv_pausado_ok() : m.busca_srv_ativado_ok(),
 				type: 'success'
 			};
 			statusConfirmOpen = false;
@@ -361,7 +373,7 @@
 			statusMessage = { text: formatDeleteError(error), type: 'error' };
 		} else {
 			allServices = allServices.filter((serv) => serv.id !== id);
-			statusMessage = { text: 'Serviço excluído.', type: 'success' };
+			statusMessage = { text: m.busca_srv_excluido(), type: 'success' };
 			deleteConfirmOpen = false;
 			deleteConfirmItem = null;
 		}
@@ -372,7 +384,7 @@
 
 	async function handleEditSaved() {
 		await fetchServices();
-		statusMessage = { text: 'Serviço atualizado com sucesso.', type: 'success' };
+		statusMessage = { text: m.busca_srv_atualizado(), type: 'success' };
 	}
 
 	onMount(() => {
@@ -381,7 +393,7 @@
 </script>
 
 <svelte:head>
-	<title>Meus serviços — Osiris</title>
+	<title>{m.busca_meus_servicos()} — Osiris</title>
 </svelte:head>
 
 {#snippet serviceList()}
@@ -415,7 +427,7 @@
 							<div class="lg:hidden">
 								<AppMenu
 									items={serviceMenuItems(serv)}
-									label="Ações do serviço"
+									label={m.busca_acoes_servico()}
 									triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
 								>
 									{#snippet trigger()}
@@ -446,17 +458,17 @@
 
 					<!-- computador: valor com o modo de cobrança e ações à direita -->
 					<div class="hidden shrink-0 text-right lg:block">
-						<p class="preset-typo-label">{PRICING_CAPTION[serv.pricing_model] ?? 'Valor'}</p>
+						<p class="preset-typo-label">{PRICING_CAPTION[serv.pricing_model]?.() ?? m.busca_valor()}</p>
 						<p class="text-2xl font-bold leading-tight text-primary-700-300">
-							{serv.price ? formatCurrencyOnly(serv.price) : 'A combinar'}
+							{serv.price ? formatCurrencyOnly(serv.price) : m.busca_a_combinar()}
 						</p>
 					</div>
 					<div class="hidden shrink-0 items-center gap-2 lg:flex">
 						<button type="button" onclick={() => openEdit(serv)} class="btn preset-tonal">
 							<Edit size={18} />
-							<span>Editar</span>
+							<span>{m.comum_editar()}</span>
 						</button>
-						<AppMenu items={serviceMenuItems(serv)} label="Ações do serviço" triggerClass="btn-icon btn-icon-lg preset-tonal">
+						<AppMenu items={serviceMenuItems(serv)} label={m.busca_acoes_servico()} triggerClass="btn-icon btn-icon-lg preset-tonal">
 							{#snippet trigger()}
 								<MoreVertical size={18} />
 							{/snippet}
@@ -473,14 +485,14 @@
 						<Briefcase class="h-8 w-8" />
 					{/if}
 				</span>
-				<h3 class="mt-3 text-base font-semibold text-surface-950-50">Nenhum serviço encontrado</h3>
+				<h3 class="mt-3 text-base font-semibold text-surface-950-50">{m.busca_srv_nenhum()}</h3>
 				<p class="mt-1 text-sm text-surface-800-200">
-					Você ainda não possui serviços cadastrados nesta categoria.
+					{m.busca_srv_nenhum_texto()}
 				</p>
 				{#if !searchQuery.trim()}
 					<a href={resolve('/servicos/novo')} class="btn preset-filled-primary-500 mt-4">
 						<Plus size={18} />
-						<span>Oferecer serviço</span>
+						<span>{m.busca_oferecer_servico()}</span>
 					</a>
 				{/if}
 			</div>
@@ -489,30 +501,30 @@
 {/snippet}
 
 <div class="min-h-screen pb-24">
-	<Header title="Meus serviços" />
+	<Header title={m.busca_meus_servicos()} />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
-		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label={m.busca_caminho()}>
 			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 				<Home size={16} />
-				Início
+				{m.nav_inicio()}
 			</a>
 			<span class="text-surface-700-300">/</span>
-			<span class="font-semibold text-surface-950-50" aria-current="page">Meus serviços</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">{m.busca_meus_servicos()}</span>
 		</nav>
 
 		<div class="mb-4 flex items-center justify-between gap-3">
 			<div class="min-w-0">
-				<h1 class="preset-typo-headline">Meus serviços</h1>
-				<p class="preset-typo-subtitle">Mão de obra e pacotes que você oferece</p>
+				<h1 class="preset-typo-headline">{m.busca_meus_servicos()}</h1>
+				<p class="preset-typo-subtitle">{m.busca_srv_subtitulo()}</p>
 			</div>
 			<a
 				href={resolve('/servicos/novo')}
 				class="btn btn-md preset-filled-primary-500 shrink-0"
 			>
 				<Plus size={18} />
-				<span class="lg:hidden">Oferecer</span>
-				<span class="hidden lg:inline">Oferecer serviço</span>
+				<span class="lg:hidden">{m.busca_oferecer()}</span>
+				<span class="hidden lg:inline">{m.busca_oferecer_servico()}</span>
 			</a>
 		</div>
 
@@ -534,7 +546,7 @@
 			</div>
 		{:else if loading}
 			<div class="mb-6 hidden lg:block">
-				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+				<ListingSkeleton variant="stats" count={3} label={m.busca_carregando_resumo()} />
 			</div>
 		{/if}
 
@@ -554,19 +566,20 @@
 			</div>
 		{/if}
 
-		<AppTabs bind:value={activeTab} items={serviceTabs} label="Tipo de serviço" variant="segmented" class="gap-4">
+		<AppTabs bind:value={activeTab} items={serviceTabs} label={m.busca_tipo_servico()} variant="segmented" class="gap-4">
 			<div class="relative">
 				<Search class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
 				<input
 					type="search"
-					placeholder="Buscar nos meus serviços..."
+					placeholder={m.busca_srv_buscar_placeholder()}
+					aria-label={m.busca_srv_buscar_placeholder()}
 					bind:value={searchQuery}
 					class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-11 pr-4 text-base shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
 
 			{#if loading}
-				<ListingSkeleton variant="list" count={3} label="Carregando seus serviços..." />
+				<ListingSkeleton variant="list" count={3} label={m.busca_srv_carregando()} />
 			{:else}
 				<AppTabsPanel value="mao_de_obra">
 					{@render serviceList()}
@@ -584,7 +597,7 @@
 		bind:open={statusConfirmOpen}
 		title={statusConfirmContent?.title ?? ''}
 		message={statusConfirmContent?.message ?? ''}
-		confirmLabel={statusConfirmContent?.confirmLabel ?? 'Confirmar'}
+		confirmLabel={statusConfirmContent?.confirmLabel ?? m.comum_confirmar()}
 		variant={statusConfirmContent?.variant ?? 'default'}
 		loading={statusConfirmLoading}
 		onconfirm={confirmToggleStatus}
@@ -595,7 +608,7 @@
 		bind:open={deleteConfirmOpen}
 		title={deleteConfirmContent?.title ?? ''}
 		message={deleteConfirmContent?.message ?? ''}
-		confirmLabel={deleteConfirmContent?.confirmLabel ?? 'Excluir'}
+		confirmLabel={deleteConfirmContent?.confirmLabel ?? m.comum_excluir()}
 		variant={deleteConfirmContent?.variant ?? 'danger'}
 		loading={deleteConfirmLoading}
 		onconfirm={confirmDelete}
