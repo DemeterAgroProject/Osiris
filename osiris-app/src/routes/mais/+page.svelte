@@ -19,7 +19,8 @@
         LogOut,
         ChevronRight,
         Settings,
-        Shield
+        Shield,
+        CircleHelp
     } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
@@ -107,6 +108,8 @@
                   { icon: Briefcase, label: 'Oferecer serviços', href: '/login?redirect=/servicos/novo' }
               ]
     );
+
+    const helpItems = [{ icon: CircleHelp, label: 'Central de ajuda', href: '/ajuda' }];
 
     async function refreshUser() {
         loading = true;
@@ -256,7 +259,7 @@
                     <p class="mt-1 text-sm opacity-90">Entre para anunciar, negociar e gerenciar seu inventário.</p>
                     <a
                         href={resolve('/login')}
-                        class="btn btn-lg preset-filled-surface-50-950 mt-4"
+                        class="btn btn-md preset-filled-surface-50-950 mt-4"
                     >
                         <LogIn size={18} />
                         <span>Entrar com Google</span>
@@ -297,6 +300,7 @@
         {@render menuGroup('mais-atividade', 'Minha atividade', activityItems)}
         {@render menuGroup('mais-descubra', 'Descubra', discoverItems)}
         {@render menuGroup('mais-vender', 'Vender e gerir', sellItems)}
+        {@render menuGroup('mais-ajuda', 'Ajuda', helpItems)}
 
         {#if isLoggedIn}
             <button
