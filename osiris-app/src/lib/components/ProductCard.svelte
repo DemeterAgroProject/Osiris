@@ -2,24 +2,27 @@
 	import { resolve } from '$app/paths';
 	import { MapPin, Clock, Briefcase, Tractor, Leaf, ImageOff, Eye } from 'lucide-svelte';
 	import { listingPriceLabel, MACHINE_OFFER_LABEL } from '$lib/pricing';
+	import { m } from '$lib/paraglide/messages';
+	import { intlLocale } from '$lib/i18n';
 
+	// "há 3 h", "3h ago", "hace 3 h": tempo relativo no idioma atual
 	function formatPublishedDate(value) {
-		if (!value) return 'Agora';
+		if (!value) return m.busca_agora();
 		const published = new Date(value);
-		if (Number.isNaN(published.getTime())) return 'Agora';
+		if (Number.isNaN(published.getTime())) return m.busca_agora();
 
 		const diffInHours = Math.floor((Date.now() - published.getTime()) / (1000 * 60 * 60));
-		if (diffInHours < 1) return 'Agora';
-		if (diffInHours < 24) return `${diffInHours}h atrás`;
-		const diffInDays = Math.floor(diffInHours / 24);
-		return `${diffInDays}d atrás`;
+		if (diffInHours < 1) return m.busca_agora();
+		const relative = new Intl.RelativeTimeFormat(intlLocale(), { style: 'narrow' });
+		if (diffInHours < 24) return relative.format(-diffInHours, 'hour');
+		return relative.format(-Math.floor(diffInHours / 24), 'day');
 	}
 
-	// selo sobre a foto: diz de cara o que é o anúncio
+	// selo sobre a foto: diz de cara o que é o anúncio (label guarda a função da mensagem)
 	const TYPE_BADGE = {
-		maquinario: { label: 'Máquina', icon: Tractor, tone: 'preset-filled-primary-500' },
-		produto: { label: 'Produto', icon: Leaf, tone: 'preset-filled-tertiary-500' },
-		servico: { label: 'Serviço', icon: Briefcase, tone: 'preset-filled-secondary-500' }
+		maquinario: { label: m.comum_maquina, icon: Tractor, tone: 'preset-filled-primary-500' },
+		produto: { label: m.busca_badge_produto, icon: Leaf, tone: 'preset-filled-tertiary-500' },
+		servico: { label: m.comum_servico, icon: Briefcase, tone: 'preset-filled-secondary-500' }
 	};
 
 	let { title, price, pricingModel = null, priceUnit = null, location = '', publishedAt, imageUrl, tipo = '', adId = '', href = '', description = '' } = $props();
@@ -27,10 +30,11 @@
 	// imagem que falha ao carregar (link quebrado) cai no aviso "Sem imagem"
 	let failedImage = $state(null);
 
-	const resolvedTitle = $derived(title || 'Anúncio');
+	const resolvedTitle = $derived(title || m.busca_anuncio_padrao());
 	const resolvedPrice = $derived(listingPriceLabel(tipo, price, pricingModel, priceUnit));
-	// "R$ 280,00 / ha": valor em destaque, unidade menor (cabe numa linha no card)
-	const priceParts = $derived(resolvedPrice.match(/^(R\$\s?[\d.,]+)\s*(.*)$/u) ?? [resolvedPrice, resolvedPrice, '']);
+	// "R$ 280,00 / ha": valor em destaque, unidade menor (cabe numa linha no card);
+	// o valor vai até o último algarismo, para servir ao formato de qualquer idioma ("R$280.00 / ha")
+	const priceParts = $derived(resolvedPrice.match(/^(\D*\d[\d.,]*)\s*(.*)$/u) ?? [resolvedPrice, resolvedPrice, '']);
 	const resolvedPublishedAt = $derived(formatPublishedDate(publishedAt));
 	const resolvedImage = $derived(imageUrl && imageUrl !== failedImage ? imageUrl : null);
 	const resolvedHref = $derived(href || (tipo && adId ? `/anuncio/${tipo}/${adId}` : ''));
@@ -38,8 +42,8 @@
 	// máquina: pricingModel guarda o offer_type (venda/aluguel)
 	const badgeLabel = $derived(
 		tipo === 'maquinario' && MACHINE_OFFER_LABEL[pricingModel]
-			? `${badge?.label} · ${MACHINE_OFFER_LABEL[pricingModel]}`
-			: badge?.label
+			? `${badge?.label()} · ${MACHINE_OFFER_LABEL[pricingModel]}`
+			: badge?.label()
 	);
 </script>
 
@@ -66,7 +70,7 @@
 				{:else}
 					<ImageOff class="h-8 w-8" strokeWidth={1.5} />
 				{/if}
-				Sem foto
+				{m.busca_sem_foto()}
 			</div>
 		{/if}
 
@@ -104,7 +108,7 @@
 			<!-- computador: deixa claro que o card abre o anúncio (o card inteiro já é o link) -->
 			<span class="btn preset-tonal-primary mt-3 hidden w-full lg:inline-flex" aria-hidden="true">
 				<Eye size={18} />
-				<span>Ver detalhes</span>
+				<span>{m.busca_ver_detalhes()}</span>
 			</span>
 		{/if}
 	</div>
@@ -112,7 +116,7 @@
 
 <article class="group h-full overflow-hidden rounded-container border border-surface-200-800 bg-surface-50-950 shadow-sm transition-shadow hover:shadow-md">
 	{#if resolvedHref}
-		<a href={resolve(resolvedHref)} class="flex h-full flex-col" aria-label={`Ver anúncio: ${resolvedTitle}`}>
+		<a href={resolve(resolvedHref)} class="flex h-full flex-col" aria-label={m.busca_ver_anuncio_titulo({ titulo: resolvedTitle })}>
 			{@render cover()}
 			{@render details()}
 		</a>

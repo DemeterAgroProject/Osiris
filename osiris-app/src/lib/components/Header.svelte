@@ -22,6 +22,8 @@
     import { watchChanges } from '$lib/realtime';
     import UserMenu from '$lib/components/UserMenu.svelte';
     import AppPopover from '$lib/components/ui/AppPopover.svelte';
+    import { m } from '$lib/paraglide/messages';
+    import { notificationText } from '$lib/notifications';
     
     function resolveDisplayName(profile, authUser) {
         return (
@@ -29,7 +31,7 @@
             profile?.name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split('@')[0] ||
-            'Usuário'
+            m.app_usuario()
         );
     }
 
@@ -79,21 +81,22 @@
     let { title = '', backHref = '', backUsesHistory = false } = $props();
 
     // menu do computador: quem entrou vê as áreas da conta; visitante vê as categorias do marketplace
+    // (label guarda a função da mensagem, chamada no template)
     const MEMBER_NAV = [
-        { href: '/', label: 'Início' },
-        { href: '/buscar', label: 'Buscar' },
-        { href: '/inventario', label: 'Meu inventário' },
-        { href: '/servicos', label: 'Meus serviços' },
-        { href: '/negociacoes', label: 'Negociações' },
-        { href: '/mais', label: 'Mais' }
+        { href: '/', label: m.nav_inicio },
+        { href: '/buscar', label: m.nav_buscar },
+        { href: '/inventario', label: m.app_meu_inventario },
+        { href: '/servicos', label: m.app_meus_servicos },
+        { href: '/negociacoes', label: m.app_negociacoes },
+        { href: '/mais', label: m.nav_mais }
     ];
     const VISITOR_NAV = [
-        { href: '/', label: 'Início' },
-        { href: '/buscar', label: 'Buscar' },
-        { href: '/buscar?tipo=maquinario', label: 'Máquinas' },
-        { href: '/buscar?tipo=produto', label: 'Produtos e insumos' },
-        { href: '/buscar?tipo=servico', label: 'Serviços' },
-        { href: '/mais', label: 'Mais' }
+        { href: '/', label: m.nav_inicio },
+        { href: '/buscar', label: m.nav_buscar },
+        { href: '/buscar?tipo=maquinario', label: m.app_maquinas },
+        { href: '/buscar?tipo=produto', label: m.app_produtos_insumos },
+        { href: '/buscar?tipo=servico', label: m.app_servicos },
+        { href: '/mais', label: m.nav_mais }
     ];
 
     function isNavActive(href) {
@@ -212,11 +215,11 @@
     function formatTime(dateStr) {
         const diff = Date.now() - new Date(dateStr).getTime();
         const min = Math.floor(diff / 60000);
-        if (min < 1) return 'agora';
-        if (min < 60) return `${min}min`;
+        if (min < 1) return m.app_tempo_agora();
+        if (min < 60) return m.app_tempo_minutos({ n: min });
         const h = Math.floor(min / 60);
-        if (h < 24) return `${h}h`;
-        return `${Math.floor(h / 24)}d`;
+        if (h < 24) return m.app_tempo_horas({ n: h });
+        return m.app_tempo_dias({ n: Math.floor(h / 24) });
     }
 
     onMount(() => {
@@ -245,21 +248,21 @@
                         }
                     }}
                     class="btn-icon btn-icon-lg preset-tonal shrink-0"
-                    title="Voltar"
-                    aria-label="Voltar"
+                    title={m.comum_voltar()}
+                    aria-label={m.comum_voltar()}
                 >
                     <ArrowLeft size={18} />
                 </a>
             {:else}
-                <a href={resolve('/')} class="flex h-11 w-11 shrink-0 items-center justify-center" aria-label="Início">
-                    <img src="/logo_black.png" alt="Logo Osiris" class="h-10" />
+                <a href={resolve('/')} class="flex h-11 w-11 shrink-0 items-center justify-center" aria-label={m.nav_inicio()}>
+                    <img src="/logo_black.png" alt={m.app_logo_alt()} class="h-10" />
                 </a>
             {/if}
 
             <!-- computador: marca no lugar do título da tela -->
             <a href={resolve('/')} class="hidden leading-tight xl:block">
                 <span class="block text-lg font-bold text-surface-950-50">Osiris</span>
-                <span class="block text-primary-700-300 preset-typo-label">Marketplace agro</span>
+                <span class="block text-primary-700-300 preset-typo-label">{m.app_marca_subtitulo()}</span>
             </a>
 
             {#if title}
@@ -271,7 +274,7 @@
         </div>
 
         <!-- computador: as mesmas seções da barra inferior do celular -->
-        <nav class="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex" aria-label="Navegação principal">
+        <nav class="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex" aria-label={m.nav_navegacao_principal()}>
             {#each isLoggedIn ? MEMBER_NAV : VISITOR_NAV as item (item.href)}
                 {@const isActive = isNavActive(item.href)}
                 <a
@@ -279,7 +282,7 @@
                     aria-current={isActive ? 'page' : undefined}
                     class="btn px-3 {isActive ? 'preset-tonal-primary' : 'hover:preset-tonal'}"
                 >
-                    <span>{item.label}</span>
+                    <span>{item.label()}</span>
                 </a>
             {/each}
         </nav>
@@ -289,24 +292,24 @@
                 <a
                     href={resolve('/anunciar')}
                     class="btn preset-filled-primary-500 mr-2 hidden lg:inline-flex"
-                    title="Novo anúncio"
-                    aria-label="Novo anúncio"
+                    title={m.app_novo_anuncio()}
+                    aria-label={m.app_novo_anuncio()}
                 >
                     <Plus size={18} />
-                    <span class="hidden xl:inline">Novo anúncio</span>
+                    <span class="hidden xl:inline">{m.app_novo_anuncio()}</span>
                 </a>
             {:else}
                 <!-- visitante: entra antes e volta direto para o anúncio (mesmo caminho da tela Mais) -->
                 <a href={resolve('/login?redirect=/anunciar')} class="btn preset-tonal-primary mr-1 hidden lg:inline-flex">
                     <Megaphone size={18} />
-                    <span>Anunciar</span>
+                    <span>{m.nav_anunciar()}</span>
                 </a>
             {/if}
             {#if isLoggedIn}
             <AppPopover
                 bind:open={notifOpen}
-                title="Notificações"
-                label={unreadCount > 0 ? `Notificações: ${unreadCount} não lidas` : 'Notificações'}
+                title={m.app_notificacoes()}
+                label={unreadCount > 0 ? m.app_notificacoes_nao_lidas({ count: unreadCount }) : m.app_notificacoes()}
                 triggerClass="btn-icon btn-icon-lg rounded-full relative data-[state=open]:preset-tonal-primary"
                 contentClass="w-[22rem]"
             >
@@ -327,7 +330,7 @@
                             class="btn btn-sm preset-tonal-primary"
                         >
                             <CheckCheck size={18} />
-                            <span>Marcar todas como lidas</span>
+                            <span>{m.app_marcar_todas_lidas()}</span>
                         </button>
                     {/if}
                 {/snippet}
@@ -338,13 +341,14 @@
                             <span class="flex h-14 w-14 items-center justify-center rounded-full preset-tonal-surface">
                                 <Bell class="h-7 w-7 opacity-60" />
                             </span>
-                            <p class="text-sm font-semibold text-surface-950-50">Nenhuma notificação</p>
-                            <p class="text-xs">Avisos de propostas, mensagens e operações aparecem aqui.</p>
+                            <p class="text-sm font-semibold text-surface-950-50">{m.app_nenhuma_notificacao()}</p>
+                            <p class="text-xs">{m.app_notificacoes_vazio_desc()}</p>
                         </div>
                     {:else}
                         <ul class="divide-y divide-surface-200-800">
                             {#each notifications as notif (notif.id)}
                                 {@const style = notificationStyle(notif.type)}
+                                {@const text = notificationText(notif)}
                                 <li>
                                     <button
                                         type="button"
@@ -355,18 +359,18 @@
                                             <style.icon class="h-5 w-5" />
                                             {#if !notif.is_read}
                                                 <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-primary-500 ring-2 ring-surface-50-950">
-                                                    <span class="sr-only">Não lida</span>
+                                                    <span class="sr-only">{m.app_nao_lida()}</span>
                                                 </span>
                                             {/if}
                                         </span>
 
                                         <span class="min-w-0 flex-1">
                                             <span class="flex items-start justify-between gap-2">
-                                                <span class="line-clamp-2 text-sm text-surface-950-50 {!notif.is_read ? 'font-bold' : 'font-medium'}">{notif.title}</span>
+                                                <span class="line-clamp-2 text-sm text-surface-950-50 {!notif.is_read ? 'font-bold' : 'font-medium'}">{text.title}</span>
                                                 <span class="shrink-0 pt-0.5 text-xs text-surface-800-200">{formatTime(notif.created_at)}</span>
                                             </span>
-                                            {#if notif.body}
-                                                <span class="mt-0.5 line-clamp-2 block text-sm leading-snug text-surface-900-100">{notif.body}</span>
+                                            {#if text.body}
+                                                <span class="mt-0.5 line-clamp-2 block text-sm leading-snug text-surface-900-100">{text.body}</span>
                                             {/if}
                                         </span>
                                     </button>
@@ -406,7 +410,7 @@
                     class="btn preset-filled-primary-500"
                 >
                     <User size={18} />
-                    <span>Entrar</span>
+                    <span>{m.nav_entrar()}</span>
                 </button>
             {/if}
         </div>

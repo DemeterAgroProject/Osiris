@@ -17,21 +17,13 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import CancelBookingDialog from '$lib/components/CancelBookingDialog.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { formatDate, intlLocale } from '$lib/i18n';
 
-	const monthNames = [
-		'Janeiro',
-		'Fevereiro',
-		'Março',
-		'Abril',
-		'Maio',
-		'Junho',
-		'Julho',
-		'Agosto',
-		'Setembro',
-		'Outubro',
-		'Novembro',
-		'Dezembro'
-	];
+	// nomes de mês e dia da semana no idioma atual (7/1/2024 foi um domingo)
+	const weekdayNames = Array.from({ length: 7 }, (_, i) =>
+		new Date(2024, 0, 7 + i).toLocaleDateString(intlLocale(), { weekday: 'short' }).replace('.', '')
+	);
 
 	const ACTIVE_BOOKING_STATUSES = ['pendente', 'em_operacao', 'em_avaliacao'];
 	const ACTIVE_NEGOTIATION_STATUSES = ['solicitada', 'em_negociacao'];
@@ -45,6 +37,9 @@
 
 	let currentYear = $derived(currentDate.getFullYear());
 	let currentMonth = $derived(currentDate.getMonth());
+	const monthLabel = $derived(
+		new Date(currentYear, currentMonth, 1).toLocaleDateString(intlLocale(), { month: 'long' })
+	);
 
 	function dateOnly(value) {
 		if (!value) return null;
@@ -55,7 +50,8 @@
 		const normalized = dateOnly(dateString);
 		if (!normalized) return '';
 		const [year, month, day] = normalized.split('-');
-		return `${day}/${month}/${year}`;
+		// data local (sem fuso), para não voltar um dia
+		return formatDate(new Date(Number(year), Number(month) - 1, Number(day)));
 	}
 
 	function rangesOverlap(aStart, aEnd, bStart, bEnd) {
@@ -71,13 +67,13 @@
 	async function fetchListingTitle(productId, serviceId) {
 		if (productId) {
 			const { data } = await supabase.from('products').select('name').eq('id', productId).maybeSingle();
-			return data?.name || 'Produto';
+			return data?.name || m.operacao_produto();
 		}
 		if (serviceId) {
 			const { data } = await supabase.from('services').select('title').eq('id', serviceId).maybeSingle();
-			return data?.title || 'Serviço';
+			return data?.title || m.operacao_servico();
 		}
-		return 'Reserva';
+		return m.operacao_titulo();
 	}
 
 	async function enrichBookingRow(row) {
@@ -213,17 +209,17 @@
 </script>
 
 <svelte:head>
-	<title>Agenda — Osiris</title>
+	<title>{m.operacao_agenda()} — Osiris</title>
 </svelte:head>
 
 <div class="min-h-screen pb-24">
-	<Header title="Agenda" />
+	<Header title={m.operacao_agenda()} />
 
 	<main class="mx-auto w-full max-w-3xl space-y-6 px-4 py-4">
 		<div>
-			<h1 class="preset-typo-headline">Minha agenda</h1>
+			<h1 class="preset-typo-headline">{m.operacao_minha_agenda()}</h1>
 			<p class="mt-1 preset-typo-subtitle">
-				Propostas em negociação e operações confirmadas no calendário.
+				{m.operacao_agenda_subtitulo()}
 			</p>
 		</div>
 
@@ -234,13 +230,13 @@
 		{:else}
 			<div class="rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
 				<div class="mb-4 flex items-center justify-between">
-					<h2 class="capitalize preset-typo-title">{monthNames[currentMonth]} {currentYear}</h2>
+					<h2 class="capitalize preset-typo-title">{monthLabel} {currentYear}</h2>
 					<div class="flex gap-1">
 						<button
 							type="button"
 							onclick={() => changeMonth(-1)}
-							aria-label="Mês anterior"
-							title="Mês anterior"
+							aria-label={m.operacao_mes_anterior()}
+							title={m.operacao_mes_anterior()}
 							class="btn-icon btn-icon-lg preset-tonal"
 						>
 							<ChevronLeft size={18} />
@@ -248,8 +244,8 @@
 						<button
 							type="button"
 							onclick={() => changeMonth(1)}
-							aria-label="Próximo mês"
-							title="Próximo mês"
+							aria-label={m.operacao_proximo_mes()}
+							title={m.operacao_proximo_mes()}
 							class="btn-icon btn-icon-lg preset-tonal"
 						>
 							<ChevronRight size={18} />
@@ -261,13 +257,9 @@
 					style="display: grid; grid-template-columns: repeat(7, 1fr);"
 					class="mb-2 gap-1 text-center text-xs font-semibold text-surface-800-200"
 				>
-					<div>Dom</div>
-					<div>Seg</div>
-					<div>Ter</div>
-					<div>Qua</div>
-					<div>Qui</div>
-					<div>Sex</div>
-					<div>Sáb</div>
+					{#each weekdayNames as weekday, index (index)}
+						<div class="capitalize">{weekday}</div>
+					{/each}
 				</div>
 
 				<div style="display: grid; grid-template-columns: repeat(7, 1fr);" class="gap-1">
@@ -298,25 +290,25 @@
 					class="mt-4 flex flex-wrap justify-center gap-3 border-t border-surface-200-800 pt-3 text-xs font-medium"
 				>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded border border-secondary-500 preset-tonal-secondary"></span> Proposta nova
+						<span class="h-3 w-3 rounded border border-secondary-500 preset-tonal-secondary"></span> {m.operacao_legenda_proposta_nova()}
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded preset-filled-secondary-500"></span> Em negociação
+						<span class="h-3 w-3 rounded preset-filled-secondary-500"></span> {m.operacao_legenda_em_negociacao()}
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded preset-tonal-warning"></span> Operação pendente
+						<span class="h-3 w-3 rounded preset-tonal-warning"></span> {m.operacao_legenda_pendente()}
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded preset-filled-primary-500"></span> Em operação
+						<span class="h-3 w-3 rounded preset-filled-primary-500"></span> {m.operacao_legenda_em_operacao()}
 					</div>
 					<div class="flex items-center gap-1.5">
-						<span class="h-3 w-3 rounded preset-filled-error-500"></span> Conflito
+						<span class="h-3 w-3 rounded preset-filled-error-500"></span> {m.operacao_legenda_conflito()}
 					</div>
 				</div>
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="preset-typo-title">Propostas em negociação</h2>
+				<h2 class="preset-typo-title">{m.operacao_propostas_em_negociacao()}</h2>
 
 				{#each activeNegotiations as neg (neg.id)}
 					{@const conflict = hasConflict(neg)}
@@ -339,12 +331,12 @@
 								<h3 class="line-clamp-2 preset-typo-card-title">{neg.title}</h3>
 								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
 									<Clock class="h-4 w-4 shrink-0" />
-									De {formatDbDate(neg.start_date)} até {formatDbDate(neg.end_date)}
+									{m.operacao_de_ate({ inicio: formatDbDate(neg.start_date), fim: formatDbDate(neg.end_date) })}
 								</p>
 								<span
 									class="badge mt-2 rounded-full px-2 py-0.5 uppercase preset-tonal-secondary text-xs font-bold tracking-wide"
 								>
-									{neg.status === 'solicitada' ? 'Solicitada' : 'Em negociação'}
+									{neg.status === 'solicitada' ? m.operacao_negociacao_solicitada() : m.operacao_negociacao_em_negociacao()}
 								</span>
 							</div>
 						</div>
@@ -354,7 +346,7 @@
 								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-3 py-2.5 text-sm font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
-								Atenção: período sobreposto a outra atividade na agenda.
+								{m.operacao_conflito_proposta()}
 							</div>
 						{/if}
 
@@ -362,7 +354,7 @@
 							href={resolve(neg.href)}
 							class="btn btn-lg preset-filled-secondary-500 w-full"
 						>
-							<span>Abrir negociação</span>
+							<span>{m.operacao_abrir_negociacao()}</span>
 							<ArrowRight size={18} />
 						</a>
 					</div>
@@ -370,13 +362,13 @@
 					<div
 						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
-						Nenhuma proposta com datas no momento.
+						{m.operacao_nenhuma_proposta()}
 					</div>
 				{/each}
 			</div>
 
 			<div class="space-y-3">
-				<h2 class="preset-typo-title">Operações aguardando início</h2>
+				<h2 class="preset-typo-title">{m.operacao_aguardando_inicio()}</h2>
 
 				{#each pendingBookings as req (req.id)}
 					{@const conflict = hasConflict(req)}
@@ -397,7 +389,7 @@
 								<h3 class="line-clamp-2 preset-typo-card-title">{req.title}</h3>
 								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
 									<Clock class="h-4 w-4 shrink-0" />
-									De {formatDbDate(req.start_date)} até {formatDbDate(req.end_date)}
+									{m.operacao_de_ate({ inicio: formatDbDate(req.start_date), fim: formatDbDate(req.end_date) })}
 								</p>
 							</div>
 						</div>
@@ -407,7 +399,7 @@
 								class="flex items-center gap-1.5 rounded-container preset-tonal-error px-3 py-2.5 text-sm font-medium"
 							>
 								<AlertCircle class="h-4 w-4 shrink-0" />
-								Atenção: você já possui atividades marcadas nestes dias.
+								{m.operacao_conflito_operacao()}
 							</div>
 						{/if}
 
@@ -417,7 +409,7 @@
 								class="btn preset-filled-primary-500 flex-1"
 							>
 								<CheckCircle2 size={18} />
-								<span>Gerenciar</span>
+								<span>{m.operacao_gerenciar()}</span>
 							</a>
 							<button
 								type="button"
@@ -425,7 +417,7 @@
 								class="btn preset-tonal-error flex-1"
 							>
 								<XCircle size={18} />
-								<span>Cancelar</span>
+								<span>{m.comum_cancelar()}</span>
 							</button>
 						</div>
 					</div>
@@ -433,13 +425,13 @@
 					<div
 						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
-						Nenhuma operação aguardando início.
+						{m.operacao_nenhuma_aguardando()}
 					</div>
 				{/each}
 			</div>
 
 			<div class="space-y-3 p-0.5">
-				<h2 class="preset-typo-title">Em operação</h2>
+				<h2 class="preset-typo-title">{m.operacao_em_operacao()}</h2>
 
 				{#each operatingBookings as conf (conf.id)}
 					<div
@@ -455,7 +447,7 @@
 								<h3 class="line-clamp-2 preset-typo-card-title">{conf.title}</h3>
 								<p class="mt-1 flex items-center gap-1.5 text-sm text-surface-800-200">
 									<Clock class="h-4 w-4 shrink-0" />
-									De {formatDbDate(conf.start_date)} até {formatDbDate(conf.end_date)}
+									{m.operacao_de_ate({ inicio: formatDbDate(conf.start_date), fim: formatDbDate(conf.end_date) })}
 								</p>
 							</div>
 						</div>
@@ -465,7 +457,7 @@
 								href={resolve(conf.href)}
 								class="btn preset-tonal-primary flex-1"
 							>
-								<span>Ver operação</span>
+								<span>{m.operacao_ver_operacao()}</span>
 							</a>
 							<button
 								type="button"
@@ -473,7 +465,7 @@
 								class="btn preset-tonal-error flex-1"
 							>
 								<XCircle size={18} />
-								<span>Cancelar</span>
+								<span>{m.comum_cancelar()}</span>
 							</button>
 						</div>
 					</div>
@@ -481,7 +473,7 @@
 					<div
 						class="rounded-container border border-dashed border-surface-300-700 bg-surface-50-950 py-6 text-center text-sm text-surface-800-200"
 					>
-						Nenhuma operação em campo no momento.
+						{m.operacao_nenhuma_em_campo()}
 					</div>
 				{/each}
 			</div>
@@ -494,7 +486,7 @@
 <CancelBookingDialog
 	bind:open={showCancelModal}
 	bookingId={itemToCancel?.id}
-	title="Cancelar atividade?"
-	message="As datas serão liberadas no calendário para novos agendamentos."
+	title={m.operacao_cancelar_atividade_titulo()}
+	message={m.operacao_cancelar_atividade_mensagem()}
 	oncancelled={loadAgenda}
 />

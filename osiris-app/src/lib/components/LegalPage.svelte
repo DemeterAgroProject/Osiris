@@ -4,6 +4,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { LEGAL } from '$lib/legal';
+	import { m } from '$lib/paraglide/messages';
 
 	let { title, description = '', children } = $props();
 
@@ -32,11 +33,11 @@
 			class="mb-4 inline-flex items-center gap-1 text-sm font-medium text-surface-900-100 hover:text-primary-700"
 		>
 			<ChevronLeft class="h-4 w-4" />
-			Voltar
+			{m.comum_voltar()}
 		</a>
 
 		<h1 class="preset-typo-headline">{title}</h1>
-		<p class="mt-1 preset-typo-caption">Atualizado em {LEGAL.atualizadoEm}</p>
+		<p class="mt-1 preset-typo-caption">{m.legal_atualizado_em({ data: LEGAL.atualizadoEm })}</p>
 
 		<div class="legal mt-6 space-y-6 text-sm leading-relaxed text-surface-800-200">
 			{@render children()}

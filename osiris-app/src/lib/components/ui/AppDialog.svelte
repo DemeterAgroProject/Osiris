@@ -1,6 +1,7 @@
 <script>
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { X } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	/**
 	 * Diálogo do Osiris sobre o Dialog do Skeleton.
@@ -17,7 +18,7 @@
 		size = 'sm',
 		role = 'dialog',
 		dismissible = true,
-		closeLabel = 'Fechar',
+		closeLabel = m.comum_fechar(),
 		onclose = () => {},
 		children,
 		footer

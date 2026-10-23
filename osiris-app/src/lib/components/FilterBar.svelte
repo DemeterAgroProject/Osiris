@@ -4,6 +4,7 @@
 	import { ToggleGroup } from '@skeletonlabs/skeleton-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import AppAccordion from '$lib/components/ui/AppAccordion.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	function createDefaultMarketplaceFilters() {
 		return {
@@ -43,28 +44,29 @@
 		variant = 'bar'
 	} = $props();
 
+	// os ids são os valores dos filtros (não mudam); label guarda a função da mensagem, chamada no template
 	const listingTypeOptions = [
-		{ id: 'produto', label: 'Produto' },
-		{ id: 'maquinario', label: 'Maquinário' },
-		{ id: 'servico', label: 'Serviço (pacote)' },
-		{ id: 'mao-de-obra', label: 'Mão de obra' }
+		{ id: 'produto', label: m.busca_filtro_produto },
+		{ id: 'maquinario', label: m.busca_filtro_maquinario },
+		{ id: 'servico', label: m.busca_filtro_servico_pacote },
+		{ id: 'mao-de-obra', label: m.busca_mao_de_obra }
 	];
 
 	const productKindOptions = [
-		{ id: 'insumos', label: 'Insumos' },
-		{ id: 'maquinas', label: 'Máquinas' }
+		{ id: 'insumos', label: m.busca_filtro_insumos },
+		{ id: 'maquinas', label: m.busca_cat_maquinas }
 	];
 
-	const serviceKindOptions = [{ id: 'pacote', label: 'Pacote completo' }];
+	const serviceKindOptions = [{ id: 'pacote', label: m.busca_pacote_completo }];
 
-	const laborKindOptions = [{ id: 'mao-de-obra', label: 'Mão de obra' }];
+	const laborKindOptions = [{ id: 'mao-de-obra', label: m.busca_mao_de_obra }];
 
 	const sortOptions = [
-		{ id: 'recentes', label: 'Mais recentes' },
-		{ id: 'preco-asc', label: 'Menor preço' },
-		{ id: 'preco-desc', label: 'Maior preço' },
-		{ id: 'nome-asc', label: 'Nome (A-Z)' },
-		{ id: 'nome-desc', label: 'Nome (Z-A)' }
+		{ id: 'recentes', label: m.busca_ordem_recentes },
+		{ id: 'preco-asc', label: m.busca_ordem_preco_asc },
+		{ id: 'preco-desc', label: m.busca_ordem_preco_desc },
+		{ id: 'nome-asc', label: m.busca_ordem_nome_asc },
+		{ id: 'nome-desc', label: m.busca_ordem_nome_desc }
 	];
 
 	let isOpen = $state(false);
@@ -94,7 +96,7 @@
 		const labels = [];
 		for (const id of filters.listingTypes) {
 			const opt = listingTypeOptions.find((o) => o.id === id);
-			if (opt) labels.push(opt.label);
+			if (opt) labels.push(opt.label());
 		}
 		if (filters.location) labels.push(filters.location);
 		if (filters.minPrice || filters.maxPrice) {
@@ -104,7 +106,7 @@
 		}
 		if (filters.sort !== 'recentes') {
 			const sort = sortOptions.find((o) => o.id === filters.sort);
-			if (sort) labels.push(sort.label);
+			if (sort) labels.push(sort.label());
 		}
 		return labels;
 	});
@@ -133,7 +135,7 @@
 		applyFilters();
 	}
 
-	const quickTypeOptions = [{ id: '', label: 'Todos' }, ...listingTypeOptions];
+	const quickTypeOptions = [{ id: '', label: m.busca_todos }, ...listingTypeOptions];
 
 	function isQuickTypeSelected(id) {
 		if (!id) return filters.listingTypes.length === 0;
@@ -177,7 +179,7 @@
 
 {#snippet typeChips()}
 <!-- atalho para o filtro "Tipo de anúncio": um toque troca o tipo mostrado -->
-<div class="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="Tipo de anúncio">
+<div class="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label={m.busca_tipo_anuncio()}>
 	{#each quickTypeOptions as option (option.id)}
 		{@const selected = isQuickTypeSelected(option.id)}
 		<button
@@ -191,7 +193,7 @@
 			{#if selected}
 				<Check size={18} />
 			{/if}
-			<span>{option.label}</span>
+			<span>{option.label()}</span>
 		</button>
 	{/each}
 </div>
@@ -206,7 +208,7 @@
 			class="btn preset-outlined-surface-200-800 bg-surface-50-950"
 		>
 			<SlidersHorizontal size={18} />
-			<span>Filtros</span>
+			<span>{m.busca_filtros()}</span>
 			{#if activeCount > 0}
 				<span class="flex h-5 min-w-5 items-center justify-center rounded-full preset-filled-primary-500 px-1 text-xs font-bold">
 					{activeCount}
@@ -216,7 +218,7 @@
 
 		{#if resultCount !== null}
 			<p class="ml-auto shrink-0 text-sm font-medium text-surface-900-100">
-				<strong class="text-surface-950-50">{resultCount}</strong> {resultCount === 1 ? 'resultado' : 'resultados'}
+				<strong class="text-surface-950-50">{resultCount}</strong> {resultCount === 1 ? m.busca_resultado() : m.busca_resultados_palavra()}
 			</p>
 		{/if}
 	</div>
@@ -253,7 +255,7 @@
 				{#if isSelected(key, option.id)}
 					<Check class="h-3.5 w-3.5 shrink-0" />
 				{/if}
-				<span>{option.label}</span>
+				<span>{option.label()}</span>
 			</ToggleGroup.Item>
 		{/each}
 	</ToggleGroup>
@@ -261,30 +263,30 @@
 
 {#snippet filterFields()}
 <div>
-	<AppAccordion variant="section" title="Tipo de anúncio" open={true} badge={groupCount('tipo') || ''}>
+	<AppAccordion variant="section" title={m.busca_tipo_anuncio()} open={true} badge={groupCount('tipo') || ''}>
 		{@render toggleOptions('listingTypes', listingTypeOptions)}
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Produtos" open={untrack(() => groupCount('produtos') > 0)} badge={groupCount('produtos') || ''}>
+	<AppAccordion variant="section" title={m.busca_produtos()} open={untrack(() => groupCount('produtos') > 0)} badge={groupCount('produtos') || ''}>
 		{@render toggleOptions('productKinds', productKindOptions)}
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Serviços" open={untrack(() => groupCount('servicos') > 0)} badge={groupCount('servicos') || ''}>
+	<AppAccordion variant="section" title={m.busca_cat_servicos()} open={untrack(() => groupCount('servicos') > 0)} badge={groupCount('servicos') || ''}>
 		{@render toggleOptions('serviceKinds', serviceKindOptions)}
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Mão de obra" open={untrack(() => groupCount('maoDeObra') > 0)} badge={groupCount('maoDeObra') || ''}>
+	<AppAccordion variant="section" title={m.busca_mao_de_obra()} open={untrack(() => groupCount('maoDeObra') > 0)} badge={groupCount('maoDeObra') || ''}>
 		{@render toggleOptions('laborKinds', laborKindOptions)}
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Localidade" open={untrack(() => groupCount('localidade') > 0)} badge={groupCount('localidade') || ''}>
+	<AppAccordion variant="section" title={m.busca_localidade()} open={untrack(() => groupCount('localidade') > 0)} badge={groupCount('localidade') || ''}>
 		<div class="relative">
 			<select
 				bind:value={draft.location}
-				aria-label="Localidade"
+				aria-label={m.busca_localidade()}
 				class="select h-11 w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 pl-3 pr-9 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			>
-				<option value="">Todas as regiões</option>
+				<option value="">{m.busca_todas_regioes()}</option>
 				{#each locationOptions as option (option.id)}
 					<option value={option.id}>{option.label}</option>
 				{/each}
@@ -295,15 +297,15 @@
 		</div>
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Ordenação" open={untrack(() => groupCount('ordenacao') > 0)} badge={groupCount('ordenacao') || ''}>
+	<AppAccordion variant="section" title={m.busca_ordenacao()} open={untrack(() => groupCount('ordenacao') > 0)} badge={groupCount('ordenacao') || ''}>
 		<div class="relative">
 			<select
 				bind:value={draft.sort}
-				aria-label="Ordenação"
+				aria-label={m.busca_ordenacao()}
 				class="select h-11 w-full appearance-none rounded-container border border-surface-200-800 bg-surface-50-950 pl-3 pr-9 text-sm text-surface-900-100 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			>
 				{#each sortOptions as option (option.id)}
-					<option value={option.id}>{option.label}</option>
+					<option value={option.id}>{option.label()}</option>
 				{/each}
 			</select>
 			<ChevronDown
@@ -312,15 +314,15 @@
 		</div>
 	</AppAccordion>
 
-	<AppAccordion variant="section" title="Faixa de preço (R$)" open={untrack(() => groupCount('preco') > 0)} badge={groupCount('preco') || ''}>
+	<AppAccordion variant="section" title={m.busca_faixa_preco()} open={untrack(() => groupCount('preco') > 0)} badge={groupCount('preco') || ''}>
 		<div class="grid grid-cols-2 gap-2">
 			<input
 				type="number"
 				min="0"
 				inputmode="numeric"
 				bind:value={draft.minPrice}
-				placeholder="Mínimo"
-				aria-label="Preço mínimo (R$)"
+				placeholder={m.busca_minimo()}
+				aria-label={m.busca_preco_minimo()}
 				class="input h-11 w-full min-w-0 rounded-container border border-surface-200-800 px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 			<input
@@ -328,8 +330,8 @@
 				min="0"
 				inputmode="numeric"
 				bind:value={draft.maxPrice}
-				placeholder="Máximo"
-				aria-label="Preço máximo (R$)"
+				placeholder={m.busca_maximo()}
+				aria-label={m.busca_preco_maximo()}
 				class="input h-11 w-full min-w-0 rounded-container border border-surface-200-800 px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 			/>
 		</div>
@@ -339,11 +341,11 @@
 
 <AppDialog
 	bind:open={isOpen}
-	title="Filtros do marketplace"
-	description="Produtos, maquinários e serviços"
+	title={m.busca_filtros_titulo()}
+	description={m.busca_filtros_descricao()}
 	variant="sheet"
 	size="lg"
-	closeLabel="Fechar filtros"
+	closeLabel={m.busca_fechar_filtros()}
 >
 	{@render filterFields()}
 
@@ -355,7 +357,7 @@
 				class="btn btn-lg preset-tonal w-full"
 			>
 				<Eraser size={18} />
-				<span>Limpar</span>
+				<span>{m.busca_limpar()}</span>
 			</button>
 			<button
 				type="button"
@@ -363,7 +365,7 @@
 				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
 				<Check size={18} />
-				<span>Aplicar</span>
+				<span>{m.busca_aplicar()}</span>
 			</button>
 		</div>
 	{/snippet}
@@ -374,12 +376,12 @@
 		<div class="mb-2 flex items-center justify-between gap-2">
 			<h2 id="filtros-laterais" class="flex items-center gap-2 preset-typo-title">
 				<SlidersHorizontal size={20} />
-				Filtros
+				{m.busca_filtros()}
 			</h2>
 			{#if activeCount > 0}
 				<button type="button" onclick={clearAndApply} class="btn btn-sm preset-tonal">
 					<Eraser size={16} />
-					<span>Limpar</span>
+					<span>{m.busca_limpar()}</span>
 				</button>
 			{/if}
 		</div>
@@ -388,7 +390,7 @@
 
 		<button type="button" onclick={applyFilters} class="btn btn-md preset-filled-primary-500 mt-6 w-full">
 			<Check size={18} />
-			<span>Aplicar filtros</span>
+			<span>{m.busca_aplicar_filtros()}</span>
 		</button>
 	</section>
 {/if}

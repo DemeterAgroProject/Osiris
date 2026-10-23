@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	// endereço antigo do perfil: o perfil agora fica só em /perfil/[id]
 	onMount(() => {
@@ -12,9 +13,9 @@
 </script>
 
 <svelte:head>
-	<title>Perfil — Osiris</title>
+	<title>{m.operacao_perfil()} — Osiris</title>
 </svelte:head>
 
 <div class="flex min-h-dvh items-center justify-center bg-surface-50-950">
-	<LoadingIndicator label="Carregando perfil..." />
+	<LoadingIndicator label={m.operacao_carregando_perfil()} />
 </div>

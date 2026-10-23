@@ -1,5 +1,6 @@
 <script>
 	import { ImageOff, ImagePlus, Images, Star, Trash2 } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	function createEmptyImageRow(isCover = false) {
 		return { id: null, url: '', is_cover: isCover, removed: false };
@@ -60,7 +61,7 @@
 	<div class="flex items-center justify-between gap-2">
 		<p class="flex items-center gap-2 text-base font-bold text-surface-950-50">
 			<Images class="h-5 w-5 text-primary-700-300" />
-			Fotos (link da imagem)
+			{m.anunciar_img_titulo()}
 		</p>
 		<button
 			type="button"
@@ -68,7 +69,7 @@
 			class="btn preset-tonal-primary"
 		>
 			<ImagePlus size={18} />
-			<span>Adicionar</span>
+			<span>{m.anunciar_img_adicionar()}</span>
 		</button>
 	</div>
 
@@ -78,7 +79,7 @@
 				{#if isValidImageUrl(image.url)}
 					<img
 						src={image.url.trim()}
-						alt="Prévia da foto {index + 1}"
+						alt={m.anunciar_img_previa_alt({ n: index + 1 })}
 						class="h-full w-full object-cover"
 						onerror={(event) => {
 							event.currentTarget.style.display = 'none';
@@ -93,17 +94,17 @@
 			</div>
 
 			<div class="min-w-0 flex-1">
-				<label class="sr-only" for={`product-image-url-${index}`}>Link da foto {index + 1}</label>
+				<label class="sr-only" for={`product-image-url-${index}`}>{m.anunciar_img_link_label({ n: index + 1 })}</label>
 				<input
 					id={`product-image-url-${index}`}
 					type="url"
 					bind:value={image.url}
-					placeholder="Cole o link da foto (https://...)"
+					placeholder={m.anunciar_ph_link_foto()}
 					class="input h-11 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 
 				{#if image.url?.trim() && !isValidImageUrl(image.url)}
-					<p class="mt-1 text-xs font-medium text-warning-700-300">O link precisa começar com http:// ou https://</p>
+					<p class="mt-1 text-xs font-medium text-warning-700-300">{m.anunciar_img_link_invalido()}</p>
 				{/if}
 
 				<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -113,22 +114,22 @@
 						class="btn {image.is_cover ? 'preset-filled-primary-500' : 'preset-tonal'}"
 					>
 						<Star size={18} class={image.is_cover ? 'fill-current' : ''} />
-						<span>{image.is_cover ? 'Foto de capa' : 'Usar como capa'}</span>
+						<span>{image.is_cover ? m.anunciar_img_capa() : m.anunciar_img_usar_capa()}</span>
 					</button>
 
 					<button
 						type="button"
 						onclick={() => removeImage(index)}
 						class="btn preset-tonal-error"
-						aria-label="Remover foto {index + 1}"
+						aria-label={m.anunciar_img_remover_aria({ n: index + 1 })}
 					>
 						<Trash2 size={18} />
-						<span>Remover</span>
+						<span>{m.anunciar_img_remover()}</span>
 					</button>
 				</div>
 			</div>
 		</div>
 	{/each}
 
-	<p class="text-sm text-surface-800-200">A foto de capa aparece nos cards e na busca.</p>
+	<p class="text-sm text-surface-800-200">{m.anunciar_img_dica()}</p>
 </div>

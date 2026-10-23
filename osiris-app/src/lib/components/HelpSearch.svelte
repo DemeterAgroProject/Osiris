@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { Search, X, ChevronRight } from 'lucide-svelte';
 	import { searchHelp } from '$lib/help';
+	import { m } from '$lib/paraglide/messages';
 
 	// resultsClass: posição e largura da lista de resultados abaixo do campo
 	let { inputId = 'help-search', resultsClass = 'inset-x-0' } = $props();
@@ -43,8 +44,8 @@
 		onfocus={() => (open = true)}
 		oninput={() => (open = true)}
 		onkeydown={handleKeydown}
-		placeholder="Buscar na ajuda..."
-		aria-label="Buscar na ajuda"
+		placeholder={m.ajuda_buscar_placeholder()}
+		aria-label={m.ajuda_buscar_rotulo()}
 		aria-controls="{inputId}-results"
 		autocomplete="off"
 		class="input h-11 w-full rounded-container border-surface-200-800 bg-surface-50-950 pl-10 pr-11 text-sm placeholder:text-surface-800-200 transition-all hover:border-surface-300-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
@@ -54,8 +55,8 @@
 			type="button"
 			onclick={clearSearch}
 			class="btn-icon btn-icon-sm absolute right-1.5 top-1/2 -translate-y-1/2 hover:preset-tonal"
-			aria-label="Limpar busca"
-			title="Limpar busca"
+			aria-label={m.ajuda_limpar_busca()}
+			title={m.ajuda_limpar_busca()}
 		>
 			<X size={16} />
 		</button>
@@ -66,7 +67,7 @@
 			id="{inputId}-results"
 			class="absolute {resultsClass} top-full z-30 mt-2 max-h-[min(24rem,60vh)] overflow-y-auto rounded-container border border-surface-200-800 bg-surface-50-950 shadow-xl"
 		>
-			<p class="sr-only" aria-live="polite">{results.length} resultados</p>
+			<p class="sr-only" aria-live="polite">{results.length === 1 ? m.ajuda_resultado_um() : m.ajuda_resultados({ count: results.length })}</p>
 			{#if results.length}
 				<ul class="divide-y divide-surface-200-800">
 					{#each results as result (result.article.slug)}
@@ -87,7 +88,7 @@
 				</ul>
 			{:else}
 				<p class="px-4 py-4 text-sm text-surface-800-200">
-					Nada encontrado para “{query.trim()}”. Tente outra palavra, como “proposta” ou “foto”.
+					{m.ajuda_nada_encontrado({ termo: query.trim() })}
 				</p>
 			{/if}
 		</div>

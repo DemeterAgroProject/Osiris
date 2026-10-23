@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let loading = $state(true);
 
@@ -22,11 +23,11 @@
 </script>
 
 <svelte:head>
-	<title>Perfil — Osiris</title>
+	<title>{m.operacao_perfil()} — Osiris</title>
 </svelte:head>
 
 <div class="flex min-h-dvh items-center justify-center bg-surface-50-950">
 	{#if loading}
-		<LoadingIndicator label="Carregando perfil..." />
+		<LoadingIndicator label={m.operacao_carregando_perfil()} />
 	{/if}
 </div>

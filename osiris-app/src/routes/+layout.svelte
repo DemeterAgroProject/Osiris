@@ -8,6 +8,8 @@
 	import PushPrompt from '$lib/components/PushPrompt.svelte';
 	import OnboardingGate from '$lib/components/OnboardingGate.svelte';
 	import { startTelemetry, trackPageView } from '$lib/telemetry';
+	import { supabase } from '$lib/supabase';
+	import { syncProfileLocale } from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -25,6 +27,22 @@
 				console.error('Erro ao registrar o service worker:', error);
 			});
 		}
+
+		// grava o idioma no perfil (o push é escrito nele); o Supabase repete SIGNED_IN ao voltar
+		// o foco da aba, então uma vez por conta
+		let localeSyncedUserId = null;
+		const {
+			data: { subscription }
+		} = supabase.auth.onAuthStateChange((event, session) => {
+			if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+			const userId = session?.user?.id;
+			if (!userId || userId === localeSyncedUserId) return;
+			localeSyncedUserId = userId;
+			// fora do callback: chamadas ao Supabase dentro dele podem travar o cliente
+			setTimeout(() => syncProfileLocale(userId), 0);
+		});
+
+		return () => subscription.unsubscribe();
 	});
 
 	onNavigate((navigation) => {

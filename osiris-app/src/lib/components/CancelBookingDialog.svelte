@@ -4,24 +4,25 @@
 	import { supabase } from '$lib/supabase';
 	import { userMessage } from '$lib/errors';
 	import { track, trackError } from '$lib/telemetry';
+	import { m } from '$lib/paraglide/messages';
 
-	// valores aceitos por bookings_cancellation_reason_check
+	// valores aceitos por bookings_cancellation_reason_check (o id vai para o banco; só o rótulo traduz)
 	const REASONS = [
-		{ id: 'mechanical_issue', label: 'Problema mecânico' },
-		{ id: 'weather_conditions', label: 'Condições climáticas' },
-		{ id: 'logistical_issue', label: 'Problema de logística' },
-		{ id: 'operational_unavailability', label: 'Indisponibilidade operacional' },
-		{ id: 'commercial_disagreement', label: 'Desacordo comercial' },
-		{ id: 'withdrawal', label: 'Desistência' },
-		{ id: 'other', label: 'Outro motivo' }
+		{ id: 'mechanical_issue', label: m.operacao_motivo_mecanico },
+		{ id: 'weather_conditions', label: m.operacao_motivo_clima },
+		{ id: 'logistical_issue', label: m.operacao_motivo_logistica },
+		{ id: 'operational_unavailability', label: m.operacao_motivo_indisponibilidade },
+		{ id: 'commercial_disagreement', label: m.operacao_motivo_desacordo },
+		{ id: 'withdrawal', label: m.operacao_motivo_desistencia },
+		{ id: 'other', label: m.operacao_motivo_outro }
 	];
 	const MIN_DETAILS_LENGTH = 15;
 
 	let {
 		open = $bindable(false),
 		bookingId = null,
-		title = 'Cancelar operação?',
-		message = 'As datas serão liberadas e a operação não poderá ser retomada.',
+		title = m.operacao_cancelar_titulo(),
+		message = m.operacao_cancelar_mensagem(),
 		oncancelled = () => {}
 	} = $props();
 
@@ -62,7 +63,7 @@
 
 		if (error) {
 			trackError('cancelamento_falhou', error, { motivo: reason });
-			errorMessage = userMessage(error, 'Não foi possível cancelar a operação.');
+			errorMessage = userMessage(error, m.operacao_erro_cancelar());
 			return;
 		}
 
@@ -80,7 +81,7 @@
 	dismissible={!loading}
 >
 	<label for="cancel-booking-reason" class="mb-1 block text-sm font-medium text-surface-900-100">
-		Motivo
+		{m.operacao_motivo()}
 	</label>
 	<select
 		id="cancel-booking-reason"
@@ -88,26 +89,26 @@
 		disabled={loading}
 		class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
 	>
-		<option value="" disabled>Selecione</option>
+		<option value="" disabled>{m.operacao_selecione()}</option>
 		{#each REASONS as option (option.id)}
-			<option value={option.id}>{option.label}</option>
+			<option value={option.id}>{option.label()}</option>
 		{/each}
 	</select>
 
 	{#if needsDetails}
 		<label for="cancel-booking-details" class="mb-1 mt-3 block text-sm font-medium text-surface-900-100">
-			Descreva o motivo
+			{m.operacao_descreva_motivo()}
 		</label>
 		<textarea
 			id="cancel-booking-details"
-			placeholder="Ex: a máquina quebrou e não há como atender nas datas"
+			placeholder={m.operacao_descreva_motivo_exemplo()}
 			bind:value={details}
 			disabled={loading}
 			rows="3"
 			class="w-full rounded-container border border-surface-200-800 bg-surface-50-950 p-3 text-sm outline-none focus:border-primary-500"
 		></textarea>
 		<p class="mt-1 text-xs text-surface-800-200">
-			Mínimo de {MIN_DETAILS_LENGTH} caracteres ({details.trim().length}/{MIN_DETAILS_LENGTH}).
+			{m.operacao_minimo_caracteres({ minimo: MIN_DETAILS_LENGTH, atual: details.trim().length })}
 		</p>
 	{/if}
 
@@ -124,7 +125,7 @@
 				class="btn btn-md preset-tonal w-full"
 			>
 				<ArrowLeft size={18} />
-				<span>Voltar</span>
+				<span>{m.comum_voltar()}</span>
 			</button>
 			<button
 				type="button"
@@ -133,7 +134,7 @@
 				class="btn btn-md preset-filled-error-500 w-full"
 			>
 				<XCircle size={18} />
-				<span>{loading ? 'Aguarde...' : 'Cancelar operação'}</span>
+				<span>{loading ? m.operacao_aguarde() : m.operacao_cancelar()}</span>
 			</button>
 		</div>
 	{/snippet}

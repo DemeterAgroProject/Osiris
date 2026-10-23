@@ -1,8 +1,9 @@
 <script>
 	import { Progress } from '@skeletonlabs/skeleton-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let {
-		label = 'Carregando...',
+		label = m.comum_carregando(),
 		size = '2rem',
 		compact = false,
 		showLabel = true,

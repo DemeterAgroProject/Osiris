@@ -4,6 +4,7 @@
 	import { BookOpen, Menu, X } from 'lucide-svelte';
 	import HelpNav from '$lib/components/HelpNav.svelte';
 	import HelpSearch from '$lib/components/HelpSearch.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	// topo próprio da central de ajuda (no lugar do Header do app): busca, volta ao app e,
 	// no celular, o menu com os temas em uma gaveta
@@ -37,7 +38,7 @@
 				class="btn-icon btn-icon-lg -ml-1 lg:hidden {menuOpen ? 'border border-surface-300-700 rounded-full' : 'hover:preset-tonal'}"
 				aria-expanded={menuOpen}
 				aria-controls="ajuda-menu"
-				aria-label={menuOpen ? 'Fechar temas da ajuda' : 'Abrir temas da ajuda'}
+				aria-label={menuOpen ? m.ajuda_fechar_temas() : m.ajuda_abrir_temas()}
 			>
 				{#if menuOpen}
 					<X size={20} />
@@ -47,7 +48,7 @@
 			</button>
 			<a href={resolve('/ajuda')} class="flex items-center gap-2 font-bold text-surface-950-50">
 				<BookOpen class="h-6 w-6 text-primary-600-400" />
-				<span>Central de ajuda</span>
+				<span>{m.ajuda_titulo()}</span>
 			</a>
 		</div>
 
@@ -55,7 +56,7 @@
 			<div class="lg:w-80">
 				<HelpSearch inputId="ajuda-busca" resultsClass="inset-x-0 lg:left-auto lg:right-0 lg:w-[26rem]" />
 			</div>
-			<a href={resolve('/')} class="btn preset-filled-primary-500 h-11 w-full lg:w-auto">Voltar ao app</a>
+			<a href={resolve('/')} class="btn preset-filled-primary-500 h-11 w-full lg:w-auto">{m.ajuda_voltar_app()}</a>
 		</div>
 	</div>
 </header>
@@ -66,7 +67,7 @@
 		class="fixed inset-x-0 bottom-0 z-40 bg-surface-950/50 lg:hidden"
 		style="top: {headerHeight}px"
 		onclick={() => (menuOpen = false)}
-		aria-label="Fechar temas da ajuda"
+		aria-label={m.ajuda_fechar_temas()}
 		tabindex="-1"
 	></button>
 	<div

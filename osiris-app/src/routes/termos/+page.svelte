@@ -2,87 +2,66 @@
 	import { resolve } from '$app/paths';
 	import LegalPage from '$lib/components/LegalPage.svelte';
 	import { LEGAL } from '$lib/legal';
+	import { m } from '$lib/paraglide/messages';
 </script>
 
-<LegalPage title="Termos de uso" description="Regras de uso do marketplace Osiris.">
+<LegalPage title={m.legal_termos_titulo()} description={m.legal_termos_descricao()}>
 	<section>
 		<p>
-			O Osiris é um protótipo de marketplace para o agro, desenvolvido pelo {LEGAL.responsavel}. Ao entrar no
-			app, você concorda com estes termos e com a
-			<a href={resolve('/privacidade')} class="font-medium text-primary-700 underline">Política de privacidade</a>.
+			{m.legal_termos_intro({ responsavel: LEGAL.responsavel })}
+			<a href={resolve('/privacidade')} class="font-medium text-primary-700 underline">{m.legal_link_privacidade()}</a>.
 		</p>
 	</section>
 
 	<section>
-		<h2>1. O que o Osiris faz</h2>
+		<h2>{m.legal_termos_1_titulo()}</h2>
+		<p>{m.legal_termos_1_p1()}</p>
 		<p>
-			O Osiris aproxima quem anuncia máquinas, produtos e serviços do agro de quem procura por eles. O app
-			permite publicar anúncios, enviar propostas, conversar, registrar a operação combinada e avaliar a outra
-			parte.
-		</p>
-		<p>
-			O Osiris <strong>não</strong> processa pagamentos, não é parte dos negócios fechados entre os usuários e
-			não garante a qualidade, a entrega ou a existência do que é anunciado. Pagamento, entrega e demais
-			condições são combinados diretamente entre as partes.
+			{m.legal_termos_1_p2_antes()} <strong>{m.legal_termos_1_p2_destaque()}</strong>
+			{m.legal_termos_1_p2_depois()}
 		</p>
 	</section>
 
 	<section>
-		<h2>2. Fase de testes</h2>
-		<p>
-			O app está em desenvolvimento e pode ter falhas, ficar fora do ar ou mudar sem aviso. Anúncios de
-			demonstração podem aparecer na vitrine, e dados de teste podem ser apagados. Não use o Osiris para
-			negócios que dependam exclusivamente dele.
-		</p>
+		<h2>{m.legal_termos_2_titulo()}</h2>
+		<p>{m.legal_termos_2_p1()}</p>
 	</section>
 
 	<section>
-		<h2>3. Sua conta</h2>
+		<h2>{m.legal_termos_3_titulo()}</h2>
 		<ul>
-			<li>O acesso é feito com uma conta Google; você é responsável pelo que for feito com ela.</li>
-			<li>Mantenha seus dados de perfil corretos e não se passe por outra pessoa ou empresa.</li>
+			<li>{m.legal_termos_3_item_1()}</li>
+			<li>{m.legal_termos_3_item_2()}</li>
 		</ul>
 	</section>
 
 	<section>
-		<h2>4. Anúncios e negociações</h2>
+		<h2>{m.legal_termos_4_titulo()}</h2>
 		<ul>
-			<li>Anuncie só o que você pode vender, alugar ou prestar, com descrição, fotos e preço verdadeiros.</li>
-			<li>
-				É proibido anunciar itens ilegais, roubados, falsificados ou que exijam autorização que você não tem
-				(como defensivos sem registro).
-			</li>
-			<li>Propostas aceitas viram operações; cancelamentos precisam de um motivo e ficam registrados.</li>
-			<li>Avaliações devem refletir a experiência real, sem ofensas.</li>
+			<li>{m.legal_termos_4_item_1()}</li>
+			<li>{m.legal_termos_4_item_2()}</li>
+			<li>{m.legal_termos_4_item_3()}</li>
+			<li>{m.legal_termos_4_item_4()}</li>
 		</ul>
 	</section>
 
 	<section>
-		<h2>5. Condutas proibidas</h2>
+		<h2>{m.legal_termos_5_titulo()}</h2>
 		<ul>
-			<li>Enviar conteúdo ofensivo, discriminatório, enganoso ou que viole direitos de terceiros.</li>
-			<li>Usar o app para spam, golpes ou para coletar dados de outros usuários.</li>
-			<li>Tentar acessar dados ou funções que não são suas, ou atrapalhar o funcionamento do app.</li>
+			<li>{m.legal_termos_5_item_1()}</li>
+			<li>{m.legal_termos_5_item_2()}</li>
+			<li>{m.legal_termos_5_item_3()}</li>
 		</ul>
-		<p>
-			Podemos remover conteúdo e suspender contas que descumpram estes termos.
-		</p>
+		<p>{m.legal_termos_5_p1()}</p>
 	</section>
 
 	<section>
-		<h2>6. Responsabilidade</h2>
-		<p>
-			Cada usuário responde pelo que publica e pelos negócios que fecha. Na medida permitida pela lei, o
-			projeto não se responsabiliza por perdas decorrentes de negócios entre usuários ou de indisponibilidade
-			do app.
-		</p>
+		<h2>{m.legal_termos_6_titulo()}</h2>
+		<p>{m.legal_termos_6_p1()}</p>
 	</section>
 
 	<section>
-		<h2>7. Mudanças e contato</h2>
-		<p>
-			Estes termos podem ser atualizados; a data no topo indica a última versão. Eles seguem a lei brasileira.
-			Dúvidas: {LEGAL.contato}.
-		</p>
+		<h2>{m.legal_termos_7_titulo()}</h2>
+		<p>{m.legal_termos_7_p1({ contato: LEGAL.contato })}</p>
 	</section>
 </LegalPage>

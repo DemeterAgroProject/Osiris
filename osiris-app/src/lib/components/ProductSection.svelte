@@ -2,13 +2,14 @@
 	import { resolve } from '$app/paths';
 	import { ChevronRight } from 'lucide-svelte';
 	import ProductCard from './ProductCard.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let {
 		title,
 		subtitle = '',
 		products = [],
 		seeMoreHref = null,
-		seeMoreLabel = 'Ver mais',
+		seeMoreLabel = m.comum_ver_mais(),
 		limit = 6
 	} = $props();
 

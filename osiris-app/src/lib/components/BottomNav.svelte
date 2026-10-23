@@ -23,26 +23,28 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { Home, Search, Archive, Menu, Plus, CircleHelp, LogIn } from 'lucide-svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let { active = 'inicio' } = $props();
 
 	onMount(watchSession);
 
+	// rótulos guardam a função da mensagem (m.nav_*), chamada no template: o texto sai no idioma atual
 	// quem entrou: o "Anunciar" fica no meio, em destaque
 	const MEMBER_ITEMS = [
-		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
-		{ id: 'buscar', label: 'Buscar', icon: Search, href: '/buscar' },
-		{ id: 'anunciar', label: 'Anunciar', icon: Plus, href: '/anunciar', featured: true },
-		{ id: 'inventario', label: 'Inventário', icon: Archive, href: '/inventario' },
-		{ id: 'mais', label: 'Mais', icon: Menu, href: '/mais' }
+		{ id: 'inicio', label: m.nav_inicio, icon: Home, href: '/' },
+		{ id: 'buscar', label: m.nav_buscar, icon: Search, href: '/buscar' },
+		{ id: 'anunciar', label: m.nav_anunciar, icon: Plus, href: '/anunciar', featured: true },
+		{ id: 'inventario', label: m.nav_inventario, icon: Archive, href: '/inventario' },
+		{ id: 'mais', label: m.nav_mais, icon: Menu, href: '/mais' }
 	];
 
 	// visitante: "Sobre" abre a apresentação do app
 	const VISITOR_ITEMS = [
-		{ id: 'inicio', label: 'Início', icon: Home, href: '/' },
-		{ id: 'buscar', label: 'Buscar', icon: Search, href: '/buscar' },
-		{ id: 'sobre', label: 'Sobre', icon: CircleHelp, href: '/boas-vindas' },
-		{ id: 'entrar', label: 'Entrar', icon: LogIn, href: '/login' }
+		{ id: 'inicio', label: m.nav_inicio, icon: Home, href: '/' },
+		{ id: 'buscar', label: m.nav_buscar, icon: Search, href: '/buscar' },
+		{ id: 'sobre', label: m.nav_sobre, icon: CircleHelp, href: '/boas-vindas' },
+		{ id: 'entrar', label: m.nav_entrar, icon: LogIn, href: '/login' }
 	];
 
 	const navItems = $derived(session.loggedIn ? MEMBER_ITEMS : VISITOR_ITEMS);
@@ -50,7 +52,7 @@
 
 <nav
 	class="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-surface-200-800 bg-surface-50-950/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur"
-	aria-label="Navegação principal"
+	aria-label={m.nav_navegacao_principal()}
 >
 	<div class="mx-auto flex min-h-16 max-w-xl items-stretch justify-around px-1">
 		{#if session.checked}
@@ -68,7 +70,7 @@
 						>
 							<Icon class="h-7 w-7" strokeWidth={2.5} />
 						</span>
-						<span class="text-xs font-bold">{item.label}</span>
+						<span class="text-xs font-bold">{item.label()}</span>
 					</a>
 				{:else}
 					<a
@@ -85,7 +87,7 @@
 						>
 							<Icon class="h-6 w-6" strokeWidth={isActive ? 2.25 : 1.75} />
 						</span>
-						<span class="text-xs {isActive ? 'font-bold' : 'font-medium'}">{item.label}</span>
+						<span class="text-xs {isActive ? 'font-bold' : 'font-medium'}">{item.label()}</span>
 					</a>
 				{/if}
 			{/each}

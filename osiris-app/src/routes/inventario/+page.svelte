@@ -26,7 +26,9 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import { supabase } from '$lib/supabase';
-	import { stockUnitLabel } from '$lib/pricing';
+	import { MACHINE_OFFER_LABEL, categoryLabel, machineTypeLabel, rentalUnitSuffix, stockUnitLabel } from '$lib/pricing';
+	import { formatBRL, formatNumber } from '$lib/i18n';
+	import { m } from '$lib/paraglide/messages';
 	import { requireUser } from '$lib/auth';
 	import { onMount } from 'svelte';
 
@@ -85,8 +87,8 @@
 	}
 
 	function getStatusLabel(status) {
-		if (isActiveStatus(status)) return 'Ativo';
-		if (isPausedStatus(status)) return 'Pausado';
+		if (isActiveStatus(status)) return m.anunciar_status_ativo();
+		if (isPausedStatus(status)) return m.anunciar_status_pausado();
 		return status || '—';
 	}
 
@@ -153,8 +155,8 @@
 	}
 
 	const inventoryTabs = $derived([
-		{ value: 'maquinarios', label: `Máquinas (${maquinarios.length})`, icon: Tractor },
-		{ value: 'produtos', label: `Produtos (${produtos.length})`, icon: Leaf }
+		{ value: 'maquinarios', label: m.anunciar_inv_tab_maquinas({ n: maquinarios.length }), icon: Tractor },
+		{ value: 'produtos', label: m.anunciar_inv_tab_produtos({ n: produtos.length }), icon: Leaf }
 	]);
 
 	let activeTab = $state('maquinarios');
@@ -189,11 +191,11 @@
 
 		return {
 			nextStatus,
-			title: isPausing ? 'Pausar anúncio?' : 'Ativar anúncio?',
+			title: isPausing ? m.anunciar_inv_pausar_titulo() : m.anunciar_inv_ativar_titulo(),
 			message: isPausing
-				? `"${statusConfirmItem.name}" deixará de aparecer na busca até você ativá-lo novamente.`
-				: `"${statusConfirmItem.name}" voltará a aparecer na busca do marketplace.`,
-			confirmLabel: isPausing ? 'Pausar anúncio' : 'Ativar anúncio',
+				? m.anunciar_inv_pausar_msg({ nome: statusConfirmItem.name })
+				: m.anunciar_inv_ativar_msg({ nome: statusConfirmItem.name }),
+			confirmLabel: isPausing ? m.anunciar_inv_pausar() : m.anunciar_inv_ativar(),
 			variant: isPausing ? 'warning' : 'default'
 		};
 	});
@@ -202,9 +204,9 @@
 		if (!deleteConfirmItem) return null;
 
 		return {
-			title: 'Excluir anúncio?',
-			message: `Tem certeza que deseja excluir "${deleteConfirmItem.name}"? Esta ação não pode ser desfeita.`,
-			confirmLabel: 'Excluir anúncio',
+			title: m.anunciar_inv_excluir_titulo(),
+			message: m.anunciar_inv_excluir_msg({ nome: deleteConfirmItem.name }),
+			confirmLabel: m.anunciar_inv_excluir_anuncio(),
 			variant: 'danger'
 		};
 	});
@@ -230,7 +232,7 @@
 
 		if (error) {
 			console.error('Erro ao buscar anúncios:', error);
-			statusMessage = { text: 'Não foi possível carregar seus anúncios.', type: 'error' };
+			statusMessage = { text: m.anunciar_inv_erro_carregar(), type: 'error' };
 			maquinarios = [];
 			produtos = [];
 		} else if (allAds) {
@@ -263,8 +265,8 @@
 	);
 
 	function formatPrice(value) {
-		if (!value) return 'Preço a combinar';
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+		if (!value) return m.comum_preco_a_combinar();
+		return formatBRL(value);
 	}
 
 	function statusBadgeClass(status) {
@@ -275,7 +277,7 @@
 
 	function getMachineryTypeName(item) {
 		const machinery = getMachineryFromProduct(item);
-		return machinery?.machinery_types?.name || 'Máquina';
+		return machineTypeLabel(machinery?.machinery_types?.name) || m.comum_maquina();
 	}
 
 	function getAdCoverUrl(item) {
@@ -324,7 +326,6 @@
 		if (!statusConfirmItem || !statusConfirmContent) return;
 
 		const { nextStatus } = statusConfirmContent;
-		const actionLabel = nextStatus === 'pausado' ? 'pausar' : 'ativar';
 		const item = statusConfirmItem;
 
 		statusConfirmLoading = true;
@@ -333,11 +334,14 @@
 		const { error } = await updateProductStatus(item.id, nextStatus);
 
 		if (error) {
-			statusMessage = { text: `Erro ao ${actionLabel} o anúncio.`, type: 'error' };
+			statusMessage = {
+				text: nextStatus === 'pausado' ? m.anunciar_inv_erro_pausar() : m.anunciar_inv_erro_ativar(),
+				type: 'error'
+			};
 		} else {
 			updateItemInLists({ ...item, status: nextStatus });
 			statusMessage = {
-				text: nextStatus === 'pausado' ? 'Anúncio pausado com sucesso.' : 'Anúncio ativado com sucesso.',
+				text: nextStatus === 'pausado' ? m.anunciar_inv_pausado_sucesso() : m.anunciar_inv_ativado_sucesso(),
 				type: 'success'
 			};
 			statusConfirmOpen = false;
@@ -412,9 +416,9 @@
 
 	function formatDeleteError(error) {
 		if (error?.code === '23503' || error?.status === 409) {
-			return 'Não foi possível excluir: este anúncio ainda possui vínculos no sistema (reservas ou negociações).';
+			return m.anunciar_inv_erro_excluir_vinculos();
 		}
-		return 'Erro ao excluir o anúncio.';
+		return m.anunciar_inv_erro_excluir();
 	}
 
 	async function confirmDelete() {
@@ -432,7 +436,7 @@
 		} else {
 			maquinarios = maquinarios.filter((item) => item.id !== id);
 			produtos = produtos.filter((item) => item.id !== id);
-			statusMessage = { text: 'Anúncio excluído.', type: 'success' };
+			statusMessage = { text: m.anunciar_inv_excluido(), type: 'success' };
 			deleteConfirmOpen = false;
 			deleteConfirmItem = null;
 		}
@@ -444,18 +448,18 @@
 	function adMenuItems(item) {
 		const active = isActiveStatus(item.status);
 		return [
-			{ value: 'ver', label: 'Ver anúncio', icon: ExternalLink, href: getAdHref(item) },
-			{ value: 'editar', label: 'Editar', icon: Edit, onselect: () => openEdit(item) },
+			{ value: 'ver', label: m.anunciar_inv_ver_anuncio(), icon: ExternalLink, href: getAdHref(item) },
+			{ value: 'editar', label: m.comum_editar(), icon: Edit, onselect: () => openEdit(item) },
 			{
 				value: 'status',
-				label: active ? 'Pausar anúncio' : 'Ativar anúncio',
+				label: active ? m.anunciar_inv_pausar() : m.anunciar_inv_ativar(),
 				icon: active ? Pause : Play,
 				disabled: togglingId === item.id,
 				onselect: () => requestToggleStatus(item)
 			},
 			{
 				value: 'excluir',
-				label: 'Excluir',
+				label: m.comum_excluir(),
 				icon: Trash2,
 				danger: true,
 				separator: true,
@@ -466,25 +470,31 @@
 	}
 
 	// resumo do topo (computador), só com o que já foi carregado
+	const activeMachines = $derived(maquinarios.filter((item) => isActiveStatus(item.status)).length);
+	const activeProducts = $derived(produtos.filter((item) => isActiveStatus(item.status)).length);
+
 	const inventoryStats = $derived([
 		{
-			label: 'Máquinas',
+			id: 'maquinas',
+			label: m.anunciar_inv_stat_maquinas(),
 			value: maquinarios.length,
-			hint: `${maquinarios.filter((m) => isActiveStatus(m.status)).length} ativas`,
+			hint: (activeMachines === 1 ? m.anunciar_inv_maquina_ativa : m.anunciar_inv_maquinas_ativas)({ n: activeMachines }),
 			icon: Tractor,
 			tone: 'preset-tonal-primary'
 		},
 		{
-			label: 'Produtos e insumos',
+			id: 'produtos',
+			label: m.anunciar_inv_stat_produtos(),
 			value: produtos.length,
-			hint: `${produtos.filter((p) => isActiveStatus(p.status)).length} ativos`,
+			hint: (activeProducts === 1 ? m.anunciar_inv_produto_ativo : m.anunciar_inv_produtos_ativos)({ n: activeProducts }),
 			icon: Leaf,
 			tone: 'preset-tonal-tertiary'
 		},
 		{
-			label: 'Pausados',
+			id: 'pausados',
+			label: m.anunciar_inv_stat_pausados(),
 			value: [...maquinarios, ...produtos].filter((a) => isPausedStatus(a.status)).length,
-			hint: 'não aparecem na busca',
+			hint: m.anunciar_inv_nao_aparecem(),
 			icon: Pause,
 			tone: 'preset-tonal-warning'
 		}
@@ -493,32 +503,34 @@
 	// linha de detalhes do anúncio no computador
 	function adDetails(item, kind) {
 		if (kind === 'maquinario') {
-			const m = getMachineryFromProduct(item);
+			const machinery = getMachineryFromProduct(item);
 			return [
-				[m?.brands?.name, m?.model].filter(Boolean).join(' '),
-				m?.manufacture_year ? `Ano ${m.manufacture_year}` : null,
-				Number(m?.current_horimeter) > 0 ? `${Number(m.current_horimeter).toLocaleString('pt-BR')} h` : null
+				[machinery?.brands?.name, machinery?.model].filter(Boolean).join(' '),
+				machinery?.manufacture_year ? m.anunciar_inv_ano({ ano: machinery.manufacture_year }) : null,
+				Number(machinery?.current_horimeter) > 0 ? `${formatNumber(machinery.current_horimeter)} h` : null
 			]
 				.filter(Boolean)
 				.join(' · ');
 		}
-		return Number(item.quantity) > 0 ? `Estoque: ${Number(item.quantity).toLocaleString('pt-BR')} ${(item.stock_unit ?? '').toLowerCase()}`.trim() : '';
+		return Number(item.quantity) > 0
+			? m.anunciar_inv_estoque({ quantidade: formatNumber(item.quantity), unidade: stockUnitLabel(item.stock_unit, item.quantity) }).trim()
+			: '';
 	}
 
-	const RENTAL_CAPTION = { hora: 'Aluguel por hora', dia: 'Aluguel por dia', hectare: 'Aluguel por hectare' };
-	const RENTAL_SUFFIX = { hora: '/ hora', dia: '/ dia', hectare: '/ ha' };
+	const RENTAL_CAPTION = { hora: m.anunciar_inv_aluguel_hora, dia: m.anunciar_inv_aluguel_dia, hectare: m.anunciar_inv_aluguel_hectare };
 
 	function priceCaption(item, kind) {
-		if (kind !== 'maquinario') return 'Preço';
+		if (kind !== 'maquinario') return m.anunciar_etapa_preco();
 		const machinery = getMachineryFromProduct(item);
-		return machinery?.offer_type === 'aluguel' ? RENTAL_CAPTION[machinery.rental_unit] ?? 'Aluguel' : 'Venda';
+		if (machinery?.offer_type !== 'aluguel') return MACHINE_OFFER_LABEL.venda;
+		return RENTAL_CAPTION[machinery.rental_unit]?.() ?? MACHINE_OFFER_LABEL.aluguel;
 	}
 
 	// unidade ao lado do preço: "/ hora", "/ dia", "/ ha" na máquina alugada; "/ saca" no insumo
 	function priceSuffix(item, kind) {
 		if (kind === 'maquinario') {
 			const machinery = getMachineryFromProduct(item);
-			return machinery?.offer_type === 'aluguel' ? RENTAL_SUFFIX[machinery.rental_unit] ?? '/ hora' : '';
+			return machinery?.offer_type === 'aluguel' ? rentalUnitSuffix(machinery.rental_unit) : '';
 		}
 		const unit = stockUnitLabel(item.stock_unit, 1);
 		return unit ? `/ ${unit}` : '';
@@ -526,12 +538,12 @@
 
 	async function handleEditSaved() {
 		await loadAllAds();
-		statusMessage = { text: 'Anúncio atualizado com sucesso.', type: 'success' };
+		statusMessage = { text: m.anunciar_inv_atualizado(), type: 'success' };
 	}
 </script>
 
 <svelte:head>
-	<title>Meu inventário — Osiris</title>
+	<title>{m.anunciar_inv_meu_inventario()} — Osiris</title>
 </svelte:head>
 
 {#snippet adCard(item, kind)}
@@ -558,7 +570,7 @@
 					<div class="lg:hidden">
 					<AppMenu
 						items={adMenuItems(item)}
-						label="Ações do anúncio"
+						label={m.anunciar_inv_acoes()}
 						triggerClass="btn-icon btn-icon-lg preset-tonal -mr-1 -mt-1 shrink-0"
 					>
 						{#snippet trigger()}
@@ -575,7 +587,7 @@
 				</p>
 				<div class="mt-2 flex flex-wrap gap-1.5">
 					<span class="badge rounded-full bg-surface-100-900 px-2 py-1 uppercase text-surface-900-100 text-xs font-bold tracking-wide">
-						{kind === 'maquinario' ? getMachineryTypeName(item) : item.category}
+						{kind === 'maquinario' ? getMachineryTypeName(item) : categoryLabel(item.category)}
 					</span>
 					<span class="badge gap-1 rounded-full px-2 py-1 uppercase text-xs font-bold tracking-wide {statusBadgeClass(item.status)}">
 						<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
@@ -600,9 +612,9 @@
 			<div class="hidden shrink-0 items-center gap-2 lg:flex">
 				<button type="button" onclick={() => openEdit(item)} class="btn preset-tonal">
 					<Edit size={18} />
-					<span>Editar</span>
+					<span>{m.comum_editar()}</span>
 				</button>
-				<AppMenu items={adMenuItems(item)} label="Ações do anúncio" triggerClass="btn-icon btn-icon-lg preset-tonal">
+				<AppMenu items={adMenuItems(item)} label={m.anunciar_inv_acoes()} triggerClass="btn-icon btn-icon-lg preset-tonal">
 					{#snippet trigger()}
 						<MoreVertical size={18} />
 					{/snippet}
@@ -619,32 +631,33 @@
 		{#if !searchQuery.trim()}
 			<a href={resolve('/anunciar')} class="btn preset-filled-primary-500 mt-4">
 				<Plus size={18} />
-				<span>Criar anúncio</span>
+				<span>{m.anunciar_inv_criar()}</span>
 			</a>
 		{/if}
 	</div>
 {/snippet}
 
 <div class="min-h-screen pb-24">
-	<Header title="Meu inventário" />
+	<Header title={m.anunciar_inv_meu_inventario()} />
 
 	<main class="mx-auto w-full max-w-3xl px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-6">
-		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label="Caminho">
+		<nav class="mb-3 hidden items-center gap-1.5 text-sm lg:flex" aria-label={m.anunciar_inv_caminho()}>
 			<a href={resolve('/')} class="inline-flex items-center gap-1 text-surface-800-200 hover:text-primary-700-300">
 				<Home size={16} />
-				Início
+				{m.nav_inicio()}
 			</a>
 			<span class="text-surface-700-300">/</span>
-			<span class="font-semibold text-surface-950-50" aria-current="page">Meu inventário</span>
+			<span class="font-semibold text-surface-950-50" aria-current="page">{m.anunciar_inv_meu_inventario()}</span>
 		</nav>
 
 		<div class="mb-4 flex items-center justify-between gap-3">
 			<div class="min-w-0">
-				<h1 class="preset-typo-headline">Meus anúncios</h1>
+				<h1 class="preset-typo-headline">{m.anunciar_inv_meus_anuncios()}</h1>
 				{#if !loading}
 					<p class="preset-typo-subtitle">
-						{maquinarios.length + produtos.length}
-						{maquinarios.length + produtos.length === 1 ? 'anúncio cadastrado' : 'anúncios cadastrados'}
+						{(maquinarios.length + produtos.length === 1 ? m.anunciar_inv_cadastrado : m.anunciar_inv_cadastrados)({
+							n: maquinarios.length + produtos.length
+						})}
 					</p>
 				{/if}
 			</div>
@@ -653,15 +666,15 @@
 				class="btn btn-md preset-filled-primary-500 shrink-0"
 			>
 				<Plus size={18} />
-				<span class="lg:hidden">Novo</span>
-				<span class="hidden lg:inline">Novo anúncio</span>
+				<span class="lg:hidden">{m.anunciar_inv_novo()}</span>
+				<span class="hidden lg:inline">{m.anunciar_novo_anuncio()}</span>
 			</a>
 		</div>
 
 		<!-- computador: resumo do inventário (contagens dos anúncios já carregados) -->
 		{#if !loading}
 			<div class="mb-6 hidden grid-cols-3 gap-4 lg:grid">
-				{#each inventoryStats as stat (stat.label)}
+				{#each inventoryStats as stat (stat.id)}
 					<div class="flex items-center gap-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-5 shadow-sm">
 						<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-container {stat.tone}">
 							<stat.icon size={24} />
@@ -676,7 +689,7 @@
 			</div>
 		{:else if loading}
 			<div class="mb-6 hidden lg:block">
-				<ListingSkeleton variant="stats" count={3} label="Carregando resumo..." />
+				<ListingSkeleton variant="stats" count={3} label={m.anunciar_inv_carregando_resumo()} />
 			</div>
 		{/if}
 
@@ -696,26 +709,26 @@
 			</div>
 		{/if}
 
-		<AppTabs bind:value={activeTab} items={inventoryTabs} label="Tipo de anúncio" variant="segmented" class="gap-4">
+		<AppTabs bind:value={activeTab} items={inventoryTabs} label={m.anunciar_inv_tipo_anuncio()} variant="segmented" class="gap-4">
 			<div class="relative">
 				<Search class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-700-300" />
 				<input
 					type="search"
-					placeholder="Buscar nos meus anúncios..."
+					placeholder={m.anunciar_inv_buscar()}
 					bind:value={searchQuery}
 					class="input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 pl-11 pr-4 text-base shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
 				/>
 			</div>
 
 			{#if loading}
-				<ListingSkeleton variant="list" count={3} label="Carregando seus anúncios..." />
+				<ListingSkeleton variant="list" count={3} label={m.anunciar_inv_carregando_anuncios()} />
 			{:else}
 				<AppTabsPanel value="maquinarios">
 					<div class="space-y-3">
 						{#each filteredMaquinarios as maq (maq.id)}
 							{@render adCard(maq, 'maquinario')}
 						{:else}
-							{@render emptyState('Nenhuma máquina encontrada.')}
+							{@render emptyState(m.anunciar_inv_nenhuma_maquina())}
 						{/each}
 					</div>
 				</AppTabsPanel>
@@ -724,7 +737,7 @@
 						{#each filteredProdutos as prod (prod.id)}
 							{@render adCard(prod, 'produto')}
 						{:else}
-							{@render emptyState('Nenhum produto ou insumo encontrado.')}
+							{@render emptyState(m.anunciar_inv_nenhum_produto())}
 						{/each}
 					</div>
 				</AppTabsPanel>
@@ -742,10 +755,10 @@
 
 	<AppConfirmDialog
 		bind:open={statusConfirmOpen}
-		title={statusConfirmContent?.title ?? 'Confirmar'}
+		title={statusConfirmContent?.title ?? m.comum_confirmar()}
 		message={statusConfirmContent?.message ?? ''}
-		confirmLabel={statusConfirmContent?.confirmLabel ?? 'Confirmar'}
-		cancelLabel="Cancelar"
+		confirmLabel={statusConfirmContent?.confirmLabel ?? m.comum_confirmar()}
+		cancelLabel={m.comum_cancelar()}
 		variant={statusConfirmContent?.variant ?? 'default'}
 		loading={statusConfirmLoading}
 		onconfirm={confirmToggleStatus}
@@ -754,10 +767,10 @@
 
 	<AppConfirmDialog
 		bind:open={deleteConfirmOpen}
-		title={deleteConfirmContent?.title ?? 'Excluir anúncio?'}
+		title={deleteConfirmContent?.title ?? m.anunciar_inv_excluir_titulo()}
 		message={deleteConfirmContent?.message ?? ''}
-		confirmLabel={deleteConfirmContent?.confirmLabel ?? 'Excluir'}
-		cancelLabel="Cancelar"
+		confirmLabel={deleteConfirmContent?.confirmLabel ?? m.comum_excluir()}
+		cancelLabel={m.comum_cancelar()}
 		variant="danger"
 		loading={deleteConfirmLoading}
 		onconfirm={confirmDelete}
