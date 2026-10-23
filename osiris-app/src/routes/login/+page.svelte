@@ -6,6 +6,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { supabase } from '$lib/supabase';
+	import { track } from '$lib/telemetry';
 	import { onboardingSeen, safeRedirectPath } from '$lib/onboarding';
 	import { ArrowRight, Archive, CircleAlert, Handshake, Tractor } from 'lucide-svelte';
 
@@ -45,6 +46,7 @@
 	}
 
 	async function handleGoogleLogin() {
+		track('login_iniciado', { provedor: 'google', com_destino: Boolean(redirectTo) });
 		signingIn = true;
 		errorMessage = '';
 

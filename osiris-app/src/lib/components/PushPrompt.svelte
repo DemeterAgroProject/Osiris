@@ -5,6 +5,7 @@
 	import { supabase } from '$lib/supabase';
 	import { enablePush, isBrave, pushFailureReason, pushPermission, syncPushSubscription } from '$lib/push';
 	import { showToast } from '$lib/components/ui/toast.js';
+	import { track } from '$lib/telemetry';
 
 	// Pede a permissão de notificação com um toque (celulares bloqueiam o pedido automático)
 	// e mantém a inscrição do aparelho em dia para quem já permitiu.
@@ -31,6 +32,7 @@
 	}
 
 	function dismiss() {
+		track('notificacoes_dispensadas');
 		dismissed = true;
 		try {
 			sessionStorage.setItem(DISMISS_KEY, '1');
@@ -48,6 +50,11 @@
 		permissionHint = false;
 		permission = pushPermission();
 		enabling = false;
+		track(ok ? 'notificacoes_ativadas' : 'notificacoes_falharam', {
+			permissao: permission,
+			motivo: ok ? undefined : (pushFailureReason() ?? undefined),
+			brave: isBrave() || undefined
+		});
 
 		if (ok) {
 			showToast('Notificações ativadas neste aparelho.');
@@ -64,10 +71,16 @@
 		}
 	}
 
+	// o Supabase repete SIGNED_IN toda vez que a aba volta ao foco: sincroniza uma vez por conta
+	let syncedUserId = null;
+
 	function handleUser(user) {
 		userId = user?.id ?? null;
 		permission = pushPermission();
-		if (userId && permission === 'granted') syncPushSubscription(userId);
+		if (userId && permission === 'granted' && userId !== syncedUserId) {
+			syncedUserId = userId;
+			syncPushSubscription(userId);
+		}
 	}
 
 	onMount(() => {

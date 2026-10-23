@@ -4,6 +4,7 @@
     import { onMount } from 'svelte';
     import { supabase } from '$lib/supabase';
     import { requireUser } from '$lib/auth';
+    import { track, trackError } from '$lib/telemetry';
     import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Leaf, Tag, Timer, Tractor } from 'lucide-svelte';
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
@@ -115,9 +116,13 @@
             municipio: null
     });
 
+    // id de cada abertura do formulário: separa desistência e publicação na mesma sessão
+    const tentativa = crypto.randomUUID().slice(0, 8);
+
     onMount(async () => {
         // pede o login antes de a pessoa preencher as etapas, não só no envio
         if (!(await requireUser('/anunciar'))) return;
+        track('anuncio_iniciado', { tentativa });
 
         fetchMyMunicipio().then((municipio) => {
             if (municipio && !form.municipio) form.municipio = municipio;
@@ -153,6 +158,7 @@
     function nextStep() {
         if (currentStep < totalSteps - 1 && canProceed()) {
             currentStep++;
+            track('anuncio_etapa', { tentativa, etapa: currentStep, categoria: form.category });
         }
     }
 
@@ -283,11 +289,17 @@
                 }
             }
 
+            track('anuncio_publicado', {
+                tentativa,
+                categoria: form.category,
+                negocio: form.category === 'maquinario' ? form.offer_type : undefined,
+                cobranca: form.category === 'maquinario' && form.offer_type === 'aluguel' ? form.rental_unit : undefined
+            });
             showToast('Anúncio publicado com sucesso!', 'success');
             await goto(resolve('/inventario'));
 
         } catch (error) {
-            console.error("Erro ao salvar:", error);
+            trackError('anuncio_falhou', error, { tentativa, categoria: form.category, etapa: currentStep });
             message = { text: formatSaveError(error), type: 'error' };
         } finally {
             loading = false;

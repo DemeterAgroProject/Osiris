@@ -94,7 +94,6 @@ async function subscribeThisDevice() {
     }
     return true;
   } catch (error) {
-    console.error('Erro ao ativar notificações:', error);
     // "Registration failed - push service error": a permissão existe, mas o serviço de push do navegador recusou
     lastFailure =
       error?.name === 'TimeoutError'
@@ -102,6 +101,10 @@ async function subscribeThisDevice() {
         : error?.name === 'AbortError' || /push service/i.test(error?.message ?? '')
           ? 'push-service'
           : 'unknown';
+    // push-service é configuração do navegador (Brave), não defeito do app: fica no evento
+    // notificacoes_falharam, sem virar erro no log a cada carregamento
+    if (lastFailure === 'push-service') console.warn('Serviço de push do navegador recusou a inscrição:', error);
+    else console.error('Erro ao ativar notificações:', error);
     return false;
   }
 }
