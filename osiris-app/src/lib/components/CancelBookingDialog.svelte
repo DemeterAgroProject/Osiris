@@ -121,7 +121,7 @@
 				type="button"
 				onclick={close}
 				disabled={loading}
-				class="btn btn-lg preset-tonal w-full"
+				class="btn btn-md preset-tonal w-full"
 			>
 				<ArrowLeft size={18} />
 				<span>Voltar</span>
@@ -130,7 +130,7 @@
 				type="button"
 				onclick={handleConfirm}
 				disabled={loading || !canSubmit}
-				class="btn btn-lg preset-filled-error-500 w-full"
+				class="btn btn-md preset-filled-error-500 w-full"
 			>
 				<XCircle size={18} />
 				<span>{loading ? 'Aguarde...' : 'Cancelar operação'}</span>

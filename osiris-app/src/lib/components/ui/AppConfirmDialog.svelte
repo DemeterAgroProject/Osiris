@@ -47,7 +47,7 @@
 				type="button"
 				onclick={handleCancel}
 				disabled={loading}
-				class="btn btn-lg preset-tonal w-full"
+				class="btn btn-md preset-tonal w-full"
 			>
 				{cancelLabel}
 			</button>
@@ -55,7 +55,7 @@
 				type="button"
 				onclick={handleConfirm}
 				disabled={loading}
-				class="btn btn-lg w-full {confirmButtonClass}"
+				class="btn btn-md w-full {confirmButtonClass}"
 			>
 				<span>{loading ? 'Aguarde...' : confirmLabel}</span>
 			</button>

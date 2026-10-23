@@ -36,8 +36,9 @@
 		</nav>
 
 		<div>
-			<p class="preset-typo-label">Contato e termos</p>
+			<p class="preset-typo-label">Ajuda e termos</p>
 			<ul class="mt-3 space-y-2 text-sm">
+				<li><a href={resolve('/ajuda')} class="text-surface-900-100 hover:text-primary-700-300">Central de ajuda</a></li>
 				<li>
 					<a href="mailto:{LEGAL.contato}" class="inline-flex items-center gap-2 text-surface-900-100 hover:text-primary-700-300">
 						<Mail size={16} />

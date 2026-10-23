@@ -168,6 +168,11 @@
 				<span>Continuar sem entrar</span>
 				<ArrowRight size={18} />
 			</a>
+
+			<p class="mt-4 text-center text-sm text-surface-800-200">
+				Ficou com dúvida?
+				<a href={resolve('/ajuda')} class="font-semibold text-primary-700-300 underline">Veja a central de ajuda</a>
+			</p>
 		{/if}
 	</main>
 
