@@ -9,6 +9,7 @@
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import ProductImageUrlsEditor from '$lib/components/ProductImageUrlsEditor.svelte';
+    import { isValidImageUrl } from '$lib/listingPhotos';
     import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
     import { fetchMyMunicipio } from '$lib/municipios';
     import { DELIVERY_LABEL, categoryLabel, listingPriceLabel, machineTypeLabel, MACHINE_CONDITION_LABEL, MACHINE_OFFER_LABEL, RENTAL_UNIT_LABEL, stockUnitLabel, stockUnitName, tractionLabel } from '$lib/pricing';
@@ -37,24 +38,11 @@
     const fieldClass = 'input h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-4 text-base outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
     const selectClass = 'select h-12 w-full rounded-container border border-surface-200-800 bg-surface-50-950 px-3 text-base outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20';
 
-    function createEmptyImageRow(isCover = false) {
-        return { id: null, url: '', is_cover: isCover, removed: false };
-    }
-
-    function isValidImageUrl(value) {
-        const trimmed = value?.trim();
-        if (!trimmed) return false;
-        try {
-            const parsed = new URL(trimmed);
-            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-        } catch {
-            return false;
-        }
-    }
-
+    // URLs válidas com a capa primeiro (insertProductImages marca a primeira como capa)
     function collectImageUrls(images) {
         return (images ?? [])
             .filter((img) => !img.removed && isValidImageUrl(img.url))
+            .sort((a, b) => Number(b.is_cover) - Number(a.is_cover))
             .map((img) => img.url.trim());
     }
 
@@ -76,6 +64,7 @@
     let currentStep = $state(0);
     const totalSteps = 3;
     let loading = $state(false);
+    let uploadingPhotos = $state(false);
     let message = $state({ text: '', type: '' });
 
     // Dados carregados do Banco
@@ -115,8 +104,8 @@
             // Máquina e produto
             delivery: '', // retirada | entrega | a_combinar
 
-            // Imagens (URLs) — product_images
-            images: [createEmptyImageRow(true)],
+            // Fotos (enviadas pelo app ou por link) — product_images; pelo menos uma é obrigatória
+            images: [],
 
             // Cidade onde está (município do IBGE); vem preenchida com a cidade do perfil
             municipio: null
@@ -148,6 +137,7 @@
         
         if (currentStep === 1) { 
             if (!form.municipio) return false;
+            if (uploadingPhotos || collectImageUrls(form.images).length === 0) return false;
             if (form.category === 'maquinario') {
                 return form.name.trim().length > 0 && form.brand_id !== '' && form.type_id !== '' && form.model.trim().length > 0 && form.manufacture_year > 0 && form.current_horimeter !== '' && form.condition !== '';
             }
@@ -527,7 +517,7 @@
                 </div>
 
                 <div class="mt-4 rounded-container border border-surface-200-800 bg-surface-50-950 p-4 shadow-sm">
-                    <ProductImageUrlsEditor bind:images={form.images} />
+                    <ProductImageUrlsEditor bind:images={form.images} bind:uploading={uploadingPhotos} required />
                 </div>
             </div>
 

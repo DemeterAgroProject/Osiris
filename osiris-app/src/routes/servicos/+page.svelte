@@ -28,6 +28,7 @@
 	import AppTabs from '$lib/components/ui/AppTabs.svelte';
 	import AppTabsPanel from '$lib/components/ui/AppTabsPanel.svelte';
 	import ServiceEditSheet from '$lib/components/ServiceEditSheet.svelte';
+	import { removeListingPhotos } from '$lib/listingPhotos';
 	import { m } from '$lib/paraglide/messages';
 	import { formatBRL } from '$lib/i18n';
 
@@ -317,7 +318,10 @@
 			.eq('service_id', serviceId);
 		if (favoritesError) return favoritesError;
 
-		return supabase.from('services').delete().eq('id', serviceId);
+		const imageUrl = allServices.find((service) => service.id === serviceId)?.image_url;
+		const result = await supabase.from('services').delete().eq('id', serviceId);
+		if (!result.error && imageUrl) await removeListingPhotos([imageUrl]);
+		return result;
 	}
 
 	function formatDeleteError(error) {

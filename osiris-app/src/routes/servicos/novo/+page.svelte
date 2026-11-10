@@ -12,6 +12,8 @@
     import Header from '$lib/components/Header.svelte';
     import BottomNav from '$lib/components/BottomNav.svelte';
     import MunicipioPicker from '$lib/components/MunicipioPicker.svelte';
+    import ServicePhotoField from '$lib/components/ServicePhotoField.svelte';
+    import { isValidImageUrl } from '$lib/listingPhotos';
     import { fetchMyMunicipio, formatMunicipio } from '$lib/municipios';
     import { pricingModelLabel, serviceTypeLabel } from '$lib/pricing';
     import { formatNumber } from '$lib/i18n';
@@ -57,16 +59,16 @@
         location: '', // área de atendimento, texto livre (opcional)
         pricing_model: 'Por Hora', // 'Por Hora', 'Por Hectare', 'Empreitada/Fixo', 'A Combinar'
         price: null,
-        image_url: '', // foto de capa (opcional)
+        image_url: '', // foto de capa (obrigatória)
         equipment: '', // equipamento incluso (opcional)
         service_radius_km: '' // até quantos km da cidade (opcional)
     });
 
-    const imageUrlInvalid = $derived(form.image_url.trim() !== '' && !/^https?:\/\/\S+$/i.test(form.image_url.trim()));
+    let uploadingPhoto = $state(false);
 
     function canProceed() {
         if (currentStep === 0) return form.service_type !== '';
-        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && Boolean(form.municipio) && !imageUrlInvalid;
+        if (currentStep === 1) return form.title.trim().length > 0 && form.description.trim().length > 0 && Boolean(form.municipio) && isValidImageUrl(form.image_url) && !uploadingPhoto;
         if (currentStep === 2) {
             if (form.pricing_model === 'A Combinar') return true;
             return form.price !== null && form.price > 0;
@@ -259,21 +261,7 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class={labelClass} for="image_url">{m.anunciar_servico_foto()} <span class="font-normal text-surface-700-300">({m.comum_opcional()})</span></label>
-                        <input
-                            type="url"
-                            id="image_url"
-                            bind:value={form.image_url}
-                            placeholder={m.anunciar_ph_link_foto()}
-                            class={fieldClass}
-                        />
-                        {#if imageUrlInvalid}
-                            <p class="mt-1 text-sm font-medium text-error-600-400">{m.anunciar_servico_foto_invalida()}</p>
-                        {:else if form.image_url.trim()}
-                            <img src={form.image_url.trim()} alt={m.anunciar_servico_foto_previa_alt()} class="mt-2 h-36 w-full rounded-container object-cover" />
-                        {/if}
-                    </div>
+                    <ServicePhotoField bind:value={form.image_url} bind:uploading={uploadingPhoto} />
                 </div>
             </div>
 
