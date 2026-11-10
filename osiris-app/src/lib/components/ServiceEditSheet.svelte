@@ -2,8 +2,10 @@
 	import { Check } from 'lucide-svelte';
 	import AppDialog from '$lib/components/ui/AppDialog.svelte';
 	import { supabase } from '$lib/supabase';
+	import ServicePhotoField from '$lib/components/ServicePhotoField.svelte';
 	import { pricingModelLabel } from '$lib/pricing';
 	import { formatNumber } from '$lib/i18n';
+	import { isValidImageUrl, removeListingPhotos } from '$lib/listingPhotos';
 	import { m } from '$lib/paraglide/messages';
 
 	// valores aceitos por services_pricing_model_check (o texto visível vem de pricingModelLabel)
@@ -12,13 +14,15 @@
 	let { open = $bindable(false), service = null, onsaved = () => {} } = $props();
 
 	let saving = $state(false);
+	let uploadingPhoto = $state(false);
 	let errorMessage = $state('');
 	let form = $state({
 		title: '',
 		description: '',
 		location: '',
 		pricing_model: 'Por Hora',
-		price: ''
+		price: '',
+		image_url: ''
 	});
 
 	function resetForm() {
@@ -29,7 +33,8 @@
 			description: service.description ?? '',
 			location: service.location ?? '',
 			pricing_model: service.pricing_model ?? 'Por Hora',
-			price: service.price != null ? String(service.price) : ''
+			price: service.price != null ? String(service.price) : '',
+			image_url: service.image_url ?? ''
 		};
 		errorMessage = '';
 	}
@@ -53,6 +58,12 @@
 			return;
 		}
 
+		const imageUrl = form.image_url.trim();
+		if (!isValidImageUrl(imageUrl)) {
+			errorMessage = m.anunciar_foto_obrigatoria();
+			return;
+		}
+
 		let finalPrice = null;
 		if (form.pricing_model !== 'A Combinar') {
 			const parsed = Number(form.price);
@@ -73,7 +84,8 @@
 				description,
 				location,
 				pricing_model: form.pricing_model,
-				price: finalPrice
+				price: finalPrice,
+				image_url: imageUrl
 			})
 			.eq('id', service.id);
 
@@ -83,6 +95,9 @@
 			errorMessage = m.anunciar_servico_erro_salvar();
 			return;
 		}
+
+		// a foto anterior deixou de ser usada
+		if (service.image_url && service.image_url !== imageUrl) removeListingPhotos([service.image_url]);
 
 		closeSheet();
 		onsaved();
@@ -181,6 +196,13 @@
 					/>
 				</div>
 			{/if}
+
+			<ServicePhotoField
+				id="edit-service-image-url"
+				bind:value={form.image_url}
+				bind:uploading={uploadingPhoto}
+				savedUrl={service.image_url ?? ''}
+			/>
 		</form>
 	{/if}
 
@@ -188,7 +210,7 @@
 		<button
 			type="submit"
 			form="service-edit-form"
-			disabled={saving}
+			disabled={saving || uploadingPhoto}
 			class="btn btn-lg preset-filled-primary-500 w-full"
 		>
 			<Check size={18} />

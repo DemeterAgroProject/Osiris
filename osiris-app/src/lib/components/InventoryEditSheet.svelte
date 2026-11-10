@@ -17,22 +17,8 @@
 		tractionLabel
 	} from '$lib/pricing';
 	import { formatNumber } from '$lib/i18n';
+	import { isValidImageUrl, removeListingPhotos } from '$lib/listingPhotos';
 	import { m } from '$lib/paraglide/messages';
-
-	function createEmptyImageRow(isCover = false) {
-		return { id: null, url: '', is_cover: isCover, removed: false };
-	}
-
-	function isValidImageUrl(value) {
-		const trimmed = value?.trim();
-		if (!trimmed) return false;
-		try {
-			const parsed = new URL(trimmed);
-			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-		} catch {
-			return false;
-		}
-	}
 
 	function formatImageError(error) {
 		if (error?.code === '42501' || error?.status === 403) {
@@ -43,7 +29,7 @@
 
 	function normalizeImageRows(rows) {
 		const active = (rows ?? []).filter((row) => !row.removed && isValidImageUrl(row.url));
-		if (!active.length) return [createEmptyImageRow(true)];
+		if (!active.length) return [];
 
 		let hasCover = active.some((row) => row.is_cover);
 		return active.map((row, index) => ({
@@ -72,11 +58,18 @@
 
 	async function syncProductImages(productId, images) {
 		const active = (images ?? []).filter((img) => !img.removed && isValidImageUrl(img.url));
-		const removedIds = (images ?? []).filter((img) => img.removed && img.id).map((img) => img.id);
+		const removed = (images ?? []).filter((img) => img.removed && img.id);
 
-		if (removedIds.length) {
-			const { error } = await supabase.from('product_images').delete().in('id', removedIds);
+		if (removed.length) {
+			const { error } = await supabase
+				.from('product_images')
+				.delete()
+				.in(
+					'id',
+					removed.map((img) => img.id)
+				);
 			if (error) return error;
+			await removeListingPhotos(removed.map((img) => img.url));
 		}
 
 		if (!active.length) return null;
@@ -149,7 +142,8 @@
 
 	let saving = $state(false);
 	let errorMessage = $state('');
-	let images = $state([createEmptyImageRow(true)]);
+	let images = $state([]);
+	let uploadingPhotos = $state(false);
 
 	let form = $state({
 		name: '',
@@ -207,7 +201,7 @@
 						is_cover: row.is_cover,
 						removed: false
 					}))
-				: [createEmptyImageRow(true)];
+				: [];
 	}
 
 	function resetForm() {
@@ -275,6 +269,11 @@
 			return false;
 		}
 
+		if (!images.some((img) => !img.removed && isValidImageUrl(img.url))) {
+			errorMessage = m.anunciar_foto_obrigatoria();
+			return false;
+		}
+
 		errorMessage = '';
 		return true;
 	}
@@ -336,7 +335,11 @@
 			}
 		}
 
-		const imageError = await syncProductImages(product.id, normalizeImageRows(images));
+		// normalizeImageRows descarta as removidas; elas seguem junto para serem apagadas
+		const imageError = await syncProductImages(product.id, [
+			...normalizeImageRows(images),
+			...images.filter((img) => img.removed && img.id)
+		]);
 		if (imageError) {
 			errorMessage = formatImageError(imageError);
 			saving = false;
@@ -681,7 +684,7 @@
 				bind:value={form.municipio}
 			/>
 
-			<ProductImageUrlsEditor bind:images />
+			<ProductImageUrlsEditor bind:images bind:uploading={uploadingPhotos} required />
 		</form>
 	{/if}
 
@@ -698,7 +701,7 @@
 			<button
 				type="submit"
 				form="inventory-edit-form"
-				disabled={saving}
+				disabled={saving || uploadingPhotos}
 				class="btn btn-lg preset-filled-primary-500 w-full"
 			>
 				<Check size={18} />

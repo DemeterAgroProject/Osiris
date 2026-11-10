@@ -6,8 +6,12 @@ import { signedSupabaseClient } from './support/supabase.js';
 
 const IMAGE_URLS = {
 	machinery: 'https://example.com/e2e-machinery-cover.jpg',
-	product: 'https://example.com/e2e-product-cover.jpg'
+	product: 'https://example.com/e2e-product-cover.jpg',
+	service: 'https://example.com/e2e-service-cover.jpg'
 };
+
+// a foto é obrigatória; os testes usam o link em vez de enviar arquivo, para não gravar no Storage
+const USE_IMAGE_LINK = /Usar link de uma imagem/i;
 
 function uniqueMarker(testInfo, domain) {
 	return `[E2E] ${domain} ${testInfo.workerIndex}-${Date.now()}`;
@@ -45,7 +49,7 @@ async function findProductByName(client, name) {
 async function findServiceByTitle(client, title) {
 	const { data, error } = await client
 		.from('services')
-		.select('id, owner_id, title, description, service_type, pricing_model, price, location, status, municipio_id')
+		.select('id, owner_id, title, description, service_type, pricing_model, price, location, status, municipio_id, image_url')
 		.eq('title', title)
 		.single();
 
@@ -91,6 +95,7 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#year').fill('2022');
 		await page.locator('#horimeter').fill('480');
 		await page.locator('#condition').selectOption('usada');
+		await page.getByRole('button', { name: USE_IMAGE_LINK }).click();
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.machinery);
 		await chooseMunicipio(page, '#anuncio-municipio');
 		await page.getByRole('button', { name: /Próximo/i }).click();
@@ -142,6 +147,7 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#prod_category').selectOption('Sementes');
 		await page.locator('#qty').fill('40');
 		await page.locator('#unit').selectOption('Sacas');
+		await page.getByRole('button', { name: USE_IMAGE_LINK }).click();
 		await page.locator('#product-image-url-0').fill(IMAGE_URLS.product);
 		await chooseMunicipio(page, '#anuncio-municipio');
 		await page.getByRole('button', { name: /Próximo/i }).click();
@@ -188,6 +194,8 @@ test.describe('Publicacao de anuncios', () => {
 		await page.locator('#description').fill(description);
 		await chooseMunicipio(page, '#servico-municipio');
 		await page.locator('#location').fill(location);
+		await page.getByRole('button', { name: USE_IMAGE_LINK }).click();
+		await page.locator('#image_url').fill(IMAGE_URLS.service);
 		await page.getByRole('button', { name: /Próximo/i }).click();
 
 		await page.locator('#pricing_model').selectOption('Por Hectare');
@@ -208,7 +216,8 @@ test.describe('Publicacao de anuncios', () => {
 			price: 180,
 			location,
 			status: 'ativo',
-			municipio_id: ALEGRETE
+			municipio_id: ALEGRETE,
+			image_url: IMAGE_URLS.service
 		});
 
 		await expect(page).toHaveURL(/\/servicos$/);

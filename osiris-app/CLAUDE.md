@@ -37,6 +37,7 @@ Rode `lint` e `check` antes de considerar uma mudança pronta. Os testes E2E rod
 - Preço: use `listingPriceLabel()` de `src/lib/pricing.js`. Máquina tem `agricultural_machinery.offer_type` (`venda`: preço da máquina; `aluguel`: preço por `rental_unit` — hora, dia ou hectare); insumo é preço por `stock_unit` ("/ saca"); serviço segue `pricing_model`. Rótulos de condição, entrega e unidade também vêm de `pricing.js`.
 - **Localização**: anúncios (`products`, `services`) e perfil guardam `municipio_id` (código IBGE, tabela `municipios` com coordenadas), nunca endereço. Use `MunicipioPicker.svelte` nos formulários e `MUNICIPIO_EMBED` / `formatMunicipio()` de `src/lib/municipios.js` nas consultas. A cidade do perfil é privada (lida via `get_my_profile`) e só pré-preenche anúncios; em serviços, `location` é a área de atendimento em texto livre.
 - Termos e privacidade (`/termos`, `/privacidade`) leem o responsável e o contato de `src/lib/legal.js`.
+- **Fotos de anúncios** são obrigatórias (pelo menos uma). O envio passa por `src/lib/listingPhotos.js`: comprime no aparelho (WebP/JPEG até 1600 px) e grava em `machinery-images/<id do usuário>/` (policies só permitem a pasta própria; bucket limitado a 2 MB e imagens). Ao excluir anúncio ou trocar foto, apague o arquivo com `removeListingPhotos()`. Link colado continua aceito como alternativa.
 
 ## Regras de negócio (aplicadas por triggers)
 
