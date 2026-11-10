@@ -30,6 +30,7 @@
 	import { formatBRL, formatNumber } from '$lib/i18n';
 	import { m } from '$lib/paraglide/messages';
 	import { requireUser } from '$lib/auth';
+	import { removeListingPhotos } from '$lib/listingPhotos';
 	import { onMount } from 'svelte';
 
 	function pickCoverImage(images = []) {
@@ -402,6 +403,11 @@
 			if (bookingsError) return bookingsError;
 		}
 
+		const { data: photos } = await supabase
+			.from('product_images')
+			.select('url')
+			.eq('product_id', productId);
+
 		const childDeletes = await Promise.all([
 			supabase.from('product_images').delete().eq('product_id', productId),
 			supabase.from('agricultural_machinery').delete().eq('product_id', productId),
@@ -411,7 +417,9 @@
 		const childError = childDeletes.find((result) => result.error)?.error;
 		if (childError) return childError;
 
-		return supabase.from('products').delete().eq('id', productId);
+		const result = await supabase.from('products').delete().eq('id', productId);
+		if (!result.error) await removeListingPhotos((photos ?? []).map((photo) => photo.url));
+		return result;
 	}
 
 	function formatDeleteError(error) {
